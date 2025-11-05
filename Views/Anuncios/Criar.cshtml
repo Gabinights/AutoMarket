@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Criar Anúncio";
+}
+<header>
+    <div class="nav">
+        <a href="/" class="logo">AutoMarket</a>
+        <nav>
+            <ul>
+                <li><a href="/">Início</a></li>
+                <li><a href="/Veiculos">Veículos</a></li>
+                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
+                <li><a href="/Home/Sobre">Sobre</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
+            <a href="/Conta/Login" class="btn-primario">Entrar</a>
+            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
+        </div>
+    </div>
+</header>
+<main style="max-width:690px;margin:2.5rem auto;">
+    <h1 style="margin-bottom:2rem;">Criar Novo Anúncio</h1>
+    <!-- Passo 1 -->
+    <div class="form-step">
+        <h2>Passo 1: Informação Básica</h2>
+        <form>
+            <div class="form-group"><label>Marca</label><input type="text" required /></div>
+            <div class="form-group"><label>Modelo</label><input type="text" required /></div>
+            <div class="form-group"><label>Versão</label><input type="text" /></div>
+            <div class="form-group"><label>Ano</label><input type="number" required /></div>
+            <div class="form-group"><label>Kilometragem</label><input type="number" required /></div>
+            <div class="form-group"><label>Preço (€)</label><input type="number" required /></div>
+            <div class="form-group"><label>Condição</label><select><option>Usado</option><option>Novo</option></select></div>
+            <div class="form-group"><label>Localização</label><input type="text" required /></div>
+        </form>
+    </div>
+    <!-- Passo 2 -->
+    <div class="form-step">
+        <h2>Passo 2: Especificações Técnicas</h2>
+        <form>
+            <div class="form-group"><label>Combustível</label><select><option>Gasolina</option><option>Gasóleo</option><option>Híbrido</option><option>Elétrico</option></select></div>
+            <div class="form-group"><label>Caixa</label><select><option>Manual</option><option>Automática</option></select></div>
+            <div class="form-group"><label>Potência (cv)</label><input type="number" /></div>
+            <div class="form-group"><label>Cor</label><input type="text" /></div>
+            <div class="form-group"><label>Portas</label><input type="number" /></div>
+        </form>
+    </div>
+    <!-- Passo 3 -->
+    <div class="form-step">
+        <h2>Passo 3: Fotos e Descrição</h2>
+        <form>
+            <div class="form-group"><label>Upload de Fotos</label><input type="file" multiple /></div>
+            <div class="form-group"><label>Descrição do Veículo</label><textarea rows="4" style="width:100%;"></textarea></div>
+            <button class="btn-cta" style="width:100%;">Submeter Anúncio</button>
+        </form>
+        <!-- TODO: Enviar dados do formulário 'criar-anuncio' para o backend (RF12) -->
+    </div>
+</main>
+<footer>
+    &copy; 2025 AutoMarket<br /> Plataforma de compra e venda de veículos usados.
+</footer>
+@section Styles {
+    <link rel="stylesheet" href="/css/style.css" />
+}
+@section Scripts {
+    <script src="/js/script.js"></script>
+}
+
+

@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = "Veículos Disponíveis";
+}
+<header>
+    <div class="nav">
+        <a href="/" class="logo">AutoMarket</a>
+        <nav>
+            <ul>
+                <li><a href="/">Início</a></li>
+                <li><a href="/Veiculos">Veículos</a></li>
+                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
+                <li><a href="/Home/Sobre">Sobre</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
+            <a href="/Conta/Login" class="btn-primario">Entrar</a>
+            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
+        </div>
+    </div>
+</header>
+<main style="display:flex;gap:3rem;max-width:1200px;margin:2rem auto 3rem auto;">
+    <aside class="filter-sidebar">
+        <h2 style="margin-bottom:1rem;font-size:1.2rem">Filtros</h2>
+        <div class="filter-group">
+            <label>Marca</label>
+            <input type="text" name="marca" />
+        </div>
+        <div class="filter-group">
+            <label>Modelo</label>
+            <input type="text" name="modelo" />
+        </div>
+        <div class="filter-group">
+            <label>Preço até</label>
+            <input type="number" name="preco" />
+        </div>
+        <div class="filter-group">
+            <label>Ano</label>
+            <input type="number" name="ano" />
+        </div>
+        <div class="filter-group">
+            <label>Quilometragem</label>
+            <input type="number" name="km" />
+        </div>
+        <div class="filter-group">
+            <label>Condição</label>
+            <select name="condicao"><option value="">Qualquer</option><option>Novo</option><option>Usado</option></select>
+        </div>
+        <div class="filter-group">
+            <label>Combustível</label>
+            <select name="combustivel"><option value="">Qualquer</option><option>Gasolina</option><option>Gasóleo</option><option>Híbrido</option><option>Elétrico</option></select>
+        </div>
+        <div class="filter-group">
+            <label>Caixa</label>
+            <select name="caixa"><option value="">Qualquer</option><option>Manual</option><option>Automática</option></select>
+        </div>
+        <div class="filter-group">
+            <label>Localização</label>
+            <input type="text" name="localizacao" />
+        </div>
+        <button class="btn-primario" style="width:100%;margin-top:1rem">Aplicar Filtros</button>
+    </aside>
+    <section style="flex:1;">
+        <h1 style="margin-bottom:1.4rem;">Veículos Disponíveis</h1>
+        <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content:flex-start;">
+            <!-- TODO: Implementar fetch() para buscar veículos da API (RF1) -->
+            <div class="vehicle-card">
+                <img src="/images/carro_exemplo1.jpg" alt="Veículo 1" />
+                <h3>BMW Série 1</h3>
+                <div class="price">€19.900</div>
+                <div class="meta">2019 • 45.000km • Lisboa</div>
+            </div>
+            <div class="vehicle-card">
+                <img src="/images/carro_exemplo2.jpg" alt="Veículo 2" />
+                <h3>Renault Clio</h3>
+                <div class="price">€13.400</div>
+                <div class="meta">2018 • 33.000km • Porto</div>
+            </div>
+            <div class="vehicle-card">
+                <img src="/images/carro_exemplo3.jpg" alt="Veículo 3" />
+                <h3>Volkswagen Golf</h3>
+                <div class="price">€22.500</div>
+                <div class="meta">2020 • 29.900km • Braga</div>
+            </div>
+        </div>
+    </section>
+</main>
+<footer>
+    &copy; 2025 AutoMarket<br/>
+    Plataforma de compra e venda de veículos usados.
+</footer>
+@section Styles {
+    <link rel="stylesheet" href="/css/style.css" />
+}
+@section Scripts {
+    <script src="/js/script.js"></script>
+}
+
+

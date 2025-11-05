@@ -1,0 +1,105 @@
+@{
+    ViewData["Title"] = "Login/Registo";
+}
+<header>
+    <div class="nav">
+        <a href="/" class="logo">AutoMarket</a>
+        <nav>
+            <ul>
+                <li><a href="/">Início</a></li>
+                <li><a href="/Veiculos">Veículos</a></li>
+                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
+                <li><a href="/Home/Sobre">Sobre</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
+            <a href="/Conta/Login" class="btn-primario">Entrar</a>
+            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
+        </div>
+    </div>
+</header>
+<main style="display:flex;flex-direction:column;align-items:center;">
+    <div style="background:#fff; padding:2.5rem 2rem; border-radius:10px;box-shadow:0 2px 18px #00214718;margin:3rem 0;max-width:430px;width:100%;">
+        <div style="display:flex;gap:1rem;justify-content:center;margin-bottom:2rem;">
+            <button class="tab-btn active" data-target="tab-login">Entrar</button>
+            <button class="tab-btn" data-target="tab-registo">Registar</button>
+        </div>
+        <div id="tab-login" class="tab-pane active">
+            <form onsubmit="return validarFormLogin()">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" required />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" required />
+                </div>
+                <button type="submit" class="btn-primario" style="width:100%;margin-bottom:0.6rem;">Entrar</button>
+                <div style="display:flex;justify-content:space-between;">
+                    <a href="#">Esqueceu a password?</a>
+                    <a href="#">Continuar com Google/Facebook</a>
+                </div>
+            </form>
+        </div>
+        <div id="tab-registo" class="tab-pane" style="display:none;">
+            <form onsubmit="return validarFormRegisto()">
+                <div style="margin-bottom:1rem;">
+                    <label>Tipo de Conta:</label><br/>
+                    <label><input type="radio" name="tipoConta" value="comprador" checked /> Comprador</label>
+                    <label><input type="radio" name="tipoConta" value="vendedor" style="margin-left:1rem" /> Vendedor</label>
+                    <span style="display:block;color:#d36a00;font-size:0.96em;margin-top:6px;">Contas de vendedor requerem aprovação!</span>
+                </div>
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" required />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" required />
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="tel" required pattern="[0-9]{9}" />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" required />
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Password</label>
+                    <input type="password" required />
+                </div>
+                <button type="submit" class="btn-cta" style="width:100%;">Registar</button>
+            </form>
+        </div>
+    </div>
+</main>
+<footer>
+    &copy; 2025 AutoMarket<br /> Plataforma de compra e venda de veículos usados.
+</footer>
+@section Styles {
+    <link rel="stylesheet" href="/css/style.css" />
+}
+@section Scripts {
+    <script src="/js/script.js"></script>
+    <script>
+    // Interatividade para abas login/registo
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panes = document.querySelectorAll('.tab-pane');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                panes.forEach(p => p.classList.remove('active'));
+                panes.forEach(p => p.style.display = 'none');
+                document.getElementById(this.dataset.target).classList.add('active');
+                document.getElementById(this.dataset.target).style.display = 'block';
+            });
+        });
+    });
+    </script>
+}
+
+

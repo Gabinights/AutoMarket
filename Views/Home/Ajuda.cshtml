@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "Centro de Ajuda";
+}
+<header>
+    <div class="nav">
+        <a href="/" class="logo">AutoMarket</a>
+        <nav>
+            <ul>
+                <li><a href="/">Início</a></li>
+                <li><a href="/Veiculos">Veículos</a></li>
+                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
+                <li><a href="/Home/Sobre">Sobre</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
+            <a href="/Conta/Login" class="btn-primario">Entrar</a>
+            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
+        </div>
+    </div>
+</header>
+<main style="max-width:800px;margin:3rem auto;text-align:left;">
+    <h1 style="text-align:center;">Centro de Ajuda</h1>
+    <div style="margin-top:2rem;">
+        <h3>Como posso pesquisar veículos?</h3>
+        <p>Use os filtros avançados disponíveis na página inicial ou em "Veículos" para encontrar exatamente o que procura.</p>
+        <h3>Como crio um anúncio?</h3>
+        <p>Aceda a "Vender Carro" no topo do site e preencha os 3 passos do formulário.</p>
+        <h3>Como contacto o vendedor?</h3>
+        <p>Na página do anúncio, encontrará informações detalhadas do vendedor e opções para marcar visita ou reservar.</p>
+        <h3>Como funcionam os favoritos?</h3>
+        <p>Ao clicar no coração <span style="color:#ff7000">&#10084;&#65039;</span>, adiciona veículos à sua lista de favoritos, acessível no seu perfil.</p>
+    </div>
+</main>
+<footer>
+    &copy; 2025 AutoMarket<br /> Plataforma de compra e venda de veículos usados.
+</footer>
+@section Styles {
+    <link rel="stylesheet" href="/css/style.css" />
+}
+@section Scripts {
+    <script src="/js/script.js"></script>
+}
+
+
