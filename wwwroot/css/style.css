@@ -218,6 +218,10 @@ footer {
     color: #b88301;
 }
 
+.badge-container {
+    margin: 0.8rem 0;
+}
+
 @media (max-width: 900px) {
     header .nav { flex-direction: column; gap: 1.5rem; }
     .filter-sidebar { min-width: 170px; }
