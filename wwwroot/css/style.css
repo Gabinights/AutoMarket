@@ -172,6 +172,22 @@ footer {
     margin-bottom: 1.5rem;
 }
 
+.container-main {
+    max-width: 1050px;
+    margin: 2rem auto 3rem auto;
+}
+.favorites-title {
+    margin-bottom: 2rem;
+}
+.favorites-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+.remove-fav-btn {
+    margin-top: 1rem;
+}
+
 @media (max-width: 900px) {
     header .nav { flex-direction: column; gap: 1.5rem; }
     .filter-sidebar { min-width: 170px; }
@@ -185,6 +201,7 @@ footer {
     .form-step { padding: 1rem; }
     .filter-sidebar { padding: 1rem 0.5rem; }
 }
+
 
 
 
