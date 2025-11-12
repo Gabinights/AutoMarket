@@ -172,6 +172,56 @@ footer {
     margin-bottom: 1.5rem;
 }
 
+.container-main {
+    max-width: 1050px;
+    margin: 2rem auto 3rem auto;
+}
+.favorites-title {
+    margin-bottom: 2rem;
+}
+.favorites-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+.remove-fav-btn {
+    margin-top: 1rem;
+}
+
+.card {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px #00214710;
+}
+.card-lg {
+    padding: 1.5rem;
+}
+.card-mb {
+    margin-bottom: 0.8rem;
+}
+.card-mb-lg {
+    margin-bottom: 1.2rem;
+}
+.status-badge {
+    border-radius: 3px;
+    padding: 2px 7px;
+    font-size: 0.94em;
+    font-weight: 500;
+}
+.status-active {
+    background: #bee3b4;
+    color: #256908;
+}
+.status-paused {
+    background: #ffe9a0;
+    color: #b88301;
+}
+
+.badge-container {
+    margin: 0.8rem 0;
+}
+
 @media (max-width: 900px) {
     header .nav { flex-direction: column; gap: 1.5rem; }
     .filter-sidebar { min-width: 170px; }
@@ -185,5 +235,3 @@ footer {
     .form-step { padding: 1rem; }
     .filter-sidebar { padding: 1rem 0.5rem; }
 }
-
-

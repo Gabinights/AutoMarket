@@ -30,3 +30,4 @@ function validarFormRegisto() {
 // TODO: Enviar dados do formulário 'criar-anuncio' para o backend (RF12)
 
 
+
