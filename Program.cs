@@ -27,7 +27,8 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
 })
-.AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
 // --- Configuração de Cookies de Sessão ---
 builder.Services.ConfigureApplicationCookie(options =>

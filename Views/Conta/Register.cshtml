@@ -54,14 +54,19 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-    document.getElementById('msgVendedor').style.display = 'none';
+    const msgVendedor = document.getElementById('msgVendedor');
     const tipoConta = document.querySelector('select[name="TipoConta"]');
-    tipoConta.addEventListener('change', function() {
-        document.getElementById('msgVendedor').style.display =
-            this.value === 'Vendedor' ? 'block' : 'none';
+    const toggleMsg = () => {
+        msgVendedor.style.display = tipoConta.value === 'Vendedor' ? 'block' : 'none';
+    };
+    toggleMsg();
+    tipoConta.addEventListener('change', toggleMsg);
     });
     </script>
 }
+
+
+
 
 
 

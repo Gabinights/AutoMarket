@@ -1,5 +1,6 @@
 using AutoMarket.Models;
 using AutoMarket.Models.ViewModels;
+using AutoMarket.Models.Enums;
 using AutoMarket.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,13 +12,11 @@ namespace AutoMarket.Controllers
     {
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
-        private readonly ApplicationDbContext _context;
 
-        public ContaController(UserManager<Utilizador> userManager, SignInManager<Utilizador> signInManager, ApplicationDbContext context)
+        public ContaController(UserManager<Utilizador> userManager, SignInManager<Utilizador> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _context = context;
         }
 
         [HttpGet]
@@ -32,6 +31,13 @@ namespace AutoMarket.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
+            // Validar explicitamente o TipoConta
+            if (model.TipoConta != "Comprador" && model.TipoConta != "Vendedor")
+            {
+                ModelState.AddModelError(string.Empty, "Tipo de conta inválido. Deve ser 'Comprador' ou 'Vendedor'.");
+                return View(model);
+            }
+
             var user = new Utilizador
             {
                 UserName = model.Email,
@@ -39,30 +45,33 @@ namespace AutoMarket.Controllers
                 Nome = model.Nome,
                 Morada = model.Morada,
                 Contactos = model.Contactos,
+                EmailConfirmed = false
             };
 
             if (model.TipoConta == "Vendedor")
             {
-                user.StatusAprovacao = "Pendente";
+                user.StatusAprovacao = StatusAprovacaoEnum.Pendente;
             }
             else // Comprador
             {
-                user.StatusAprovacao = "Aprovado";
+                user.StatusAprovacao = StatusAprovacaoEnum.Aprovado;
             }
 
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                if (model.TipoConta == "Comprador")
-                {
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("Index", "Home");
-                }
-                else // Vendedor
-                {
-                    TempData["MensagemStatus"] = "Conta de vendedor criada com sucesso! Aguarde aprovação para começar a vender.";
-                    return RedirectToAction("Index", "Home");
-                }
+                // Gerar token de confirmação de email
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var confirmationLink = Url.Action("ConfirmarEmail", "Conta", 
+                    new { userId = user.Id, token = token }, 
+                    Request.Scheme);
+
+                // TODO: Enviar email com o link de confirmação
+                // await _emailSender.SendEmailAsync(user.Email, "Confirme o seu email", 
+                //     $"Por favor, confirme o seu email clicando neste link: {confirmationLink}");
+
+                TempData["MensagemStatus"] = "Conta criada com sucesso! Por favor, verifique o seu email para confirmar a conta.";
+                return RedirectToAction("Index", "Home");
             }
             foreach (var error in result.Errors)
             {
@@ -71,10 +80,42 @@ namespace AutoMarket.Controllers
             return View(model);
         }
 
+        /// <summary>
+        /// Action que exibe uma mensagem informando que a conta de vendedor aguarda aprovação do administrador.
+        /// </summary>
         [HttpGet]
         public IActionResult AguardarAprovacao()
         {
             return Content("Conta criada como vendedor. Aguarda aprovação do administrador.");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmarEmail(string userId, string token)
+        {
+            if (userId == null || token == null)
+            {
+                TempData["MensagemStatus"] = "Link de confirmação inválido.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                TempData["MensagemStatus"] = "Utilizador não encontrado.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+            {
+                TempData["MensagemStatus"] = "Email confirmado com sucesso! Pode agora fazer login.";
+                return RedirectToAction("Login", "Conta");
+            }
+            else
+            {
+                TempData["MensagemStatus"] = "Erro ao confirmar o email. O link pode ter expirado.";
+                return RedirectToAction("Index", "Home");
+            }
         }
 
         [HttpGet]
@@ -88,24 +129,28 @@ namespace AutoMarket.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
-            if (result.Succeeded)
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user != null)
             {
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null)
+                // Verificar se o email está confirmado
+                if (!await _userManager.IsEmailConfirmedAsync(user))
                 {
                     ModelState.AddModelError(string.Empty, "Login inválido.");
                     return View(model);
                 }
-                if (user.StatusAprovacao != "Aprovado")
+
+                // Verificar status de aprovação
+                if (user.StatusAprovacao != StatusAprovacaoEnum.Aprovado)
                 {
-                    await _signInManager.SignOutAsync();
-                    string msg = user.StatusAprovacao == "Pendente"
-                        ? "Aguardando aprovação do administrador."
-                        : "Conta de vendedor rejeitada.";
-                    ModelState.AddModelError(string.Empty, msg);
+                    ModelState.AddModelError(string.Empty, "Login inválido.");
                     return View(model);
                 }
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
+            if (result.Succeeded)
+            {
                 return RedirectToAction("Index", "Home");
             }
             if (result.IsLockedOut)

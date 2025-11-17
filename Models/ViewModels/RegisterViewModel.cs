@@ -11,7 +11,10 @@ namespace AutoMarket.Models.ViewModels
         [Required]
         public string Nome { get; set; } = string.Empty;
 
+        [Required]
         public string Morada { get; set; } = string.Empty;
+
+        [Required]
         public string Contactos { get; set; } = string.Empty;
 
         [Required]
