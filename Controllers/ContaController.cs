@@ -19,12 +19,21 @@ namespace AutoMarket.Controllers
             _signInManager = signInManager;
         }
 
+        /// <summary>
+        /// Displays the registration page for creating a new user account.
+        /// </summary>
+        /// <returns>A view result that renders the registration form.</returns>
         [HttpGet]
         public IActionResult Register()
         {
             return View();
         }
 
+        /// <summary>
+        /// Processes the registration form, creates a new user with the selected account type, and sets approval status accordingly.
+        /// </summary>
+        /// <param name="model">The registration data including email, password, name, address, contacts, and account type.</param>
+        /// <returns>An IActionResult that redirects to Home/Index when registration succeeds (immediately signing in buyers and showing a pending-approval message for sellers) or returns the registration view populated with validation/errors on failure.</returns>
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
@@ -124,6 +133,11 @@ namespace AutoMarket.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Authenticates a user using the supplied credentials and enforces seller approval before allowing access.
+        /// </summary>
+        /// <param name="model">Login view model containing the user's email, password, and remember-me selection.</param>
+        /// <returns>Redirects to Home/Index when sign-in succeeds and the account is approved; otherwise returns the login view containing validation errors or a lockout/approval message.</returns>
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -162,6 +176,10 @@ namespace AutoMarket.Controllers
             return View(model);
         }
 
+        /// <summary>
+        /// Signs the current user out and redirects to the Home controller's Index action.
+        /// </summary>
+        /// <returns>A redirect to the Home controller's Index action.</returns>
         [HttpPost]
         public async Task<IActionResult> Logout()
         {
