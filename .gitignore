@@ -1,0 +1,27 @@
+# Ficheiros de log e temporários
+*.log
+*.tmp
+*.temp
+
+# Pastas de Build
+# Ignora todos os ficheiros binários e de compilação
+[Bb]in/
+[Oo]bj/
+
+# Ficheiros de Definições de Utilizador (Específicos da sua máquina)
+*.user
+*.suo
+*.sln.docstates
+
+# Ficheiros de IDE e Sistema Operativo
+.DS_Store
+.vscode/
+Thumbs.db
+
+# Ficheiros gerados pelo Entity Framework (se aplicável)
+*.efmigrations.sql
+
+# Ficheiros de Configuração Secretos
+# NUNCA COLOCAR API keys, passwords, ou connection strings no Git.
+# Se criar um ficheiro appsettings.Secret.json, adicione-o aqui.
+# appsettings.Secret.json
