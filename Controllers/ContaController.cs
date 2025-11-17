@@ -2,21 +2,32 @@ using AutoMarket.Models;
 using AutoMarket.Models.ViewModels;
 using AutoMarket.Models.Enums;
 using AutoMarket.Data;
+using AutoMarket.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace AutoMarket.Controllers
 {
     public class ContaController : Controller
     {
+        private const string TipoContaComprador = "Comprador";
+        private const string TipoContaVendedor = "Vendedor";
+
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
+        private readonly IEmailSender _emailSender;
+        private readonly EmailTemplateService _emailTemplateService;
+        private readonly ILogger<ContaController> _logger;
 
-        public ContaController(UserManager<Utilizador> userManager, SignInManager<Utilizador> signInManager)
+        public ContaController(UserManager<Utilizador> userManager, SignInManager<Utilizador> signInManager, IEmailSender emailSender, EmailTemplateService emailTemplateService, ILogger<ContaController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailSender = emailSender;
+            _emailTemplateService = emailTemplateService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -42,9 +53,9 @@ namespace AutoMarket.Controllers
                 return View(model);
 
             // Validar explicitamente o TipoConta
-            if (model.TipoConta != "Comprador" && model.TipoConta != "Vendedor")
+            if (model.TipoConta != TipoContaComprador && model.TipoConta != TipoContaVendedor)
             {
-                ModelState.AddModelError(string.Empty, "Tipo de conta inválido. Deve ser 'Comprador' ou 'Vendedor'.");
+                ModelState.AddModelError(string.Empty, $"Tipo de conta inválido. Deve ser '{TipoContaComprador}' ou '{TipoContaVendedor}'.");
                 return View(model);
             }
 
@@ -58,13 +69,13 @@ namespace AutoMarket.Controllers
                 EmailConfirmed = false
             };
 
-            if (model.TipoConta == "Vendedor")
+            if (model.TipoConta == TipoContaVendedor)
             {
-                user.StatusAprovacao = StatusAprovacaoEnum.Pendente;
+                user.StatusAprovacao = StatusAprovacao.Pendente;
             }
             else // Comprador
             {
-                user.StatusAprovacao = StatusAprovacaoEnum.Aprovado;
+                user.StatusAprovacao = StatusAprovacao.Aprovado;
             }
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -72,16 +83,86 @@ namespace AutoMarket.Controllers
             {
                 // Gerar token de confirmação de email
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                
+                // Ensure we have a valid scheme for URL generation
+                var scheme = Request.Scheme;
+                if (string.IsNullOrEmpty(scheme))
+                {
+                    scheme = Request.IsHttps ? "https" : "http";
+                }
+
                 var confirmationLink = Url.Action("ConfirmarEmail", "Conta", 
                     new { userId = user.Id, token = token }, 
-                    Request.Scheme);
+                    scheme, Request.Host.Value);
 
-                // TODO: Enviar email com o link de confirmação
-                // await _emailSender.SendEmailAsync(user.Email, "Confirme o seu email", 
-                //     $"Por favor, confirme o seu email clicando neste link: {confirmationLink}");
+                if (string.IsNullOrEmpty(confirmationLink))
+                {
+                    _logger.LogError("Failed to generate confirmation link for user {UserId}. Scheme: {Scheme}, Host: {Host}", 
+                        user.Id, scheme, Request.Host.Value);
+                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao gerar o link de confirmação. Por favor, contacte o suporte.";
+                    return RedirectToAction("Index", "Home");
+                }
 
-                TempData["MensagemStatus"] = "Conta criada com sucesso! Por favor, verifique o seu email para confirmar a conta.";
-                return RedirectToAction("Index", "Home");
+                // Gerar template de email HTML usando Razor view
+                string emailBody;
+                try
+                {
+                    emailBody = await _emailTemplateService.GenerateEmailConfirmationTemplateAsync(user.Nome, confirmationLink, HttpContext);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to generate email template for user {UserId}. Falling back to static template.", user.Id);
+                    // Fallback to static template if Razor view rendering fails
+                    try
+                    {
+                        emailBody = EmailTemplateService.GenerateEmailConfirmationTemplate(user.Nome, confirmationLink);
+                    }
+                    catch (Exception fallbackEx)
+                    {
+                        _logger.LogError(fallbackEx, "Failed to generate fallback email template for user {UserId}", user.Id);
+                        TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao gerar o email. Por favor, contacte o suporte.";
+                        return RedirectToAction("Index", "Home");
+                    }
+                }
+
+                // Enviar email de confirmação
+                try
+                {
+                    await _emailSender.SendEmailAsync(
+                        user.Email,
+                        "Confirme o seu email - AutoMarket",
+                        emailBody,
+                        HttpContext.RequestAborted
+                    );
+                    
+                    _logger.LogInformation("Email confirmation sent successfully to {Email} for user {UserId}", user.Email, user.Id);
+                    TempData["MensagemStatus"] = "Conta criada com sucesso! Por favor, verifique o seu email para confirmar a conta.";
+                    return RedirectToAction("Index", "Home");
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning("Email send was cancelled for user {UserId}. Email: {Email}", user.Id, user.Email);
+                    TempData["MensagemStatus"] = "Conta criada, mas o envio do email foi cancelado. Por favor, tente solicitar um novo email de confirmação.";
+                    return RedirectToAction("Index", "Home");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogError(ex, "Email send failed for user {UserId}. Email: {Email}", user.Id, user.Email);
+                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao enviar o email de confirmação. Por favor, contacte o suporte.";
+                    return RedirectToAction("Index", "Home");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _logger.LogError(ex, "Email authentication failed for user {UserId}. Email: {Email}", user.Id, user.Email);
+                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro de autenticação ao enviar o email. Por favor, contacte o suporte.";
+                    return RedirectToAction("Index", "Home");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Unexpected error sending email for user {UserId}. Email: {Email}", user.Id, user.Email);
+                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao enviar o email de confirmação. Por favor, contacte o suporte.";
+                    return RedirectToAction("Index", "Home");
+                }
             }
             foreach (var error in result.Errors)
             {
@@ -97,6 +178,9 @@ namespace AutoMarket.Controllers
         public IActionResult AguardarAprovacao()
         {
             return Content("Conta criada como vendedor. Aguarda aprovação do administrador.");
+            //TODO: A parte de administração deve ser implementada
+            // TODO: Adicionar uma view para exibir a mensagem de aprovação
+
         }
 
         [HttpGet]
@@ -113,6 +197,12 @@ namespace AutoMarket.Controllers
             {
                 TempData["MensagemStatus"] = "Utilizador não encontrado.";
                 return RedirectToAction("Index", "Home");
+            }
+
+            if (user.EmailConfirmed)
+            {
+                TempData["MensagemStatus"] = "O seu email já foi confirmado. Pode fazer login.";
+                return RedirectToAction("Login", "Conta");
             }
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
@@ -152,11 +242,17 @@ namespace AutoMarket.Controllers
                 ModelState.AddModelError(string.Empty, "Login inválido.");
                 return View(model);
             }
+            // Verificar se o email está confirmado
+            if (!user.EmailConfirmed)
+            {
+                ModelState.AddModelError(string.Empty, "Email não confirmado. Por favor, confirme o seu email antes de fazer login.");
+                return View(model);
+            }
 
             // Verificar status de aprovação
-            if (user.StatusAprovacao != StatusAprovacaoEnum.Aprovado)
+            if (user.StatusAprovacao != StatusAprovacao.Aprovado)
             {
-                ModelState.AddModelError(string.Empty, "Login inválido.");
+                ModelState.AddModelError(string.Empty, "A sua conta aguarda aprovação do administrador.");
                 return View(model);
             }
 

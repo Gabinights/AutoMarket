@@ -16,18 +16,26 @@ namespace AutoMarket.Models
         [MaxLength(50, ErrorMessage = "Os contactos não podem exceder 50 caracteres.")]
         public string Contactos { get; set; } = string.Empty;
 
-        public StatusAprovacaoEnum StatusAprovacao { get; set; } = StatusAprovacaoEnum.Pendente;
+        public StatusAprovacao StatusAprovacao { get; set; } = StatusAprovacao.Pendente;
 
         public void AprovarUtilizador()
         {
-            // TODO: Adicionar Audit Logging aqui
-            this.StatusAprovacao = StatusAprovacaoEnum.Aprovado;
+            if (this.StatusAprovacao != StatusAprovacao.Pendente)
+            {
+                throw new InvalidOperationException($"Não é possível aprovar um utilizador com status {this.StatusAprovacao.ToString()}");
+            }
+            // TODO: Adicionar Audit Logging
+            this.StatusAprovacao = StatusAprovacao.Aprovado;
         }
 
         public void RejeitarUtilizador()
         {
+            if (this.StatusAprovacao != StatusAprovacao.Pendente)
+            {
+                throw new InvalidOperationException($"Não é possível rejeitar um utilizador com status {this.StatusAprovacao.ToString()}");
+            }
             // TODO: Adicionar Audit Logging aqui
-            this.StatusAprovacao = StatusAprovacaoEnum.Rejeitado;
+            this.StatusAprovacao = StatusAprovacao.Rejeitado;
         }
     }
 }

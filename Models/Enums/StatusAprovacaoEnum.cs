@@ -1,10 +1,10 @@
 namespace AutoMarket.Models.Enums
 {
-    public enum StatusAprovacaoEnum
+    public enum StatusAprovacao
     {
-        Pendente,
-        Aprovado,
-        Rejeitado
+        Pendente = 0,
+        Aprovado = 1,
+        Rejeitado = 2
     }
 }
 

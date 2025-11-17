@@ -1,13 +1,26 @@
 using AutoMarket.Data;
 using AutoMarket.Models;
+using AutoMarket.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Add localization services
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { "pt-PT", "en-US" };
+    options.SetDefaultCulture("pt-PT")
+           .AddSupportedCultures(supportedCultures)
+           .AddSupportedUICultures(supportedCultures);
+});
 
 // Adiciona o DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -43,6 +56,15 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+// Adiciona o serviço de email
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+
+// Adiciona o serviço de renderização de views
+builder.Services.AddScoped<ViewRenderService>();
+
+// Adiciona o serviço de templates de email
+builder.Services.AddScoped<EmailTemplateService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -57,6 +79,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Use localization
+var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Localization.RequestLocalizationOptions>>().Value;
+app.UseRequestLocalization(localizationOptions);
 
 app.UseAuthentication();
 app.UseAuthorization();

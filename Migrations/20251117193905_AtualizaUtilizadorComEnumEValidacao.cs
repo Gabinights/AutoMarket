@@ -10,6 +10,16 @@ namespace AutoMarket.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+        // Validate and clean data before applying constraints
+        migrationBuilder.Sql(@"
+        -- Check for constraint violations
+        IF EXISTS (SELECT 1 FROM AspNetUsers WHERE Nome IS NULL OR LEN(Nome) > 100)
+            RAISERROR('Nome column has NULL or exceeds 100 characters', 16, 1);
+        IF EXISTS (SELECT 1 FROM AspNetUsers WHERE Morada IS NULL OR LEN(Morada) > 200)
+            RAISERROR('Morada column has NULL or exceeds 200 characters', 16, 1);
+        IF EXISTS (SELECT 1 FROM AspNetUsers WHERE Contactos IS NULL OR LEN(Contactos) > 50)
+            RAISERROR('Contactos column has NULL or exceeds 50 characters', 16, 1);
+    ");
             migrationBuilder.AlterColumn<string>(
                 name: "Nome",
                 table: "AspNetUsers",
