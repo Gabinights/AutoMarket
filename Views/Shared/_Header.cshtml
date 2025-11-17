@@ -1,7 +1,6 @@
 @using Microsoft.AspNetCore.Identity;
 @using AutoMarket.Models;
 @inject SignInManager<Utilizador> SignInManager
-@inject UserManager<Utilizador> UserManager
 
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -22,6 +21,7 @@
                     {
                         <li class="nav-item">
                             <form asp-area="" asp-controller="Conta" asp-action="Logout" method="post" class="form-inline">
+                                @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-link nav-link" style="cursor:pointer;">Logout</button>
                             </form>
                         </li>

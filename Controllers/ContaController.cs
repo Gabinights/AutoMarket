@@ -35,6 +35,7 @@ namespace AutoMarket.Controllers
         /// <param name="model">The registration data including email, password, name, address, contacts, and account type.</param>
         /// <returns>An IActionResult that redirects to Home/Index when registration succeeds (immediately signing in buyers and showing a pending-approval message for sellers) or returns the registration view populated with validation/errors on failure.</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
@@ -139,30 +140,27 @@ namespace AutoMarket.Controllers
         /// <param name="model">Login view model containing the user's email, password, and remember-me selection.</param>
         /// <returns>Redirects to Home/Index when sign-in succeeds and the account is approved; otherwise returns the login view containing validation errors or a lockout/approval message.</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user != null)
+            if (user == null)
             {
-                // Verificar se o email está confirmado
-                if (!await _userManager.IsEmailConfirmedAsync(user))
-                {
-                    ModelState.AddModelError(string.Empty, "Login inválido.");
-                    return View(model);
-                }
-
-                // Verificar status de aprovação
-                if (user.StatusAprovacao != StatusAprovacaoEnum.Aprovado)
-                {
-                    ModelState.AddModelError(string.Empty, "Login inválido.");
-                    return View(model);
-                }
+                ModelState.AddModelError(string.Empty, "Login inválido.");
+                return View(model);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
+            // Verificar status de aprovação
+            if (user.StatusAprovacao != StatusAprovacaoEnum.Aprovado)
+            {
+                ModelState.AddModelError(string.Empty, "Login inválido.");
+                return View(model);
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: true);
             if (result.Succeeded)
             {
                 return RedirectToAction("Index", "Home");
@@ -181,6 +179,7 @@ namespace AutoMarket.Controllers
         /// </summary>
         /// <returns>A redirect to the Home controller's Index action.</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();

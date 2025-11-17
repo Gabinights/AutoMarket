@@ -26,6 +26,9 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
+    // --- Configuração de Utilizador / SignIn ---
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
