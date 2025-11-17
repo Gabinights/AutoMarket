@@ -1,0 +1,106 @@
+@model AutoMarket.Models.ViewModels.EmailConfirmationViewModel
+@using System.Net
+@inject Microsoft.Extensions.Localization.IStringLocalizer Localizer
+@{
+    Layout = null;
+    var encodedUserName = WebUtility.HtmlEncode(Model.UserName);
+    var encodedConfirmationLink = WebUtility.HtmlEncode(Model.ConfirmationLink);
+    
+    // Use localization with fallback values
+    var welcomeHeader = Localizer["Email_Welcome_Header"].Value ?? "Bem-vindo ao AutoMarket!";
+    var greeting = string.Format(Localizer["Email_Greeting"].Value ?? "Olá {0},", encodedUserName);
+    var intro = Localizer["Email_Confirmation_Intro"].Value ?? "Obrigado por se registar no AutoMarket. Para completar o seu registo, por favor confirme o seu endereço de email clicando no botão abaixo:";
+    var confirmButton = Localizer["Email_Confirm_Button"].Value ?? "Confirmar Email";
+    var linkAlternative = Localizer["Email_Link_Alternative"].Value ?? "Ou copie e cole o seguinte link no seu navegador:";
+    var linkExpiry = Localizer["Email_Link_Expiry"].Value ?? "Este link expirará em 24 horas.";
+    var ignoreMessage = Localizer["Email_Ignore_Message"].Value ?? "Se não criou uma conta no AutoMarket, pode ignorar este email.";
+    var copyright = Localizer["Email_Footer_Copyright"].Value ?? "© 2025 AutoMarket. Todos os direitos reservados.";
+}
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirme o seu email - AutoMarket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+        .link-text {
+            word-break: break-all;
+            color: #007bff;
+            font-size: 12px;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>@WebUtility.HtmlEncode(welcomeHeader)</h1>
+        </div>
+        <div class="content">
+            <p>@WebUtility.HtmlEncode(greeting)</p>
+            <p>@WebUtility.HtmlEncode(intro)</p>
+            <p class="text-center">
+                <a href="@Model.ConfirmationLink" class="button">@WebUtility.HtmlEncode(confirmButton)</a>
+            </p>
+            <p>@WebUtility.HtmlEncode(linkAlternative)</p>
+            <p class="link-text">@encodedConfirmationLink</p>
+            <p>@WebUtility.HtmlEncode(linkExpiry)</p>
+            <p>@WebUtility.HtmlEncode(ignoreMessage)</p>
+        </div>
+        <div class="footer">
+            <p>@Html.Raw(copyright)</p>
+        </div>
+    </div>
+</body>
+</html>
+
