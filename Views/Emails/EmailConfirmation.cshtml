@@ -3,12 +3,10 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer Localizer
 @{
     Layout = null;
-    var encodedUserName = WebUtility.HtmlEncode(Model.UserName);
-    var encodedConfirmationLink = WebUtility.HtmlEncode(Model.ConfirmationLink);
     
     // Use localization with fallback values
     var welcomeHeader = Localizer["Email_Welcome_Header"].Value ?? "Bem-vindo ao AutoMarket!";
-    var greeting = string.Format(Localizer["Email_Greeting"].Value ?? "Olá {0},", encodedUserName);
+    var greeting = string.Format(Localizer["Email_Greeting"].Value ?? "Olá {0},", Model.UserName);
     var intro = Localizer["Email_Confirmation_Intro"].Value ?? "Obrigado por se registar no AutoMarket. Para completar o seu registo, por favor confirme o seu endereço de email clicando no botão abaixo:";
     var confirmButton = Localizer["Email_Confirm_Button"].Value ?? "Confirmar Email";
     var linkAlternative = Localizer["Email_Link_Alternative"].Value ?? "Ou copie e cole o seguinte link no seu navegador:";
@@ -84,21 +82,21 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>@WebUtility.HtmlEncode(welcomeHeader)</h1>
+            <h1>@(welcomeHeader)</h1>
         </div>
         <div class="content">
-            <p>@WebUtility.HtmlEncode(greeting)</p>
-            <p>@WebUtility.HtmlEncode(intro)</p>
+            <p>@(greeting)</p>
+            <p>@(intro)</p>
             <p class="text-center">
                 <a href="@Model.ConfirmationLink" class="button">@WebUtility.HtmlEncode(confirmButton)</a>
             </p>
-            <p>@WebUtility.HtmlEncode(linkAlternative)</p>
-            <p class="link-text">@encodedConfirmationLink</p>
-            <p>@WebUtility.HtmlEncode(linkExpiry)</p>
-            <p>@WebUtility.HtmlEncode(ignoreMessage)</p>
+            <p>@(linkAlternative)</p>
+            <p class="link-text">@Model.ConfirmationLink</p>
+            <p>@(linkExpiry)</p>
+            <p>@(ignoreMessage)</p>
         </div>
         <div class="footer">
-            <p>@Html.Raw(copyright)</p>
+            <p>@copyright</p>
         </div>
     </div>
 </body>

@@ -46,16 +46,8 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// --- Configuração de Cookies de Sessão ---
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    options.LoginPath = "/Conta/Login";
-    options.SlidingExpiration = true;
-});
-
+builder.Services.AddSingleton<EmailFailureTracker>(sp =>
+    new EmailFailureTracker(maxFailures: 5, failureWindow: TimeSpan.FromMinutes(5), circuitBreakerTimeout: TimeSpan.FromMinutes(1)));
 // Adiciona o serviço de email
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
@@ -66,6 +58,18 @@ builder.Services.AddScoped<ViewRenderService>();
 builder.Services.AddScoped<EmailTemplateService>();
 
 var app = builder.Build();
+
+// --- Configuração de Cookies de Sessão ---
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = app.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.LoginPath = "/Conta/Login";
+    options.SlidingExpiration = true;
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -81,7 +85,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 // Use localization
-var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Localization.RequestLocalizationOptions>>().Value;
+var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(localizationOptions);
 
 app.UseAuthentication();

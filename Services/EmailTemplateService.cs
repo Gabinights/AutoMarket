@@ -8,10 +8,11 @@ namespace AutoMarket.Services
     public class EmailTemplateService
     {
         private readonly ViewRenderService _viewRenderService;
-
-        public EmailTemplateService(ViewRenderService viewRenderService)
+        private readonly ILogger<EmailTemplateService> _logger;
+        public EmailTemplateService(ViewRenderService viewRenderService, ILogger<EmailTemplateService> logger)
         {
             _viewRenderService = viewRenderService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -45,9 +46,9 @@ namespace AutoMarket.Services
             {
                 return await _viewRenderService.RenderToStringAsync("~/Views/Emails/EmailConfirmation.cshtml", viewModel, httpContext);
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback: try without path prefix
+                _logger.LogWarning(ex, "Failed to render email template with path prefix, trying without prefix.");
                 return await _viewRenderService.RenderToStringAsync("Emails/EmailConfirmation", viewModel, httpContext);
             }
         }
@@ -100,7 +101,7 @@ namespace AutoMarket.Services
                             <p>Olá {encodedUserName},</p>
                             <p>Obrigado por se registar no AutoMarket. Para completar o seu registo, por favor confirme o seu endereço de email clicando no botão abaixo:</p>
                             <p style=""text-align: center;"">
-                                <a href=""{confirmationLink}"" class=""button"">Confirmar Email</a>
+                                <a href=""{encodedConfirmationLink}"" class=""button"">Confirmar Email</a>
                             </p>
                             <p>Ou copie e cole o seguinte link no seu navegador:</p>
                             <p class=""link-text"">{encodedConfirmationLink}</p>

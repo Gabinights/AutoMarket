@@ -235,30 +235,29 @@ namespace AutoMarket.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
-
+            //Fetch user by email
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                ModelState.AddModelError(string.Empty, "Login inválido.");
-                return View(model);
-            }
-            // Verificar se o email está confirmado
-            if (!user.EmailConfirmed)
-            {
-                ModelState.AddModelError(string.Empty, "Email não confirmado. Por favor, confirme o seu email antes de fazer login.");
-                return View(model);
-            }
 
-            // Verificar status de aprovação
-            if (user.StatusAprovacao != StatusAprovacao.Aprovado)
-            {
-                ModelState.AddModelError(string.Empty, "A sua conta aguarda aprovação do administrador.");
-                return View(model);
-            }
-
-            var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: true);
+            // Perform password sign-in first (this already handles non-existent users)
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
+            
             if (result.Succeeded)
             {
+                // Only after successful authentication, check email confirmation and approval
+                if (!user.EmailConfirmed)
+                {
+                    await _signInManager.SignOutAsync();
+                    ModelState.AddModelError(string.Empty, "Email não confirmado. Por favor, confirme o seu email antes de fazer login.");
+                    return View(model);
+                }
+                
+                if (user.StatusAprovacao != StatusAprovacao.Aprovado)
+                {
+                    await _signInManager.SignOutAsync();
+                    ModelState.AddModelError(string.Empty, "A sua conta aguarda aprovação do administrador.");
+                    return View(model);
+                }
+
                 return RedirectToAction("Index", "Home");
             }
             if (result.IsLockedOut)
@@ -266,6 +265,7 @@ namespace AutoMarket.Controllers
                 ModelState.AddModelError(string.Empty, "Conta bloqueada devido a tentativas inválidas. Tente novamente mais tarde.");
                 return View(model);
             }
+            // Generic error message to avoid revealing whether the email or password was incorrect
             ModelState.AddModelError(string.Empty, "Login inválido.");
             return View(model);
         }

@@ -16,11 +16,11 @@ namespace AutoMarket.Services
         private readonly EmailFailureTracker _failureTracker;
         private int _failureCount = 0;
 
-        public EmailSender(IConfiguration configuration, ILogger<EmailSender> logger)
+        public EmailSender(IConfiguration configuration, ILogger<EmailSender> logger, EmailFailureTracker failureTracker)
         {
             _configuration = configuration;
             _logger = logger;
-            _failureTracker = new EmailFailureTracker(maxFailures: 5, failureWindow: TimeSpan.FromMinutes(5), circuitBreakerTimeout: TimeSpan.FromMinutes(1));
+            _failureTracker = failureTracker;
         }
 
         public async Task SendEmailAsync(string to, string subject, string message, CancellationToken cancellationToken = default)
@@ -48,7 +48,7 @@ namespace AutoMarket.Services
                 var secureSocketOptions = ParseSecureSocketOptions(secureSocketOptionString);
 
                 // If email settings are not configured, log and return (for development)
-                if (string.IsNullOrEmpty(smtpServer) || string.IsNullOrEmpty(smtpUsername) || string.IsNullOrEmpty(smtpPassword))
+                if (string.IsNullOrEmpty(smtpServer) || string.IsNullOrEmpty(smtpUsername) || string.IsNullOrEmpty(smtpPassword) || string.IsNullOrEmpty(fromEmail))
                 {
                     _logger.LogWarning("Email settings not configured. Email not sent to {To}. Subject: {Subject}", to, subject);
                     _logger.LogInformation("Email would be sent to: {To}\nSubject: {Subject}\nMessage: {Message}", to, subject, message);
@@ -134,13 +134,11 @@ namespace AutoMarket.Services
             }
             catch (InvalidOperationException ex)
             {
-                RecordFailure();
                 _logger.LogError(ex, "Email send failed for {To}. Failure count: {FailureCount}", to, _failureTracker.GetFailureCount());
                 throw;
             }
             catch (UnauthorizedAccessException ex)
             {
-                RecordFailure();
                 _logger.LogError(ex, "Email authentication failed for {To}. Failure count: {FailureCount}", to, _failureTracker.GetFailureCount());
                 throw;
             }
