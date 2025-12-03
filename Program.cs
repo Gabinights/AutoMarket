@@ -51,6 +51,18 @@ builder.Services.AddSingleton<EmailFailureTracker>(sp =>
 // Adiciona o serviço de email
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
+// --- Configuração de Cookies de Sessão ---
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.LoginPath = "/Conta/Login";
+    options.SlidingExpiration = true;
+});
+
 // Adiciona o serviço de renderização de views
 builder.Services.AddScoped<ViewRenderService>();
 
@@ -59,17 +71,7 @@ builder.Services.AddScoped<EmailTemplateService>();
 
 var app = builder.Build();
 
-// --- Configuração de Cookies de Sessão ---
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = app.Environment.IsDevelopment()
-        ? CookieSecurePolicy.SameAsRequest
-        : CookieSecurePolicy.Always;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    options.LoginPath = "/Conta/Login";
-    options.SlidingExpiration = true;
-});
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

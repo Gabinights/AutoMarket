@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\gabri\\source\\repos\\automarket\\resources\\emailresources.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:resources\\emailresources.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\gabri\\source\\repos\\automarket\\wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\gabri\\source\\repos\\automarket\\views\\emails\\emailconfirmation.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\emails\\emailconfirmation.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
@@ -47,19 +55,44 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "EmailResources.resx",
+              "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Resources\\EmailResources.resx",
+              "RelativeDocumentMoniker": "Resources\\EmailResources.resx",
+              "ToolTip": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Resources\\EmailResources.resx",
+              "RelativeToolTip": "Resources\\EmailResources.resx",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001005|",
+              "WhenOpened": "2025-12-03T16:56:48.793Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "site.css",
+              "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\wwwroot\\css\\site.css",
+              "RelativeDocumentMoniker": "wwwroot\\css\\site.css",
+              "ToolTip": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\wwwroot\\css\\site.css",
+              "RelativeToolTip": "wwwroot\\css\\site.css",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2025-12-03T16:48:59.955Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "EmailConfirmation.cshtml",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Views\\Emails\\EmailConfirmation.cshtml",
               "RelativeDocumentMoniker": "Views\\Emails\\EmailConfirmation.cshtml",
               "ToolTip": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Views\\Emails\\EmailConfirmation.cshtml",
               "RelativeToolTip": "Views\\Emails\\EmailConfirmation.cshtml",
-              "ViewState": "AgIAAFEAAAAAAAAAAAAAAFUAAAAOAAAAAAAAAA==",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAAAGIAAAAZAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
               "WhenOpened": "2025-12-03T16:36:31.635Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "EmailConfirmationViewModel.cs",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Models\\ViewModels\\EmailConfirmationViewModel.cs",
               "RelativeDocumentMoniker": "Models\\ViewModels\\EmailConfirmationViewModel.cs",
@@ -72,7 +105,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "Register.cshtml",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Views\\Conta\\Register.cshtml",
               "RelativeDocumentMoniker": "Views\\Conta\\Register.cshtml",
@@ -85,7 +118,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 5,
               "Title": "EmailTemplateService.cs",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Services\\EmailTemplateService.cs",
               "RelativeDocumentMoniker": "Services\\EmailTemplateService.cs",
@@ -98,7 +131,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 6,
               "Title": "EmailSender.cs",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Services\\EmailSender.cs",
               "RelativeDocumentMoniker": "Services\\EmailSender.cs",
@@ -111,7 +144,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 7,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
@@ -124,7 +157,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",
@@ -137,7 +170,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "ContaController.cs",
               "DocumentMoniker": "C:\\Users\\gabri\\source\\repos\\AutoMarket\\Controllers\\ContaController.cs",
               "RelativeDocumentMoniker": "Controllers\\ContaController.cs",
