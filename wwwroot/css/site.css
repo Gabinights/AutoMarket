@@ -18,5 +18,16 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+}
+
+/* Authentication form containers */
+.login-container {
+  max-width: 450px;
+  margin: 2rem auto;
+}
+
+.register-container {
+  max-width: 520px;
+  margin: 2rem auto;
 }
