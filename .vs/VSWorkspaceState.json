@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Views"
+    "\\Data",
+    "\\Views",
+    "\\Views\\Conta"
   ],
-  "SelectedNode": "\\AutoMarket.csproj",
   "PreviewInSolutionExplorer": false
 }

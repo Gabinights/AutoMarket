@@ -16,13 +16,19 @@ namespace AutoMarket.Data
         {
         }
 
+        public DbSet<Vendedor> Vendedores { get; set; }
+        public DbSet<Comprador> Compradores { get; set; }
+
+        //Futuramente, quando criar carro:
+        //public DbSet<Carro> Carros { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
             // Configurar StatusAprovacao para ser armazenado como string no banco de dados
             builder.Entity<Utilizador>()
-                .Property(u => u.StatusAprovacao)
+                .Property(u => u.StatusAprovacao) // o meu antigo status de aprovação
                 .HasConversion<string>();
         }
     }

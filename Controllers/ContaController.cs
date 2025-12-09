@@ -16,9 +16,6 @@ namespace AutoMarket.Controllers
     /// </summary>
     public class ContaController : Controller
     {
-        private const string TipoContaComprador = "Comprador";
-        private const string TipoContaVendedor = "Vendedor";
-
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
         private readonly IEmailSender _emailSender;
@@ -56,40 +53,74 @@ namespace AutoMarket.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            // Validar explicitamente o TipoConta
-            if (model.TipoConta != TipoContaComprador && model.TipoConta != TipoContaVendedor)
+            if (ModelState.IsValid)
             {
-                ModelState.AddModelError(string.Empty, $"Tipo de conta inválido. Deve ser '{TipoContaComprador}' ou '{TipoContaVendedor}'.");
-                return View(model);
+                var user = new Utilizador
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    Nome = model.Nome,
+                    Morada = model.Morada,
+                    PhoneNumber = model.Contacto
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    if (model.IsSeller)
+                    {
+                        // === Lógica de Vendedor ===
+                        if (string.IsNullOrEmpty(model.NIF) || model.IsEmpresa == null)
+                        {
+                            ModelState.AddModelError(string.Empty, "Para registar como vendedor, por favor preencha o NIF e indique se é uma empresa.");
+                            return View(model);
+                        }
+                        
+                        await _userManager.AddToRoleAsync(user, "Vendedor");
+
+                        var vendedor = new Vendedor
+                        {
+                            UserId = user.Id,
+                            NIF = model.NIF,
+                            IsEmpresa = model.IsEmpresa,
+                            IsApproved = false // Vendedor começa como não aprovado
+                        };
+                        _context.Vendedores.Add(vendedor);
+                    }
+                    else
+                    {
+                        // === Lógica de Comprador ===
+                        await _userManager.AddToRoleAsync(user, "Comprador");
+
+                        var comprador = new Comprador
+                        {
+                            UserId = user.Id,
+                            ReceberNotificacoes = false // Padrão para receber notificações
+                        };
+                        _context.Compradores.Add(comprador);
+                    }
+
+                    // Gravar as tabelas extra (Vendedor ou Comprador)
+                    await _context.SaveChangesAsync();
+
+                    // Login automático ou Redirecionar
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    return RedirectToAction("Index", "Home");
+
+                }
+
+                // Se falhar a criação do utilizador, mostrar erros
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
             }
+            return View(model);
 
-            var user = new Utilizador
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                Nome = model.Nome,
-                Morada = model.Morada,
-                Contactos = model.Contactos,
-                EmailConfirmed = false
-            };
 
-            if (model.TipoConta == TipoContaVendedor)
-            {
-                user.StatusAprovacao = StatusAprovacao.Pendente;
-            }
-            else // Comprador
-            {
-                user.StatusAprovacao = StatusAprovacao.Aprovado;
-            }
-
-            var result = await _userManager.CreateAsync(user, model.Password);
-            if (result.Succeeded)
-            {
-                // Gerar token de confirmação de email
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            // Gerar token de confirmação de email - É SUPOSTO ISTO ESTAR AQUI?
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 
                 // Ensure we have a valid scheme for URL generation
                 var scheme = Request.Scheme;
