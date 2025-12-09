@@ -6,10 +6,14 @@ using AutoMarket.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
 namespace AutoMarket.Controllers
 {
+    /// <summary>
+    /// Manages account registration, authentication, email confirmation, and logout workflows for AutoMarket users.
+    /// </summary>
     public class ContaController : Controller
     {
         private const string TipoContaComprador = "Comprador";
@@ -35,6 +39,7 @@ namespace AutoMarket.Controllers
         /// </summary>
         /// <returns>A view result that renders the registration form.</returns>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult Register()
         {
             return View();
@@ -47,6 +52,8 @@ namespace AutoMarket.Controllers
         /// <returns>An IActionResult that redirects to Home/Index when registration succeeds (immediately signing in buyers and showing a pending-approval message for sellers) or returns the registration view populated with validation/errors on failure.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
@@ -172,9 +179,11 @@ namespace AutoMarket.Controllers
         }
 
         /// <summary>
-        /// Action que exibe uma mensagem informando que a conta de vendedor aguarda aprovação do administrador.
+        /// Action que exibe uma mensagem informando que a conta de vendedor aguarda aprovação do administrador. (TODO: Implementar a parte de administração e interligar com a parte de aprovação de contas)
         /// </summary>
+        /// <returns>Um resultado de conteúdo indicando que a conta aguarda aprovação.</returns>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult AguardarAprovacao()
         {
             return Content("Conta criada como vendedor. Aguarda aprovação do administrador.");
@@ -183,7 +192,16 @@ namespace AutoMarket.Controllers
 
         }
 
+        /// <summary>
+        /// Confirma o email do utilizador a partir de um link enviado por email.
+        /// </summary>
+        /// <param name="userId">O identificador do utilizador a confirmar.</param>
+        /// <param name="token">O token de confirmação emitido pelo Identity.</param>
+        /// <returns>Redireciona para Login ou Home com uma mensagem de estado conforme o resultado da confirmação.</returns>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ConfirmarEmail(string userId, string token)
         {
             if (userId == null || token == null)
@@ -218,7 +236,12 @@ namespace AutoMarket.Controllers
             }
         }
 
+        /// <summary>
+        /// Exibe a página de login para o utilizador.
+        /// </summary>
+        /// <returns>Uma view que contém o formulário de login.</returns>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult Login()
         {
             return View();
@@ -231,6 +254,8 @@ namespace AutoMarket.Controllers
         /// <returns>Redirects to Home/Index when sign-in succeeds and the account is approved; otherwise returns the login view containing validation errors or a lockout/approval message.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
@@ -276,6 +301,7 @@ namespace AutoMarket.Controllers
         /// <returns>A redirect to the Home controller's Index action.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
