@@ -1,19 +1,27 @@
-﻿using System;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public class Comprador
+namespace AutoMarket.Models
 {
-	public int Id { get; set; }
-	
-	// Relação 1:1 com Utilizador
-	[Required]
-	public string UserId { get; set; }
-	public Utilizador User { get; set; }
 
-	//Dados específicos do Comprador
-	public bool ReceberNotificacoes { get; set; }
+	public class Comprador
+	{
+		[Key]
+		public int Id { get; set; }
 
-    // Histórico de compras do Comprador
+		// Relação 1:1 com Utilizador
+		[Required]
+		public string UserId { get; set; } //Foreign Key: coluna na tabela Compradores. Isto liga as tabelas
 
-    // Lista de carros favoritos do Comprador (Many-to-Many com Car)
-	// public ICollection<Car> Favoritos { get; set; }
+		[ForeignKey("UserId")]
+		public Utilizador User { get; set; } //Navigation Property: não existe coluna na BD. Serve para poder fazer comprador.User.Nome sem ter de fazer uma query manual SQL
+
+		//Dados específicos do Comprador
+		public bool ReceberNotificacoes { get; set; }
+
+		// Histórico de compras do Comprador
+
+		// Lista de carros favoritos do Comprador (Many-to-Many com Car)
+		// public ICollection<Car> Favoritos { get; set; }
+	}
 }
