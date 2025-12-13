@@ -1,221 +1,140 @@
 using AutoMarket.Models;
-using AutoMarket.Models.ViewModels;
-using AutoMarket.Models.Enums;
 using AutoMarket.Data;
 using AutoMarket.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using AutoMarket.Models.ViewModels;
 
 namespace AutoMarket.Controllers
 {
     public class ContaController : Controller
     {
-        private const string TipoContaComprador = "Comprador";
-        private const string TipoContaVendedor = "Vendedor";
-
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
-        private readonly IEmailSender _emailSender;
-        private readonly EmailTemplateService _emailTemplateService;
-        private readonly ILogger<ContaController> _logger;
+        private readonly ApplicationDbContext _context;
+        private readonly IEmailSender _emailSender; // <--- Injeção do Serviço
+        private readonly EmailTemplateService _emailTemplateService; // <--- Injeção do Template
 
-        public ContaController(UserManager<Utilizador> userManager, SignInManager<Utilizador> signInManager, IEmailSender emailSender, EmailTemplateService emailTemplateService, ILogger<ContaController> logger)
+        public ContaController(
+            UserManager<Utilizador> userManager,
+            SignInManager<Utilizador> signInManager,
+            ApplicationDbContext context,
+            IEmailSender emailSender,
+            EmailTemplateService emailTemplateService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _context = context;
             _emailSender = emailSender;
             _emailTemplateService = emailTemplateService;
-            _logger = logger;
         }
 
-        /// <summary>
-        /// Displays the registration page for creating a new user account.
-        /// </summary>
-        /// <returns>A view result that renders the registration form.</returns>
         [HttpGet]
         public IActionResult Register()
         {
             return View();
         }
 
-        /// <summary>
-        /// Processes the registration form, creates a new user with the selected account type, and sets approval status accordingly.
-        /// </summary>
-        /// <param name="model">The registration data including email, password, name, address, contacts, and account type.</param>
-        /// <returns>An IActionResult that redirects to Home/Index when registration succeeds (immediately signing in buyers and showing a pending-approval message for sellers) or returns the registration view populated with validation/errors on failure.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            // Validar explicitamente o TipoConta
-            if (model.TipoConta != TipoContaComprador && model.TipoConta != TipoContaVendedor)
+            if (ModelState.IsValid)
             {
-                ModelState.AddModelError(string.Empty, $"Tipo de conta inválido. Deve ser '{TipoContaComprador}' ou '{TipoContaVendedor}'.");
-                return View(model);
-            }
-
-            var user = new Utilizador
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                Nome = model.Nome,
-                Morada = model.Morada,
-                Contactos = model.Contactos,
-                EmailConfirmed = false
-            };
-
-            if (model.TipoConta == TipoContaVendedor)
-            {
-                user.StatusAprovacao = StatusAprovacao.Pendente;
-            }
-            else // Comprador
-            {
-                user.StatusAprovacao = StatusAprovacao.Aprovado;
-            }
-
-            var result = await _userManager.CreateAsync(user, model.Password);
-            if (result.Succeeded)
-            {
-                // Gerar token de confirmação de email
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                
-                // Ensure we have a valid scheme for URL generation
-                var scheme = Request.Scheme;
-                if (string.IsNullOrEmpty(scheme))
+                // 1. Criar o Utilizador Base (Identity)
+                var user = new Utilizador
                 {
-                    scheme = Request.IsHttps ? "https" : "http";
-                }
+                    UserName = model.Email,
+                    Email = model.Email,
+                    Nome = model.Nome,
+                    Morada = model.Morada,
+                    PhoneNumber = model.Contacto,
+                    DataRegisto = DateTime.Now
+                };
 
-                var confirmationLink = Url.Action("ConfirmarEmail", "Conta", 
-                    new { userId = user.Id, token = token }, 
-                    scheme, Request.Host.Value);
+                var result = await _userManager.CreateAsync(user, model.Password);
 
-                if (string.IsNullOrEmpty(confirmationLink))
+                if (result.Succeeded)
                 {
-                    _logger.LogError("Failed to generate confirmation link for user {UserId}. Scheme: {Scheme}, Host: {Host}", 
-                        user.Id, scheme, Request.Host.Value);
-                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao gerar o link de confirmação. Por favor, contacte o suporte.";
-                    return RedirectToAction("Index", "Home");
-                }
+                    // 2. Criar o Perfil Específico (Vendedor ou Comprador)
+                    if (model.IsVendedor)
+                    {
+                        // === VENDEDOR ===
+                        await _userManager.AddToRoleAsync(user, "Vendedor");
 
-                // Gerar template de email HTML usando Razor view
-                string emailBody;
-                try
-                {
-                    emailBody = await _emailTemplateService.GenerateEmailConfirmationTemplateAsync(user.Nome, confirmationLink, HttpContext);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to generate email template for user {UserId}. Falling back to static template.", user.Id);
-                    // Fallback to static template if Razor view rendering fails
+                        var vendedor = new Vendedor
+                        {
+                            UserId = user.Id,
+                            NIF = model.NIF,
+                            IsEmpresa = model.IsEmpresa,
+                            Status = StatusAprovacao.Pendente
+                        };
+                        _context.Vendedores.Add(vendedor);
+                    }
+                    else
+                    {
+                        // === COMPRADOR ===
+                        await _userManager.AddToRoleAsync(user, "Comprador");
+
+                        var comprador = new Comprador
+                        {
+                            UserId = user.Id,
+                            ReceberNotificacoes = false
+                        };
+                        _context.Compradores.Add(comprador);
+                    }
+
+                    // Gravar as tabelas extra
+                    await _context.SaveChangesAsync();
+
+                    // =========================================================
+                    // 3. Lógica de Envio de Email (Integrada com os Services)
+                    // =========================================================
                     try
                     {
-                        emailBody = EmailTemplateService.GenerateEmailConfirmationTemplate(user.Nome, confirmationLink);
+                        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                        // Gera o link completo
+                        var confirmationLink = Url.Action("ConfirmarEmail", "Conta",
+                            new { userId = user.Id, token = token },
+                            Request.Scheme);
+
+                        // Gera o corpo do email usando o serviço existente
+                        var emailBody = await _emailTemplateService.GenerateEmailConfirmationTemplateAsync(
+                            user.Nome,
+                            confirmationLink,
+                            this.HttpContext
+                        );
+
+                        // Envia o email usando o serviço de transporte (SMTP/Mock)
+                        await _emailSender.SendEmailAsync(
+                            user.Email,
+                            "Confirmação de Conta - AutoMarket",
+                            emailBody
+                        );
                     }
-                    catch (Exception fallbackEx)
+                    catch (Exception ex)
                     {
-                        _logger.LogError(fallbackEx, "Failed to generate fallback email template for user {UserId}", user.Id);
-                        TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao gerar o email. Por favor, contacte o suporte.";
-                        return RedirectToAction("Index", "Home");
+                        // Logar erro, mas não impedir o registo (Silent Fail ou Aviso)
+                        // _logger.LogError(...);
+                        // O utilizador pode pedir "Reenviar Confirmação" mais tarde se necessário
+                        ModelState.AddModelError(string.Empty, "Conta criada, mas erro ao enviar email.");
                     }
+
+                    // Se requer confirmação, redirecionar para aviso
+                    // Se não requer (para testes rápidos), fazer login:
+                    // await _signInManager.SignInAsync(user, isPersistent: false);
+
+                    return RedirectToAction("Index", "Home");
                 }
 
-                // Enviar email de confirmação
-                try
+                foreach (var error in result.Errors)
                 {
-                    await _emailSender.SendEmailAsync(
-                        user.Email,
-                        "Confirme o seu email - AutoMarket",
-                        emailBody,
-                        HttpContext.RequestAborted
-                    );
-                    
-                    _logger.LogInformation("Email confirmation sent successfully to {Email} for user {UserId}", user.Email, user.Id);
-                    TempData["MensagemStatus"] = "Conta criada com sucesso! Por favor, verifique o seu email para confirmar a conta.";
-                    return RedirectToAction("Index", "Home");
+                    ModelState.AddModelError(string.Empty, error.Description);
                 }
-                catch (OperationCanceledException)
-                {
-                    _logger.LogWarning("Email send was cancelled for user {UserId}. Email: {Email}", user.Id, user.Email);
-                    TempData["MensagemStatus"] = "Conta criada, mas o envio do email foi cancelado. Por favor, tente solicitar um novo email de confirmação.";
-                    return RedirectToAction("Index", "Home");
-                }
-                catch (InvalidOperationException ex)
-                {
-                    _logger.LogError(ex, "Email send failed for user {UserId}. Email: {Email}", user.Id, user.Email);
-                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao enviar o email de confirmação. Por favor, contacte o suporte.";
-                    return RedirectToAction("Index", "Home");
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    _logger.LogError(ex, "Email authentication failed for user {UserId}. Email: {Email}", user.Id, user.Email);
-                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro de autenticação ao enviar o email. Por favor, contacte o suporte.";
-                    return RedirectToAction("Index", "Home");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Unexpected error sending email for user {UserId}. Email: {Email}", user.Id, user.Email);
-                    TempData["MensagemStatus"] = "Conta criada, mas houve um erro ao enviar o email de confirmação. Por favor, contacte o suporte.";
-                    return RedirectToAction("Index", "Home");
-                }
-            }
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
             }
             return View(model);
-        }
-
-        /// <summary>
-        /// Action que exibe uma mensagem informando que a conta de vendedor aguarda aprovação do administrador.
-        /// </summary>
-        [HttpGet]
-        public IActionResult AguardarAprovacao()
-        {
-            return Content("Conta criada como vendedor. Aguarda aprovação do administrador.");
-            //TODO: A parte de administração deve ser implementada
-            // TODO: Adicionar uma view para exibir a mensagem de aprovação
-
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ConfirmarEmail(string userId, string token)
-        {
-            if (userId == null || token == null)
-            {
-                TempData["MensagemStatus"] = "Link de confirmação inválido.";
-                return RedirectToAction("Index", "Home");
-            }
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                TempData["MensagemStatus"] = "Utilizador não encontrado.";
-                return RedirectToAction("Index", "Home");
-            }
-
-            if (user.EmailConfirmed)
-            {
-                TempData["MensagemStatus"] = "O seu email já foi confirmado. Pode fazer login.";
-                return RedirectToAction("Login", "Conta");
-            }
-
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-            if (result.Succeeded)
-            {
-                TempData["MensagemStatus"] = "Email confirmado com sucesso! Pode agora fazer login.";
-                return RedirectToAction("Login", "Conta");
-            }
-            else
-            {
-                TempData["MensagemStatus"] = "Erro ao confirmar o email. O link pode ter expirado.";
-                return RedirectToAction("Index", "Home");
-            }
         }
 
         [HttpGet]
@@ -224,62 +143,68 @@ namespace AutoMarket.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Authenticates a user using the supplied credentials and enforces seller approval before allowing access.
-        /// </summary>
-        /// <param name="model">Login view model containing the user's email, password, and remember-me selection.</param>
-        /// <returns>Redirects to Home/Index when sign-in succeeds and the account is approved; otherwise returns the login view containing validation errors or a lockout/approval message.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
-            //Fetch user by email
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (!ModelState.IsValid) return View(model);
 
-            // Perform password sign-in first (this already handles non-existent users)
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
-            
+            // 1. Tentar Login
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
             if (result.Succeeded)
             {
-                // Only after successful authentication, check email confirmation and approval
-                if (!user.EmailConfirmed)
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                // 2. Verificar Bloqueio Global
+                if (user.IsBlocked)
                 {
                     await _signInManager.SignOutAsync();
-                    ModelState.AddModelError(string.Empty, "Email não confirmado. Por favor, confirme o seu email antes de fazer login.");
+                    ModelState.AddModelError(string.Empty, "Conta bloqueada por um administrador.");
                     return View(model);
                 }
-                
-                if (user.StatusAprovacao != StatusAprovacao.Aprovado)
+
+                // 3. Verificar Vendedor
+                if (await _userManager.IsInRoleAsync(user, "Vendedor"))
                 {
-                    await _signInManager.SignOutAsync();
-                    ModelState.AddModelError(string.Empty, "A sua conta aguarda aprovação do administrador.");
-                    return View(model);
+                    // Nota: O Include é importante se quiseres ver detalhes, mas FirstOrDefault chega para o Status
+                    var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.UserId == user.Id);
+
+                    if (vendedor != null && vendedor.Status != StatusAprovacao.Aprovado)
+                    {
+                        // Aqui decides: Ou deixas entrar com acesso limitado (Policy) ou bloqueias.
+                        // Para já, deixamos entrar. A Policy no CarrosController trata do resto.
+                    }
                 }
 
                 return RedirectToAction("Index", "Home");
             }
-            if (result.IsLockedOut)
-            {
-                ModelState.AddModelError(string.Empty, "Conta bloqueada devido a tentativas inválidas. Tente novamente mais tarde.");
-                return View(model);
-            }
-            // Generic error message to avoid revealing whether the email or password was incorrect
+
             ModelState.AddModelError(string.Empty, "Login inválido.");
             return View(model);
         }
 
-        /// <summary>
-        /// Signs the current user out and redirects to the Home controller's Index action.
-        /// </summary>
-        /// <returns>A redirect to the Home controller's Index action.</returns>
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        // Action para confirmar email (link clicado pelo user)
+        [HttpGet]
+        public async Task<IActionResult> ConfirmarEmail(string userId, string token)
+        {
+            if (userId == null || token == null) return RedirectToAction("Index", "Home");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return RedirectToAction("Index", "Home");
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+                return View("EmailConfirmado"); // Cria esta View simples ou redireciona
+
+            return View("Error");
         }
     }
 }
