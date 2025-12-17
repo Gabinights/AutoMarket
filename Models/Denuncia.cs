@@ -19,7 +19,7 @@ namespace AutoMarket.Models
         public string DenuncianteId { get; set; } = string.Empty;
 
         [ForeignKey("DenuncianteId")]
-        public Utilizador Denunciante { get; set; }
+        public Utilizador? Denunciante { get; set; }
 
         // Alvos (Opcionais na BD, Obrigatórios na Lógica)
         public int? TargetCarroId { get; set; }

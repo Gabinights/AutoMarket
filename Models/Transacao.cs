@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AutoMarket.Models
 {
@@ -40,10 +41,16 @@ namespace AutoMarket.Models
         public string NifFaturacaoSnapshot { get; set; } = string.Empty;
 
         // Relações
+        [Required]
         public int CarroId { get; set; }
+
+        [ForeignKey("CarroId")]
         public Carro Carro { get; set; }
 
+        [Required]
         public int CompradorId { get; set; }
+
+        [ForeignKey("CompradorId")]
         public Comprador Comprador { get; set; }
     }
 }

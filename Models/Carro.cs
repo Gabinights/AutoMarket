@@ -54,10 +54,12 @@ namespace AutoMarket.Models
         public int Km { get; set; }
 
         // Dropdowns fixos (vamos simplificar como string por agora, ou Enum se preferires rigidez)
+        [Required]
         [StringLength(20)]
         [Display(Name = "Combustível")]
         public string Combustivel { get; set; }
 
+        [Required]
         [StringLength(20)]
         [Display(Name = "Caixa")]
         public string Caixa { get; set; }
@@ -66,6 +68,7 @@ namespace AutoMarket.Models
         [Display(Name = "Localização")]
         public string Localizacao { get; set; } // Ex: "Lisboa"
 
+        [Required]
         [DataType(DataType.MultilineText)]
         [StringLength(2000, ErrorMessage = "A descrição é demasiado longa.")]
         [Display(Name = "Descrição Detalhada")]

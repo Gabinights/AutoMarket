@@ -25,7 +25,6 @@ namespace AutoMarket.Controllers
         /// Renders the home page.
         /// </summary>
         /// <returns>A view representing the home page.</returns>
-        [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult Index()
         {
             return View();
@@ -35,7 +34,6 @@ namespace AutoMarket.Controllers
         /// Renders the privacy policy page.
         /// </summary>
         /// <returns>A view containing the privacy policy.</returns>
-        [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult Privacy()
         {
             return View();
@@ -47,7 +45,6 @@ namespace AutoMarket.Controllers
         /// </summary>
         /// <returns>A view with error details for troubleshooting.</returns>
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });

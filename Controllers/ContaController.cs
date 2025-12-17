@@ -42,94 +42,107 @@ namespace AutoMarket.Controllers
         {
             if (ModelState.IsValid)
             {
-                // 1. Criar o Utilizador Base (Identity)
-                var user = new Utilizador
+                // 1. Iniciar Transação
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                try
                 {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    Nome = model.Nome,
-                    Morada = model.Morada,
-                    PhoneNumber = model.Contacto,
-                    DataRegisto = DateTime.Now
-                };
-
-                var result = await _userManager.CreateAsync(user, model.Password);
-
-                if (result.Succeeded)
-                {
-                    // 2. Criar o Perfil Específico (Vendedor ou Comprador)
-                    if (model.IsVendedor)
+                    var user = new Utilizador
                     {
-                        // === VENDEDOR ===
-                        await _userManager.AddToRoleAsync(user, "Vendedor");
+                        UserName = model.Email,
+                        Email = model.Email,
+                        Nome = model.Nome,
+                        Morada = model.Morada,
+                        PhoneNumber = model.Contacto,
+                        DataRegisto = DateTime.UtcNow
+                    };
 
-                        var vendedor = new Vendedor
+                    // 2. Criar o User (Identity)
+                    var result = await _userManager.CreateAsync(user, model.Password);
+
+                    if (result.Succeeded)
+                    {
+                        // 3. Criar o Perfil Específico (Vendedor ou Comprador)
+                        if (model.IsVendedor)
                         {
-                            UserId = user.Id,
-                            NIF = model.NIF,
-                            IsEmpresa = model.IsEmpresa,
-                            Status = StatusAprovacao.Pendente
-                        };
-                        _context.Vendedores.Add(vendedor);
-                    }
-                    else
-                    {
-                        // === COMPRADOR ===
-                        await _userManager.AddToRoleAsync(user, "Comprador");
+                            var vendedor = new Vendedor
+                            {
+                                UserId = user.Id,
+                                NIF = model.NIF,
+                                IsEmpresa = model.IsEmpresa,
+                                Status = StatusAprovacao.Pendente
+                            };
+                            _context.Vendedores.Add(vendedor);
 
-                        var comprador = new Comprador
+                            await _userManager.AddToRoleAsync(user, "Vendedor");
+                        }
+                        else
                         {
-                            UserId = user.Id,
-                            ReceberNotificacoes = false
-                        };
-                        _context.Compradores.Add(comprador);
+                            var comprador = new Comprador
+                            {
+                                UserId = user.Id,
+                                ReceberNotificacoes = false
+                            };
+                            _context.Compradores.Add(comprador);
+
+                            await _userManager.AddToRoleAsync(user, "Comprador");
+                        }
+                        // 4. Gravar Perfil na BD
+                        await _context.SaveChangesAsync();
+
+                        // 5. Se chegámos aqui sem erros, confirmar a transação
+                        await transaction.CommitAsync();
+
+                        // =========================================================
+                        // Lógica de Envio de Email (Integrada com os Services)
+                        // =========================================================
+                        try
+                        {
+                            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                            // Gera o link completo
+                            var confirmationLink = Url.Action("ConfirmarEmail", "Conta",
+                                new { userId = user.Id, token = token },
+                                Request.Scheme);
+
+                            // Gera o corpo do email usando o serviço existente
+                            var emailBody = await _emailTemplateService.GenerateEmailConfirmationTemplateAsync(
+                                user.Nome,
+                                confirmationLink,
+                                this.HttpContext
+                            );
+
+                            // Envia o email usando o serviço de transporte (SMTP/Mock)
+                            await _emailSender.SendEmailAsync(
+                                user.Email,
+                                "Confirmação de Conta - AutoMarket",
+                                emailBody
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            // TODO: logar o erro (_logger.LogError(ex,...))
+                            TempData["EmailWarning"] = "Conta criada, mas ocorreu um erro ao enviar o email de confirmação.";
+                        }
+
+                        // Se requer confirmação, redirecionar para aviso
+                        // Se não requer (para testes rápidos), fazer login:
+                        // await _signInManager.SignInAsync(user, isPersistent: false);
+
+                        return RedirectToAction("Index", "Home");
                     }
-
-                    // Gravar as tabelas extra
-                    await _context.SaveChangesAsync();
-
-                    // =========================================================
-                    // 3. Lógica de Envio de Email (Integrada com os Services)
-                    // =========================================================
-                    try
+                    // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
+                    foreach (var error in result.Errors)
                     {
-                        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                        // Gera o link completo
-                        var confirmationLink = Url.Action("ConfirmarEmail", "Conta",
-                            new { userId = user.Id, token = token },
-                            Request.Scheme);
-
-                        // Gera o corpo do email usando o serviço existente
-                        var emailBody = await _emailTemplateService.GenerateEmailConfirmationTemplateAsync(
-                            user.Nome,
-                            confirmationLink,
-                            this.HttpContext
-                        );
-
-                        // Envia o email usando o serviço de transporte (SMTP/Mock)
-                        await _emailSender.SendEmailAsync(
-                            user.Email,
-                            "Confirmação de Conta - AutoMarket",
-                            emailBody
-                        );
+                        ModelState.AddModelError(string.Empty, error.Description);
                     }
-                    catch (Exception ex)
-                    {
-                        // TODO: logar o erro (_logger.LogError(ex,...))
-                        TempData["EmailWarning"] = "Conta criada, mas ocorreu um erro ao enviar o email de confirmação.";
-                    }
-
-                    // Se requer confirmação, redirecionar para aviso
-                    // Se não requer (para testes rápidos), fazer login:
-                    // await _signInManager.SignInAsync(user, isPersistent: false);
-
-                    return RedirectToAction("Index", "Home");
                 }
-
-                foreach (var error in result.Errors)
+                catch (Exception ex)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    // Se ocorrer um erro, reverter a transação
+                    await transaction.RollbackAsync();
+                    ModelState.AddModelError(string.Empty, "Ocorreu um erro ao registar. Por favor, tente novamente.");
+                    // TODO: logar o erro (_logger.LogError(ex,...))
                 }
             }
             return View(model);
