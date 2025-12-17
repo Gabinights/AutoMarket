@@ -25,7 +25,7 @@ namespace AutoMarket.Models
         // -- Dados de Negócio -- //
         [StringLength(9, MinimumLength = 9, ErrorMessage = "O NIF deve ter exatamente 9 caracteres.")] // performance (coluna na BD é criada com o número certo de dígitos)
         [RegularExpression(@"^\d{9}$", ErrorMessage = "O NIF deve conter apenas 9 números")]
-        public string? NIF { get; set; } = string.Empty;
+        public string? NIF { get; set; }
 
         //Dados específicos do Vendedor
         [Display(Name = "É Empresa?")]
@@ -35,13 +35,17 @@ namespace AutoMarket.Models
         public StatusAprovacao Status { get; set; } = StatusAprovacao.Pendente;
 
         //Registo de quem aprovou (auditoria)
+        [StringLength(450)]
         public string? ApprovedByAdminId { get; set; } //ID do admin que aprovou o vendedor
+
+        [ForeignKey("ApprovedByAdminId")]
+        public Utilizador? ApprovedByAdmin { get; set; } //Navegação para o admin que aprovou o vendedor
 
         [StringLength(500)] 
         public string? MotivoRejeicao { get; set; } //Motivo da rejeição, se aplicável
 
         //Lista de carros que este vendedor tem à venda
-        public ICollection<Carro> CarrosAVenda { get; set; }
+        public ICollection<Carro> CarrosAVenda { get; set; } = new List<Carro>();
 
         // -- Métodos de Domínio (Lógica de negócio) --
 
@@ -67,10 +71,11 @@ namespace AutoMarket.Models
 
         public void Ressubmeter()
         {
-            if(this.Status == StatusAprovacao.Rejeitado)
-            {
-                this.Status = StatusAprovacao.Pendente;
-            }
+            if (this.Status != StatusAprovacao.Rejeitado)
+                throw new InvalidOperationException($"Apenas vendedores rejeitados podem ser ressubmetidos. Estado atual: {this.Status}");
+            
+            this.Status = StatusAprovacao.Pendente;
+            this.MotivoRejeicao = null; // Limpa o motivo anterior
         }
     }
 }

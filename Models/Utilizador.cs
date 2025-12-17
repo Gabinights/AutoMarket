@@ -16,7 +16,7 @@ namespace AutoMarket.Models
 
         [DataType(DataType.Date)]
         [Display(Name = "Data de Registo")]
-        public DateTime DataRegisto { get; set; } = DateTime.Now;
+        public DateTime DataRegisto { get; set; } = DateTime.UtcNow;
 
         [MaxLength(50, ErrorMessage = "Os contactos não podem exceder 50 caracteres.")]
         public string Contacto { get; set; } = string.Empty;

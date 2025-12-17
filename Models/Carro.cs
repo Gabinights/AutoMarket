@@ -76,7 +76,7 @@ namespace AutoMarket.Models
         public EstadoCarro Estado { get; set; } = EstadoCarro.Ativo;
 
         [Display(Name = "Publicado em")]
-        public DateTime DataCriacao { get; set; } = DateTime.Now;
+        public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
         // --- Relacao com Vendedor (1 Vendedor -> N Carros) ---
         [Required]

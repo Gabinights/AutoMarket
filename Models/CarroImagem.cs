@@ -17,7 +17,7 @@ namespace AutoMarket.Models
         public string ContentType { get; set; } // ex: "image/jpeg"
 
         [Display(Name = "Capa")]
-        public bool IsPrincipale { get; set; } = false; // Define se é a foto de capa
+        public bool IsCapa { get; set; } = false; // Define se é a foto de capa
 
         // --- Relação com Carro ---
         public int CarroId { get; set; }

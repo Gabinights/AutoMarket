@@ -12,7 +12,7 @@ namespace AutoMarket.Models
         [StringLength(1000)]
         public string Conteudo { get; set; } = string.Empty;
 
-        public DateTime DataEnvio { get; set; } = DateTime.Now;
+        public DateTime DataEnvio { get; set; } = DateTime.UtcNow;
         public bool Lida { get; set; } = false;
 
         [Required]

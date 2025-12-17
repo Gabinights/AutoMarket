@@ -41,12 +41,13 @@ namespace AutoMarket.Controllers
             return View();
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+
         /// <summary>
         /// Renders the error page including the current request identifier.
         /// </summary>
         /// <returns>A view with error details for troubleshooting.</returns>
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });

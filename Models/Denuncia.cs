@@ -37,7 +37,12 @@ namespace AutoMarket.Models
 
         // Gestão Admin
         public string? DecisaoAdmin { get; set; }
+
+        [StringLength(450)]
         public string? AnalisadoPorAdminId { get; set; }
+
+        [ForeignKey("AnalisadoPorAdminId")]
+        public Utilizador? AnalisadoPorAdmin { get; set; }
 
         // Validação: Garante que escolheu pelo menos um alvo
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

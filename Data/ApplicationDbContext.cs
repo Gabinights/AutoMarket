@@ -6,16 +6,14 @@ namespace AutoMarket.Data
 {
     public class ApplicationDbContext : IdentityDbContext<Utilizador>
     {
-        /// <summary>
-        /// Initializes a new instance of <see cref="ApplicationDbContext"/> using the provided options.
-        /// </summary>
-        /// <param name="options">The options used to configure the database context.</param>
-
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
 
+        // =========================================================
+        // DbSets (Tabelas)
+        // =========================================================
         public DbSet<Vendedor> Vendedores { get; set; }
         public DbSet<Comprador> Compradores { get; set; }
         public DbSet<Carro> Carros { get; set; }
@@ -24,113 +22,111 @@ namespace AutoMarket.Data
         public DbSet<Mensagem> Mensagens { get; set; }
         public DbSet<Transacao> Transacoes { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
-       
-
-
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // =========================================================
-            // 1. Configurações de Enums (Para guardar como Texto)
-            // =========================================================
+            // #region 1. Configuração de Propriedades (Enums & Tipos SQL) 
 
-            builder.Entity<Vendedor>()
-            .Property(v => v.Status)
-            .HasConversion<string>();
+            // Conversão de Enums para String (Legibilidade na BD)
+            builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>();
+            builder.Entity<Carro>().Property(c => c.Estado).HasConversion<string>();
+            builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>();
+            builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>();
+            builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>();
 
-            builder.Entity<Carro>()
-                .Property(c => c.Estado)
-                .HasConversion<string>();
-
-            builder.Entity<Transacao>()
-                .Property(t => t.Estado)
-                .HasConversion<string>();
-
-            builder.Entity<Transacao>()
-                .Property(t => t.Metodo)
-                .HasConversion<string>();
-
-            builder.Entity<Denuncia>()
-                .Property(d => d.Estado)
-                .HasConversion<string>();
-
-            // =========================================================
-            // 2. Tipos de Dados Especiais (SQL)
-            // =========================================================
-
+            // Tipos SQL Específicos (Money)
             builder.Entity<Carro>().Property(c => c.Preco).HasColumnType("money");
             builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("money");
 
+            // #endregion
 
-            // =========================================================
-            // 3. Relações e Cascades (Explícito é melhor que Implícito)
-            // =========================================================
+            // #region 2. Índices e Restrições (Unicidade)
 
-            // Configurar Delete em Cascata: Apagar Vendedor -> Apaga Carros
+            // Garante relação 1:1 estrita (Um User só pode ter 1 perfil de cada tipo)
+            builder.Entity<Comprador>()
+                .HasIndex(c => c.UserId)
+                .IsUnique();
+
+            builder.Entity<Vendedor>()
+                .HasIndex(v => v.UserId)
+                .IsUnique();
+
+            // #endregion
+
+            // #region 3. Relações: Delete CASCADE (Pai morre -> Filhos morrem)
+
+            // Se apagar Vendedor -> Apaga os seus Carros
             builder.Entity<Carro>()
                 .HasOne(c => c.Vendedor)
                 .WithMany(v => v.CarrosAVenda)
                 .HasForeignKey(c => c.VendedorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Configurar Delete em Cascata: Apagar Carro -> Apaga Imagens
+            // Se apagar Carro -> Apaga as suas Imagens
             builder.Entity<CarroImagem>()
                 .HasOne(i => i.Carro)
                 .WithMany(c => c.Imagens)
                 .HasForeignKey(i => i.CarroId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Restrict: Apagar User NÃO pode apagar Mensagens (Evitar Ciclos)
-            builder.Entity<Mensagem>()
-            .HasOne(m => m.Remetente)
-            .WithMany()
-            .HasForeignKey(m => m.RemetenteId)
-            .OnDelete(DeleteBehavior.Restrict);
+            // #endregion
 
-            builder.Entity<Mensagem>()
-            .HasOne(m => m.Destinatario)
-            .WithMany()
-            .HasForeignKey(m => m.DestinatarioId)
-            .OnDelete(DeleteBehavior.Restrict);
+            // #region 4. Relações: Delete RESTRICT (Segurança & Histórico)
 
-            // Restrict: Apagar User NÃO deve apagar Denúncias feitas por ele (Histórico)
+            // --- Transações (Financeiro) ---
+            // Impedir apagar Comprador ou Carro se houver histórico financeiro
+            builder.Entity<Transacao>()
+                .HasOne(t => t.Comprador)
+                .WithMany()
+                .HasForeignKey(t => t.CompradorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Transacao>()
+                .HasOne(t => t.Carro)
+                .WithMany()
+                .HasForeignKey(t => t.CarroId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Denúncias (Auditoria) ---
+            // Impedir apagar User se tiver feito denúncias (Opcional, mas boa prática)
             builder.Entity<Denuncia>()
                 .HasOne(d => d.Denunciante)
                 .WithMany()
                 .HasForeignKey(d => d.DenuncianteId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
-            // =========================================================
-            // CORREÇÃO DO ERRO DE CICLO (Transações)
-            // =========================================================
-
-            // Se apagares um Comprador, NÃO apagues o histórico de compras dele.
-            // O SQL vai lançar erro se tentares apagar um comprador com compras.
-            builder.Entity<Transacao>()
-                .HasOne(t => t.Comprador)
-                .WithMany() // (Ou .WithMany(c => c.Transacoes) se tiveres a lista no Comprador)
-                .HasForeignKey(t => t.CompradorId)
-                .OnDelete(DeleteBehavior.Restrict); // <--- O SEGREDO ESTÁ AQUI
-
-            // Se apagares um Carro, também não deves apagar o registo financeiro da venda.
-            builder.Entity<Transacao>()
-                .HasOne(t => t.Carro)
+            // Impedir apagar Admin se ele resolveu denúncias (Preservar auditoria)
+            builder.Entity<Denuncia>()
+                .HasOne(d => d.AnalisadoPorAdmin)
                 .WithMany()
-                .HasForeignKey(t => t.CarroId)
-                .OnDelete(DeleteBehavior.Restrict); // <--- AQUI TAMBÉM
+                .HasForeignKey(d => d.AnalisadoPorAdminId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // --- Vendedores (Aprovações) ---
+            // Preservar histórico de quem aprovou o vendedor
+            builder.Entity<Vendedor>()
+                .HasOne(v => v.ApprovedByAdmin)
+                .WithMany()
+                .HasForeignKey(v => v.ApprovedByAdminId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // --- Mensagens (Chat) ---
+            // Impedir apagar User se tiver mensagens (Evita o ciclo de delete do SQL Server)
+            builder.Entity<Mensagem>()
+                .HasOne(m => m.Remetente)
+                .WithMany()
+                .HasForeignKey(m => m.RemetenteId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Mensagem>()
+                .HasOne(m => m.Destinatario)
+                .WithMany()
+                .HasForeignKey(m => m.DestinatarioId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // #endregion
         }
     }
 }
-
-
-
-
-
-

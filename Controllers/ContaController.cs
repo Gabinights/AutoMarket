@@ -116,10 +116,8 @@ namespace AutoMarket.Controllers
                     }
                     catch (Exception ex)
                     {
-                        // Logar erro, mas não impedir o registo (Silent Fail ou Aviso)
-                        // _logger.LogError(...);
-                        // O utilizador pode pedir "Reenviar Confirmação" mais tarde se necessário
-                        ModelState.AddModelError(string.Empty, "Conta criada, mas erro ao enviar email.");
+                        // TODO: logar o erro (_logger.LogError(ex,...))
+                        TempData["EmailWarning"] = "Conta criada, mas ocorreu um erro ao enviar o email de confirmação.";
                     }
 
                     // Se requer confirmação, redirecionar para aviso
@@ -185,6 +183,7 @@ namespace AutoMarket.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();

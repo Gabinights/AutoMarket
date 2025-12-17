@@ -45,13 +45,13 @@
         </div>
 
         <div class="form-group mb-3">
-            <input asp-for="IsVendedor" class="form-check-input" id="sellerToggle" />
+            <input asp-for="IsVendedor" class="form-check-input" id="sellerToggle" aria-controls="sellerFields" aria-expanded="false" />
             <label asp-for="IsVendedor" class="form-check-label">
                 Quero vender carros nesta plataforma
             </label>
         </div>
 
-        <div id="sellerFields" style="display:none; border-left: 3px solid #0d6efd; padding-left: 15px;">
+        <div id="sellerFields" class="seller-fields" style="display:none;" role="region" aria-labelledby="sellerToggle">
             <div class="form-group mb-3">
                 <label asp-for="NIF" class="control-label">NIF (Obrigatório para vendedores)</label>
                 <input asp-for="NIF" class="form-control" />
@@ -74,33 +74,47 @@
 </main>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
     <script>
         $(document).ready(function () {
-            // Função para alternar visibilidade
-            function toggleSellerFields() {
-                if ($('#sellerToggle').is(':checked')) {
-                    $('#sellerFields').slideDown();
-                } else {
-                    $('#sellerFields').slideUp();
+            // Referências aos elementos
+            const $checkVendedor = $('#checkVendedor');
+			const $sellerFields = $('#sellerFields');
+			const $IsEmpresa = $('#IsEmpresa');
+			const $NIF = $('#NIF');
+
+            // Função que decide o estado da UI
+            function atualiazarFormulario() {
+				// 1. Mostrar/Esconder campos de vendedor
+                if($checkVendedor.is(':checked')){
+					$sellerFields.slideDown();
+				} else {
+					$sellerFields.slideUp();
+					// Limpar campos relacionados
+					$IsEmpresa.prop('checked', false);
+					$NIF.val('');
+                } 
+
+                // 2. Gerir obrigatoriedade do NIF
+                if ($IsEmpresa.is(':checked')) {
+                    // Adiciona asterisco se não tiver 
+                    if (!$NIF.html().includes('*')) {
+                        $NIF.append(' <span class="text-danger">*</span>');
+                    }
+					$('#NIF').attr('placeholder', 'NIF obrigatório (9 dígitos)');
+				} else {
+                    // Remove asterisco
+                    $NIF.find('span').remove();
+                    $('#NIF').attr('placeholder', 'NIF (Opcional)');
                 }
             }
 
             // Executar no carregamento (caso haja erro de validação e a página recarregue)
-            toggleSellerFields();
+            atualiazarFormulario();
 
             // Executar quando o utilizador clica
-            $('#sellerToggle').change(toggleSellerFields);
+            $sellerToggle.change(atualiazarFormulario);
+			$IsEmpresa.change(atualiazarFormulario);
         });
     </script>
 }
-
-
-
-
-
-
-
-
-
-
-

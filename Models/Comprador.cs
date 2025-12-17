@@ -19,9 +19,10 @@ namespace AutoMarket.Models
 		//Dados específicos do Comprador
 		public bool ReceberNotificacoes { get; set; }
 
-		// Histórico de compras do Comprador
+        // TODO: Histórico de compras do Comprador
 
-		// Lista de carros favoritos do Comprador (Many-to-Many com Car)
-		// public ICollection<Car> Favoritos { get; set; }
-	}
+        // Lista de carros favoritos do Comprador (Many-to-Many com Car)
+        // public ICollection<Car> Favoritos { get; set; }
+        // TODO: Implementar a tabela de junção para favoritos?
+    }
 }

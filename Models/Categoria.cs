@@ -12,6 +12,6 @@ namespace AutoMarket.Models
         public string Nome { get; set; } // Ex: "SUV", "Sedan"
 
         // Relação: Uma categoria tem muitos carros
-        public ICollection<Carro> Carros { get; set; }
+        public ICollection<Carro> Carros { get; set; } = new List<Carro>();
     }
 }
