@@ -44,11 +44,6 @@ namespace AutoMarket.Services
                     httpContext 
                 );
 
-                if (string.IsNullOrWhiteSpace(user.Email))
-                {
-                    _logger.LogWarning("Tentativa de enviar email de confirmação para utilizador sem email: {UserId}", user.Id);
-                    return;
-                }
                 // 2. Enviar
                 await _emailSender.SendEmailAsync(
                     user.Email,

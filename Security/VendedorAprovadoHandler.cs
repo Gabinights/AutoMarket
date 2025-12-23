@@ -13,16 +13,13 @@ namespace AutoMarket.Security
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public VendedorAprovadoHandler(
             ApplicationDbContext context,
-            UserManager<Utilizador> userManager,
-            IHttpContextAccessor httpContextAccessor)
+            UserManager<Utilizador> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         protected override async Task HandleRequirementAsync(
@@ -32,7 +29,7 @@ namespace AutoMarket.Security
             var userPrincipal = context.User;
 
             // 1. Verificar se está logado e se é Vendedor
-            if (!userPrincipal.Identity.IsAuthenticated || !userPrincipal.IsInRole(Roles.Vendedor))
+            if (userPrincipal.Identity?.IsAuthenticated != true || !userPrincipal.IsInRole(Roles.Vendedor))
             {
                 // Se não é vendedor, a policy não se aplica (ou falha)
                 return;
@@ -42,13 +39,13 @@ namespace AutoMarket.Security
 
             // 2. Ir à Base de Dados ver o Status
             // Usamos AsNoTracking() porque é só leitura e é mais rápido
-            var statusVendedor = await _context.Vendedores
+            var status = await _context.Vendedores
                 .Where(v => v.UserId == userId)
                 .Select(v => v.Status)
                 .FirstOrDefaultAsync();
 
             // 3. O momento da verdade
-            if (statusVendedor == StatusAprovacao.Aprovado)
+            if (status == StatusAprovacao.Aprovado)
             {
                 context.Succeed(requirement); // SUCESSO!
             }

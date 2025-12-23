@@ -104,9 +104,10 @@ app.UseAuthorization();
 app.UseStatusCodePages(async context =>
 {
     var response = context.HttpContext.Response;
+    var user = context.HttpContext.User;
 
     // Se for erro 403 (Proibido) e for Vendedor
-    if (response.StatusCode == 403)
+    if (response.StatusCode == 403 && user.IsInRole("Vendedor"))
     {
         response.Redirect("/Conta/AguardandoAprovacao");
     }

@@ -100,8 +100,15 @@ namespace AutoMarket.Controllers
                     var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
                         new { userId = user.Id, token }, Request.Scheme);
 
-                    await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
-
+                    if (string.IsNullOrEmpty(confirmationLink))
+                    {
+                        _logger.LogError("Falha ao gerar link de confirmação para {Email}", user.Email);
+                        // allow registration to complete, but log the issue
+                    }
+                    else
+                    {
+                        await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
+                    }
                     return RedirectToAction("Index", "Home");
                 }
                 // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
@@ -202,7 +209,7 @@ namespace AutoMarket.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles = "Vendedor")]
         public IActionResult AguardandoAprovacao()
         {
             // Vamos buscar o utilizador para garantir que é mesmo um Vendedor
