@@ -1,0 +1,65 @@
+﻿using AutoMarket.Data;
+using AutoMarket.Constants;
+using AutoMarket.Models.Enums;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using AutoMarket.Models;
+
+namespace AutoMarket.Security
+{
+    public class VendedorAprovadoHandler : AuthorizationHandler<VendedorAprovadoRequirement>
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<Utilizador> _userManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public VendedorAprovadoHandler(
+            ApplicationDbContext context,
+            UserManager<Utilizador> userManager,
+            IHttpContextAccessor httpContextAccessor)
+        {
+            _context = context;
+            _userManager = userManager;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        protected override async Task HandleRequirementAsync(
+            AuthorizationHandlerContext context,
+            VendedorAprovadoRequirement requirement)
+        {
+            var userPrincipal = context.User;
+
+            // 1. Verificar se está logado e se é Vendedor
+            if (!userPrincipal.Identity.IsAuthenticated || !userPrincipal.IsInRole(Roles.Vendedor))
+            {
+                // Se não é vendedor, a policy não se aplica (ou falha)
+                return;
+            }
+
+            var userId = _userManager.GetUserId(userPrincipal);
+
+            // 2. Ir à Base de Dados ver o Status
+            // Usamos AsNoTracking() porque é só leitura e é mais rápido
+            var statusVendedor = await _context.Vendedores
+                .Where(v => v.UserId == userId)
+                .Select(v => v.Status)
+                .FirstOrDefaultAsync();
+
+            // 3. O momento da verdade
+            if (statusVendedor == StatusAprovacao.Aprovado)
+            {
+                context.Succeed(requirement); // SUCESSO!
+            }
+            else
+            {
+                // Se falhar, podemos redirecionar ou deixar o ASP.NET retornar 403 Forbidden.
+                // Dica Pro: Para redirecionar dentro de um Handler é preciso lógica extra,
+                // geralmente o 403 é intercetado no Program.cs ou deixa-se falhar.
+
+                // Opção Simples: Apenas não chamamos o Succeed. O sistema assume falha.
+            }
+        }
+    }
+}

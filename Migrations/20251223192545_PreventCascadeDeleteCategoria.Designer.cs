@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoMarket.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251223155127_PadronizacaoContas")]
-    partial class PadronizacaoContas
+    [Migration("20251223192545_PreventCascadeDeleteCategoria")]
+    partial class PreventCascadeDeleteCategoria
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -572,7 +572,7 @@ namespace AutoMarket.Migrations
                     b.HasOne("AutoMarket.Models.Categoria", "Categoria")
                         .WithMany("Carros")
                         .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AutoMarket.Models.Vendedor", "Vendedor")

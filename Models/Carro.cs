@@ -57,6 +57,7 @@ namespace AutoMarket.Models
         [Display(Name = "Caixa")]
         public string Caixa { get; set; }
 
+        [Required]
         [StringLength(100)]
         [Display(Name = "Localização")]
         public string Localizacao { get; set; } // Ex: "Lisboa"
@@ -82,6 +83,6 @@ namespace AutoMarket.Models
         public Vendedor Vendedor { get; set; }
 
         // --- Relação com Imagens (1 Carro -> N Imagens) ---
-        public ICollection<CarroImagem> Imagens { get; set; }
+        public ICollection<CarroImagem> Imagens { get; set; } = [];
     }
 }

@@ -48,17 +48,17 @@
             <label class="form-label fw-bold d-block">Tipo de Conta:</label>
 
             <div class="btn-group w-100" role="group" aria-label="Seleção de tipo de conta">
-                <input type="radio" class="btn-check" name="TipoConta" id="tipoComprador" value="0" checked autocomplete="off">
+                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoComprador" value="0" autocomplete="off">
                 <label class="btn btn-outline-primary" for="tipoComprador">
                     <i class="bi bi-search"></i> Comprador
                 </label>
 
-                <input type="radio" class="btn-check" name="TipoConta" id="tipoVendedor" value="1" autocomplete="off">
+                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoVendedor" value="1" autocomplete="off">
                 <label class="btn btn-outline-primary" for="tipoVendedor">
                     <i class="bi bi-car-front"></i> Vendedor Particular
                 </label>
 
-                <input type="radio" class="btn-check" name="TipoConta" id="tipoEmpresa" value="2" autocomplete="off">
+                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoEmpresa" value="2" autocomplete="off">
                 <label class="btn btn-outline-primary" for="tipoEmpresa">
                     <i class="bi bi-building"></i> Empresa
                 </label>
@@ -80,6 +80,7 @@
                 </div>
             </div>
         </div>
+        <button type="submit" class="btn btn-primary w-100">Registar</button>
     </form>
 </main>
 <script>
@@ -128,4 +129,3 @@
         atualizarFormulario();
     });
 </script>
-}

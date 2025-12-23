@@ -569,7 +569,7 @@ namespace AutoMarket.Migrations
                     b.HasOne("AutoMarket.Models.Categoria", "Categoria")
                         .WithMany("Carros")
                         .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("AutoMarket.Models.Vendedor", "Vendedor")

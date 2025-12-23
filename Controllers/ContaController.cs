@@ -1,13 +1,14 @@
-using AutoMarket.Models;
+using AutoMarket.Constants;
 using AutoMarket.Data;
+using AutoMarket.Models;
+using AutoMarket.Models.Enums;
+using AutoMarket.Models.ViewModels;
 using AutoMarket.Services;
+using AutoMarket.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using AutoMarket.Models.ViewModels;
-using AutoMarket.Constants;
-using AutoMarket.Models.Enums;
-using AutoMarket.Services.Interfaces;
 
 namespace AutoMarket.Controllers
 {
@@ -137,6 +138,12 @@ namespace AutoMarket.Controllers
             if (result.Succeeded)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    await _signInManager.SignOutAsync();
+                    ModelState.AddModelError(string.Empty, "Erro inesperado ao obter dados do utilizador.");
+                    return View(model);
+                }
 
                 // 2. Verificar Bloqueio Global
                 if (user.IsBlocked)
@@ -147,15 +154,17 @@ namespace AutoMarket.Controllers
                 }
 
                 // 3. Verificar Vendedor
-                if (await _userManager.IsInRoleAsync(user, "Vendedor"))
+                if (await _userManager.IsInRoleAsync(user, Roles.Vendedor))
                 {
-                    // Nota: O Include é importante se quiseres ver detalhes, mas FirstOrDefault chega para o Status
-                    var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.UserId == user.Id);
+                    var vendedor = await _context.Vendedores
+                        .Select(v => new { v.UserId, v.Status })
+                        .FirstOrDefaultAsync(v => v.UserId == user.Id);
 
                     if (vendedor != null && vendedor.Status != StatusAprovacao.Aprovado)
                     {
-                        // Aqui decides: Ou deixas entrar com acesso limitado (Policy) ou bloqueias.
-                        // Para já, deixamos entrar. A Policy no CarrosController trata do resto.
+                        _logger.LogWarning("Vendedor {Email} tentou entrar mas está com status {Status}", user.Email, vendedor.Status);
+
+                        return RedirectToAction(nameof(AguardandoAprovacao));
                     }
                 }
 
@@ -178,16 +187,29 @@ namespace AutoMarket.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmarEmail(string userId, string token)
         {
-            if (userId == null || token == null) return RedirectToAction("Index", "Home");
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new { Message = "Link de confirmação inválido." }); 
 
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return RedirectToAction("Index", "Home");
+            if (user == null) return View("Error", new { Message = "Utilizador não encontrado." });
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
             if (result.Succeeded)
                 return View("EmailConfirmado"); // Cria esta View simples ou redireciona
 
-            return View("Error");
+            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}",
+                userId, string.Join(", ", result.Errors.Select(e => e.Description)));
+            return View("Error", new { Message = "Não foi possível confirmar o email. O link pode ter expirado." });
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult AguardandoAprovacao()
+        {
+            // Vamos buscar o utilizador para garantir que é mesmo um Vendedor
+            // (Otimização: Injetar IAuthMessageService aqui se quiseres reenviar email, etc.)
+            return View();
         }
     }
 }
+
+

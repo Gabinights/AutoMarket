@@ -27,7 +27,7 @@ namespace AutoMarket.Data
         {
             base.OnModelCreating(builder);
 
-            // #region 1. Configuração de Propriedades (Enums & Tipos SQL) 
+            // #region 1. Configuracao de Propriedades (Enums & Tipos SQL) 
 
             // Conversão de Enums para String (Legibilidade na BD)
             builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>();
@@ -124,6 +124,13 @@ namespace AutoMarket.Data
                 .HasOne(m => m.Destinatario)
                 .WithMany()
                 .HasForeignKey(m => m.DestinatarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Impede apagar uma categoria se existirem carros associados a ela
+            builder.Entity<Carro>()
+                .HasOne(c => c.Categoria)
+                .WithMany(cat => cat.Carros) // Assumindo que tens: public ICollection<Carro> Carros { get; set; } na Categoria
+                .HasForeignKey(c => c.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // #endregion

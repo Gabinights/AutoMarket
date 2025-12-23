@@ -47,7 +47,7 @@ namespace AutoMarket.Models.ViewModels
         // --- Campos específicos para Vendedor --- (Nullable para não dar erro de validação ao comprador)
         [Display(Name ="NIF")]
         [NifPortugues]
-        public string NIF { get; set; }
+        public string? NIF { get; set; }
 
         // -- Lógica de validação personalizada do NIF --
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
