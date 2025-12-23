@@ -1,142 +1,96 @@
-O projeto tem como principal objetivo o desenvolvimento de uma aplicação web que suporte um portal de compra e venda de veículos usados, semelhante a plataformas existentes no mercado, como o StandVirtual ou o Auto.pt.
+📘 AutoMarket - Guia de Desenvolvimento & Arquitetura
 
+[!URGENT] LEIAM ISTO ANTES DE ESCREVER CÓDIGO 
+Este documento define como trabalhamos. Seguir estas regras evita que partam a base de dados ou criem conflitos de merge impossíveis de resolver.
 
 
-Levantamento dos requisitos funcionais:
+1. Stack Tecnológica
 
-\- RF1: O sistema deve permitir que visitantes consultem anúncios de veículos, com filtros por marca, modelo, ano, preço, quilometragem, combustível, transmissão e localização.
+Framework: ASP.NET Core 8.0 (MVC)
 
+Base de Dados: SQL Server + Entity Framework Core (Code First)
 
+Autenticação: ASP.NET Core Identity (Com extensão de perfis)
 
-\- RF2: O sistema deve exibir a lista de veículos com detalhes (especificações, preço, descrição, imagens, estado do anúncio).
+Front-end: Razor Views, Bootstrap 5, jQuery (AJAX).
 
 
+2. A Nossa Estrutura (Onde fica o quê?)
 
-\- RF3: O sistema deve permitir visualizar o detalhe de cada anúncio, com galeria de imagens e dados completos do veículo.
+Não inventem pastas novas. Sigam este mapa:
 
-RF4: O sistema deve permitir o registo e autenticação de compradores.
+AutoMarket/
+├── Controllers/              # O "Cérebro". Recebe pedidos e decide o que fazer.
+│   ├── AdminController.cs    # Aprovar Vendedores, gerir bloqueios.
+│   ├── CarrosController.cs   # Criar carros (Vendedor) e Listar (Público).
+│   └── ContaController.cs    # Lógica de Login/Registo (NÃO MEXER sem falar com o Lead).
+├── Data/
+│   ├── ApplicationDbContext.cs # Onde as tabelas são definidas.
+│   └── DbInitializer.cs      # Cria o Admin e Categorias se a BD estiver vazia.
+├── Models/                   # A "Verdade". Classes que viram tabelas na BD.
+│   ├── ViewModels/           # "Papéis de Rascunho". Classes só para formulários (ex: RegisterViewModel).
+├── Services/                 # Lógica pesada (Emails, PDFs, Cálculos complexos).
+├── Views/                    # O HTML (Interface).
+└── wwwroot/                  # Imagens, CSS e JS estáticos.
 
 
+3. Workflow de Desenvolvimento (Como não partir tudo)
 
-\- RF5: O comprador pode guardar filtros de pesquisa e definir marcas favoritas
+A. Trabalhar com Base de Dados (Migrations)
+Sempre que alterarem um ficheiro na pasta Models/:
+- Parem a aplicação.
+- Abram a Package Manager Console.
+- Criar a "fotografia" da mudança: Add-Migration NomeDescritivoDaMudanca (Ex: AddCampoCorToCarro).
+- Aplicar à BD: Update-Database.
+- Nunca apaguem a pasta Migrations manualmente a não ser que a base de dados seja resetada.
 
+B. Git (Controlo de Versões)
+- Nunca trabalhem diretamente na main ou master.
+- Começar tarefa: git checkout -b feat/nome-da-funcionalidade (Ex: feat/upload-imagens).
+- Durante o trabalho: Façam commits pequenos.
+- Acabar: Abram um Pull Request (PR) no GitHub.
+Regra de Ouro: Antes de fazerem o PR, façam git pull origin main na vossa branch para garantir que não há conflitos.
 
+4. Regras de Implementação (Ler Obrigatório)
 
-\- RF7: O comprador pode agendar visitas a veículos, escolhendo data e hora.
+🔐 Autenticação (Quem és tu?)
+- Não usamos a classe IdentityUser diretamente para guardar dados de negócio.
 
+- Se precisarem de dados de Venda (NIF, Stand), usem a tabela Vendedores.
 
+- Se precisarem de dados de Compra (Favoritos), usem a tabela Compradores.
 
+Exemplo: Para saber o NIF do utilizador logado, não está no User. Têm de ir à tabela Vendedores procurar pelo UserId.
 
+🛡️ Autorização (O que podes fazer?)
+- Não façam if (User.Identity.Name == "admin"). Isso é proibido. Usem atributos em cima dos Controllers ou Actions:
 
-\- RF9: O comprador pode consultar o histórico de reservas, visitas e encomendas.
+[Authorize(Roles = "Admin")] -> Só para chefes.
 
+[Authorize(Policy = "VendedorAprovado")] -> Só para vendedores que já foram aceites.
 
+⚡ Performance (Não matem o servidor)
+- Quando fizerem pesquisas na Base de Dados para listagens (ex: Catálogo de Carros):
 
-\- RF10: O comprador pode apresentar denúncias sobre anúncios ou utilizadores.
+ERRADO: _context.Carros.ToList().Where(c => c.Preco > 1000)
 
-\- RF11: O sistema deve permitir o registo e autenticação de vendedores (com aprovação por administrador).
+Porquê? Traz 1 milhão de carros para a memória RAM e só depois filtra.
 
+CERTO: _context.Carros.Where(c => c.Preco > 1000).ToList()
 
+Porquê? O filtro é feito no SQL Server. Só vêm os carros certos.
 
-\- RF12: O vendedor pode criar, editar, pausar, ativar e remover anúncios.
+🖼️ Uploads de Imagens
+- Base de Dados: Guarda apenas o nome (ferrari_123.jpg).
 
+- Pasta wwwroot/images: Guarda o ficheiro real.
 
+Nunca tentem guardar o ficheiro binário dentro do SQL Server.
 
-\- RF13: O vendedor pode carregar imagens para os seus anúncios.
+5. Dúvidas Comuns (FAQ)
+"Onde ponho a lógica de enviar Email?" -> Pasta Services. Não ponham no Controller.
 
+"Criei um campo novo no Model mas dá erro." -> Esqueceste-te de fazer Add-Migration e Update-Database.
 
-
-\- RF14: O vendedor pode atualizar o estado de um anúncio (ativo, vendido, pausado).
-
-
-
-\- RF15: O vendedor pode responder a mensagens ou denúncias relacionadas aos seus anúncios.
-
-
-
-\- RF16: O vendedor pode consultar o histórico de  vendas dos seus anúncios.
-
-\- RF17: O administrador pode aprovar ou bloquear vendedores, com registo do motivo.
-
-
-
-\- RF18: O administrador pode ativar/bloquear utilizadores e consultar histórico de bloqueios.
-
-
-
-\- RF19: O administrador pode moderar anúncios, alterando o seu estado ou removendo-os.
-
-
-
-\- RF20: O administrador deve gerir denúncias, percorrendo o workflow Aberta → Em análise → Encerrada (procedente/não procedente).
-
-
-
-\- RF21: O administrador pode registar ações em denúncias (atribuir, pedir info, encerrar, etc.).
-
-
-
-\- RF22: O administrador pode enviar notificações a compradores e vendedores sobre alterações ou decisões.
-
-
-
-\- RF23: O administrador pode consultar estatísticas e relatórios (utilizadores, anúncios ativos, vendas, reservas, denúncias, etc.).
-
-\- RF24: O sistema deve registar em auditoria todas as ações de moderação e administração.
-
-
-
-Levantamento dos requisitos não-funcionais:
-
-
-
-\- RNF1: O sistema deve implementar autenticação segura e autorização baseada em papéis (comprador, vendedor, administrador).
-
-\- RNF2: As passwords devem ser encriptadas e os dados pessoais tratados conforme o RGPD.
-
-
-
-
-
-\- RNF3: Todas as ações administrativas devem ser registadas em logs de auditoria.
-
-
-
-\- RNF4: A aplicação deve ser responsiva, adaptando-se a desktop, tablet e dispositivos móveis.
-
-
-
-\- RNF5: O sistema deve fornecer feedback claro ao utilizador (mensagens de erro, estados de reserva/compra, confirmações). 
-
-\- RNF6: O sistema deve suportar pelo menos 5.000 acessos concorrentes sem degradação significativa.
-
-
-
-\- RNF7: Consultas e listagens de anúncios devem ter tempo de resposta inferior a 2 segundos em condições normais.
-
-
-
-\- RNF8: O sistema deve garantir integridade dos dados através de constraints, transações e triggers.
-
-
-
-\- RNF9: O sistema deve realizar backups diários e permitir recuperação em até 1 hora após falha.
-
-
-
-\- RNF10: O sistema deve estar disponível em pelo menos 99% do tempo definido no SLA.
-
-
-
-\- RNF11: O sistema deve ser modular e documentado, facilitando manutenção e evolução.
-
-
-
-\- RNF12: O código deve seguir normas de estilo e ser acompanhado de testes unitários e de integração.
-
-
-
-\- RNF13: O sistema deve permitir fácil portabilidade entre ambientes (dev/test/prod).
-
-
+"O Login não funciona." -> Verifica se tens o DbInitializer corrido e se o user existe na tabela AspNetUsers.
 
