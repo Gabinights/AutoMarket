@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AutoMarket.Models.ViewModels;
+using AutoMarket.Constants;
+using AutoMarket.Models.Enums;
+using AutoMarket.Services.Interfaces;
 
 namespace AutoMarket.Controllers
 {
@@ -13,21 +16,21 @@ namespace AutoMarket.Controllers
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
         private readonly ApplicationDbContext _context;
-        private readonly IEmailSender _emailSender; // <--- Injeção do Serviço
-        private readonly EmailTemplateService _emailTemplateService; // <--- Injeção do Template
+        private readonly IEmailAuthService _emailAuthService;
+        private readonly ILogger<ContaController> _logger;
 
         public ContaController(
             UserManager<Utilizador> userManager,
             SignInManager<Utilizador> signInManager,
             ApplicationDbContext context,
-            IEmailSender emailSender,
-            EmailTemplateService emailTemplateService)
+            IEmailAuthService emailAuthService,
+            ILogger<ContaController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
-            _emailSender = emailSender;
-            _emailTemplateService = emailTemplateService;
+            _logger = logger;
+            _emailAuthService = emailAuthService;
         }
 
         [HttpGet]
@@ -40,110 +43,78 @@ namespace AutoMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(model);
+
+            // 1. Iniciar Transação
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                // 1. Iniciar Transação
-                using var transaction = await _context.Database.BeginTransactionAsync();
-
-                try
+                var user = new Utilizador
                 {
-                    var user = new Utilizador
-                    {
-                        UserName = model.Email,
-                        Email = model.Email,
-                        Nome = model.Nome,
-                        Morada = model.Morada,
-                        PhoneNumber = model.Contacto,
-                        DataRegisto = DateTime.UtcNow
-                    };
+                    UserName = model.Email,
+                    Email = model.Email,
+                    Nome = model.Nome,
+                    Morada = model.Morada,
+                    PhoneNumber = model.Contacto,
+                    DataRegisto = DateTime.UtcNow
+                };
 
-                    // 2. Criar o User (Identity)
-                    var result = await _userManager.CreateAsync(user, model.Password);
+                // 2. Criar o User (Identity)
+                var result = await _userManager.CreateAsync(user, model.Password);
 
-                    if (result.Succeeded)
-                    {
-                        // 3. Criar o Perfil Específico (Vendedor ou Comprador)
-                        if (model.IsVendedor)
-                        {
-                            var vendedor = new Vendedor
-                            {
-                                UserId = user.Id,
-                                NIF = model.NIF,
-                                IsEmpresa = model.IsEmpresa,
-                                Status = StatusAprovacao.Pendente
-                            };
-                            _context.Vendedores.Add(vendedor);
-
-                            await _userManager.AddToRoleAsync(user, "Vendedor");
-                        }
-                        else
-                        {
-                            var comprador = new Comprador
-                            {
-                                UserId = user.Id,
-                                ReceberNotificacoes = false
-                            };
-                            _context.Compradores.Add(comprador);
-
-                            await _userManager.AddToRoleAsync(user, "Comprador");
-                        }
-                        // 4. Gravar Perfil na BD
-                        await _context.SaveChangesAsync();
-
-                        // 5. Se chegámos aqui sem erros, confirmar a transação
-                        await transaction.CommitAsync();
-
-                        // =========================================================
-                        // Lógica de Envio de Email (Integrada com os Services)
-                        // =========================================================
-                        try
-                        {
-                            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                            // Gera o link completo
-                            var confirmationLink = Url.Action("ConfirmarEmail", "Conta",
-                                new { userId = user.Id, token = token },
-                                Request.Scheme);
-
-                            // Gera o corpo do email usando o serviço existente
-                            var emailBody = await _emailTemplateService.GenerateEmailConfirmationTemplateAsync(
-                                user.Nome,
-                                confirmationLink,
-                                this.HttpContext
-                            );
-
-                            // Envia o email usando o serviço de transporte (SMTP/Mock)
-                            await _emailSender.SendEmailAsync(
-                                user.Email,
-                                "Confirmação de Conta - AutoMarket",
-                                emailBody
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            // TODO: logar o erro (_logger.LogError(ex,...))
-                            TempData["EmailWarning"] = "Conta criada, mas ocorreu um erro ao enviar o email de confirmação.";
-                        }
-
-                        // Se requer confirmação, redirecionar para aviso
-                        // Se não requer (para testes rápidos), fazer login:
-                        // await _signInManager.SignInAsync(user, isPersistent: false);
-
-                        return RedirectToAction("Index", "Home");
-                    }
-                    // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
-                    foreach (var error in result.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-                }
-                catch (Exception ex)
+                if (result.Succeeded)
                 {
-                    // Se ocorrer um erro, reverter a transação
-                    await transaction.RollbackAsync();
-                    ModelState.AddModelError(string.Empty, "Ocorreu um erro ao registar. Por favor, tente novamente.");
-                    // TODO: logar o erro (_logger.LogError(ex,...))
+                    // 3. Criar o Perfil Específico (Vendedor ou Comprador) baseado no enum
+                    if (model.TipoConta == TipoConta.Vendedor || model.TipoConta == TipoConta.Empresa)
+                    {
+                        var vendedor = new Vendedor
+                        {
+                            UserId = user.Id,
+                            NIF = model.NIF,
+                            IsEmpresa = model.TipoConta == TipoConta.Empresa,
+                            Status = StatusAprovacao.Pendente
+                        };
+                        _context.Vendedores.Add(vendedor);
+                        await _userManager.AddToRoleAsync(user, Roles.Vendedor);
+                    }
+                    else
+                    {
+                        var comprador = new Comprador
+                        {
+                            UserId = user.Id,
+                            ReceberNotificacoes = false
+                        };
+                        _context.Compradores.Add(comprador);
+                        await _userManager.AddToRoleAsync(user, Roles.Comprador);
+                    }
+                    // 4. Gravar Perfil na BD
+                    await _context.SaveChangesAsync();
+                    // 5. Se chegámos aqui sem erros, confirmar a transação
+                    await transaction.CommitAsync();
+
+                    // Lógica de envio de email de confirmação
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                    var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
+                        new { userId = user.Id, token }, Request.Scheme);
+
+                    await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
+
+                    return RedirectToAction("Index", "Home");
                 }
+                // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Se ocorrer um erro, reverter a transação
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Erro ao registar utilizador {Email}", model.Email);
+                ModelState.AddModelError(string.Empty, "Ocorreu um erro interno. Tente novamente.");
             }
             return View(model);
         }

@@ -1,19 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AutoMarket.Models.Enums;
 
 namespace AutoMarket.Models
 {
-    public enum EstadoCarro
-    {
-        Ativo = 0, // Visível no site
-        Reservado = 1, // Visível mas não comprável
-        Vendido = 2, // Histórico
-        Pausado = 3 // Escondido pelo vendedor ou pelo admin
-    }
-
     public class Carro
     {
-        [Key] // Isto é desnecessário?? Entity auto key attributting to ID
+        [Key] // é boa prática especificar data annotations que por regra o EF já trata (blindagem)
         public int Id { get; set; }
 
         // --- Dados do veículo ---

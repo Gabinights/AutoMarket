@@ -37,8 +37,8 @@ namespace AutoMarket.Data
             builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>();
 
             // Tipos SQL Específicos (Money)
-            builder.Entity<Carro>().Property(c => c.Preco).HasColumnType("money");
-            builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("money");
+            builder.Entity<Carro>().Property(c => c.Preco).HasColumnType("decimal(18,2)");
+            builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("decimal(18,2)");
 
             // #endregion
 

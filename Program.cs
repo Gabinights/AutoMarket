@@ -1,6 +1,7 @@
 using AutoMarket.Data;
 using AutoMarket.Models;
 using AutoMarket.Services;
+using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
@@ -50,6 +51,8 @@ builder.Services.AddSingleton<EmailFailureTracker>(sp =>
     new EmailFailureTracker(maxFailures: 5, failureWindow: TimeSpan.FromMinutes(5), circuitBreakerTimeout: TimeSpan.FromMinutes(1)));
 // Adiciona o serviço de email
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<EmailTemplateService>();
+builder.Services.AddScoped<IEmailAuthService, EmailAuthService>();
 
 // --- Configuração de Cookies de Sessão ---
 builder.Services.ConfigureApplicationCookie(options =>
@@ -66,12 +69,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Adiciona o serviço de renderização de views
 builder.Services.AddScoped<ViewRenderService>();
 
-// Adiciona o serviço de templates de email
-builder.Services.AddScoped<EmailTemplateService>();
-
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Jg9oHYGUC1w=",
+  "dgSpecHash": "zsoXvbhAP0U=",
   "success": true,
-  "projectFilePath": "C:\\Users\\gabri\\source\\repos\\Gabinights\\AutoMarket\\AutoMarket.csproj",
+  "projectFilePath": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\AutoMarket.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\gabri\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\gabri\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
