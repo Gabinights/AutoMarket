@@ -54,18 +54,11 @@ namespace AutoMarket.Models.ViewModels
             {
                 if (string.IsNullOrWhiteSpace(NIF))
                 {
-                    yield return new ValidationResult(
-                        "O NIF é obrigatório para contas de Empresa.",
-                        new[] { nameof(NIF) });
+                    yield return new ValidationResult("O NIF é obrigatório para contas de Empresa.", new[] { nameof(NIF) });
                 }
-                else
+                else if (!NIF.Trim().StartsWith("5"))
                 {
-                    if (!NIF.Trim().StartsWith("5"))
-                    {
-                        yield return new ValidationResult(
-                           "O NIF de empresa deve começar por 5 (NIPC).",
-                           new[] { nameof(NIF) });
-                    }
+                    yield return new ValidationResult("NIF de empresa deve começar por 5.", new[] { nameof(NIF) });
                 }
             }
         }

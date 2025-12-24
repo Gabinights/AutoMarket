@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using AutoMarket.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using AutoMarket.Models.ViewModels;
 
 namespace AutoMarket.Controllers

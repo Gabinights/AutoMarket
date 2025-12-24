@@ -36,15 +36,15 @@ namespace AutoMarket.Data
             builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>();
             builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>();
 
-            // Tipos SQL Espec�ficos (Money)
+            // Tipos SQL Especificos (Money)
             builder.Entity<Carro>().Property(c => c.Preco).HasColumnType("decimal(18,2)");
             builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("decimal(18,2)");
 
             // #endregion
 
-            // #region 2. �ndices e Restri��es (Unicidade)
+            // #region 2. Indices e Restricoes (Unicidade)
 
-            // Garante rela��o 1:1 estrita (Um User s� pode ter 1 perfil de cada tipo)
+            // Garante relacao 1:1 estrita (Um User so pode ter 1 perfil de cada tipo)
             builder.Entity<Comprador>()
                 .HasIndex(c => c.UserId)
                 .IsUnique();
@@ -55,7 +55,7 @@ namespace AutoMarket.Data
 
             // #endregion
 
-            // #region 3. Rela��es: Delete CASCADE (Pai morre -> Filhos morrem)
+            // #region 3. Relacoes: Delete CASCADE (Pai morre -> Filhos morrem)
 
             // Se apagar Vendedor -> Apaga os seus Carros
             builder.Entity<Carro>()
@@ -73,10 +73,10 @@ namespace AutoMarket.Data
 
             // #endregion
 
-            // #region 4. Rela��es: Delete RESTRICT (Seguran�a & Hist�rico)
+            // #region 4. Relacoes: Delete RESTRICT (Seguranca & Historico)
 
-            // --- Transa��es (Financeiro) ---
-            // Impedir apagar Comprador ou Carro se houver hist�rico financeiro
+            // --- Transacoes (Financeiro) ---
+            // Impedir apagar Comprador ou Carro se houver historico financeiro
             builder.Entity<Transacao>()
                 .HasOne(t => t.Comprador)
                 .WithMany()
@@ -90,22 +90,22 @@ namespace AutoMarket.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // --- Den�ncias (Auditoria) ---
-            // Impedir apagar User se tiver feito den�ncias (Opcional, mas boa pr�tica)
+            // Impedir apagar User se tiver feito denuncias (Opcional, mas boa pratica)
             builder.Entity<Denuncia>()
                 .HasOne(d => d.Denunciante)
                 .WithMany()
                 .HasForeignKey(d => d.DenuncianteId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Impedir apagar Admin se ele resolveu den�ncias (Preservar auditoria)
+            // Impedir apagar Admin se ele resolveu denuncias (Preservar auditoria)
             builder.Entity<Denuncia>()
                 .HasOne(d => d.AnalisadoPorAdmin)
                 .WithMany()
                 .HasForeignKey(d => d.AnalisadoPorAdminId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // --- Vendedores (Aprova��es) ---
-            // Preservar hist�rico de quem aprovou o vendedor
+            // --- Vendedores (Aprovacoes) ---
+            // Preservar historico de quem aprovou o vendedor
             builder.Entity<Vendedor>()
                 .HasOne(v => v.ApprovedByAdmin)
                 .WithMany()

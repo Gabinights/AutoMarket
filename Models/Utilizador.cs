@@ -21,8 +21,9 @@ namespace AutoMarket.Models
         [MaxLength(50, ErrorMessage = "Os contactos não podem exceder 50 caracteres.")]
         public string Contacto { get; set; } = string.Empty;
 
-        //Campo para o bloqueio administrativo 
+        //Campos para o bloqueio administrativo 
         public bool IsBlocked { get; set; } = false;
-        public string? BlockReason;    
+        public string? BlockReason { get; set; }    
     }
 }
+

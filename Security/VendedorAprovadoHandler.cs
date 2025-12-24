@@ -36,6 +36,7 @@ namespace AutoMarket.Security
             }
 
             var userId = _userManager.GetUserId(userPrincipal);
+            if (string.IsNullOrEmpty(userId)) return;
 
             // 2. Ir à Base de Dados ver o Status
             var status = await _context.Vendedores

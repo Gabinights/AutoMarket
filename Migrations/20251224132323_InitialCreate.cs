@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AutoMarket.Migrations
 {
     /// <inheritdoc />
-    public partial class ArquiteturaArranjada : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,6 +35,7 @@ namespace AutoMarket.Migrations
                     DataRegisto = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Contacto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     IsBlocked = table.Column<bool>(type: "bit", nullable: false),
+                    BlockReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -202,14 +203,20 @@ namespace AutoMarket.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     NIF = table.Column<string>(type: "nvarchar(9)", maxLength: 9, nullable: true),
-                    IsEmpresa = table.Column<bool>(type: "bit", nullable: false),
+                    TipoConta = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ApprovedByAdminId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ApprovedByAdminId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
                     MotivoRejeicao = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Vendedores", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Vendedores_AspNetUsers_ApprovedByAdminId",
+                        column: x => x.ApprovedByAdminId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Vendedores_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -229,7 +236,7 @@ namespace AutoMarket.Migrations
                     Modelo = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     CategoriaId = table.Column<int>(type: "int", nullable: false),
                     Ano = table.Column<int>(type: "int", nullable: false),
-                    Preco = table.Column<decimal>(type: "money", nullable: false),
+                    Preco = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Km = table.Column<int>(type: "int", nullable: false),
                     Combustivel = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Caixa = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
@@ -247,7 +254,7 @@ namespace AutoMarket.Migrations
                         column: x => x.CategoriaId,
                         principalTable: "Categorias",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Carros_Vendedores_VendedorId",
                         column: x => x.VendedorId,
@@ -264,7 +271,7 @@ namespace AutoMarket.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CaminhoFicheiro = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     ContentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    IsPrincipale = table.Column<bool>(type: "bit", nullable: false),
+                    IsCapa = table.Column<bool>(type: "bit", nullable: false),
                     CarroId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -291,11 +298,17 @@ namespace AutoMarket.Migrations
                     Estado = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DecisaoAdmin = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AnalisadoPorAdminId = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    AnalisadoPorAdminId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Denuncias", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Denuncias_AspNetUsers_AnalisadoPorAdminId",
+                        column: x => x.AnalisadoPorAdminId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Denuncias_AspNetUsers_DenuncianteId",
                         column: x => x.DenuncianteId,
@@ -356,7 +369,7 @@ namespace AutoMarket.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DataTransacao = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ValorPago = table.Column<decimal>(type: "money", nullable: false),
+                    ValorPago = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Metodo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Estado = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     MoradaEnvioSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -438,7 +451,13 @@ namespace AutoMarket.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Compradores_UserId",
                 table: "Compradores",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Denuncias_AnalisadoPorAdminId",
+                table: "Denuncias",
+                column: "AnalisadoPorAdminId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Denuncias_DenuncianteId",
@@ -481,9 +500,15 @@ namespace AutoMarket.Migrations
                 column: "CompradorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Vendedores_ApprovedByAdminId",
+                table: "Vendedores",
+                column: "ApprovedByAdminId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Vendedores_UserId",
                 table: "Vendedores",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
         }
 
         /// <inheritdoc />

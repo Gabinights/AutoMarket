@@ -21,7 +21,7 @@ namespace AutoMarket.Models
         [ForeignKey("DenuncianteId")]
         public Utilizador? Denunciante { get; set; }
 
-        // Alvos (Opcionais na BD, Obrigat�rios na L�gica)
+        // Alvos (Opcionais na BD, Obrigatorios na Logica)
         public int? TargetCarroId { get; set; }
         public Carro? TargetCarro { get; set; }
 
@@ -33,9 +33,9 @@ namespace AutoMarket.Models
         public string Motivo { get; set; } = string.Empty;
 
         public EstadoDenuncia Estado { get; set; } = EstadoDenuncia.Aberta;
-        public DateTime DataCriacao { get; set; } = DateTime.Now;
+        public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
-        // Gest�o Admin
+        // Gestão Admin
         public string? DecisaoAdmin { get; set; }
 
         [StringLength(450)]
@@ -44,7 +44,7 @@ namespace AutoMarket.Models
         [ForeignKey("AnalisadoPorAdminId")]
         public Utilizador? AnalisadoPorAdmin { get; set; }
 
-        // Valida��o: Garante que escolheu pelo menos um alvo
+        // Validação: Garante que escolheu pelo menos um alvo
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (TargetCarroId == null && string.IsNullOrEmpty(TargetUserId))
