@@ -31,11 +31,15 @@ namespace AutoMarket.Data
             // #region 1. Configuracao de Propriedades (Enums & Tipos SQL) 
 
             // Conversao de Enums para String (Legibilidade na BD)
-            builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>();
-            builder.Entity<Carro>().Property(c => c.Estado).HasConversion<string>();
-            builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>();
-            builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>();
-            builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>();
+            builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Vendedor>().Property(v => v.TipoConta).HasConversion<string>().HasMaxLength(50);
+
+            builder.Entity<Carro>().Property(c => c.Estado).HasConversion<string>().HasMaxLength(50);
+
+            builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>().HasMaxLength(50);
+
+            builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>().HasMaxLength(50);
 
             // Tipos SQL Especificos (Money)
             builder.Entity<Carro>().Property(c => c.Preco).HasColumnType("decimal(18,2)");
@@ -54,12 +58,14 @@ namespace AutoMarket.Data
                 .HasIndex(v => v.UserId)
                 .IsUnique();
 
-            // 
+            // NIF unico quando preenchido (NULLs permitidos mas sem duplicados)
             builder.Entity<Utilizador>()
                 .HasIndex(u => u.NIF)
                 .IsUnique()
                 .HasFilter("[NIF] IS NOT NULL");
 
+            // Soft Delete Global Query Filter
+            builder.Entity<Utilizador>().HasQueryFilter(u => !u.IsDeleted);
             // #endregion
 
             // #region 3. Relacoes: Delete CASCADE (Pai morre -> Filhos morrem)

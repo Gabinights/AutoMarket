@@ -25,7 +25,7 @@ namespace AutoMarket.Models
         public int Id { get; set; }
 
         [Display(Name = "Data da Transação")]
-        public DateTime DataTransacao { get; set; } = DateTime.Now;
+        public DateTime DataTransacao { get; set; } = DateTime.UtcNow;
 
         [Required]
         [DataType(DataType.Currency)]

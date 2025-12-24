@@ -152,10 +152,10 @@ namespace AutoMarket.Controllers
                 }
 
                 // 2. Verificar Bloqueio Global
-                if (user.IsBlocked)
+                if (user.IsBlocked || user.IsDeleted)
                 {
                     await _signInManager.SignOutAsync();
-                    ModelState.AddModelError(string.Empty, "Conta bloqueada por um administrador.");
+                    ModelState.AddModelError(string.Empty, "Conta bloqueada ou eliminada.");
                     return View(model);
                 }
 
@@ -259,6 +259,40 @@ namespace AutoMarket.Controllers
             // Vamos buscar o utilizador para garantir que é mesmo um Vendedor
             // (Otimização: Injetar IAuthMessageService aqui se quiseres reenviar email, etc.)
             return View();
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApagarConta()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            // LÓGICA DE SOFT DELETE
+            // 1. Ofuscar dados pessoais (Opcional, mas recomendado por RGPD)
+            // user.Email = $"deleted_{Guid.NewGuid()}@automarket.com";
+            // user.UserName = user.Email;
+            // user.Nome = "Utilizador Eliminado";
+            // user.NIF = null; 
+
+            // 2. Marcar como eliminado
+            user.IsDeleted = true;
+
+            // 3. Atualizar na BD
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                // 4. Fazer Logout forçado
+                await _signInManager.SignOutAsync();
+                _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete).", user.Id);
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Tratar erro...
+            return View("Perfil");
         }
     }
 }

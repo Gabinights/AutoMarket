@@ -37,7 +37,7 @@ namespace AutoMarket.Models.ViewModels
         [Display(Name = "Contacto")]
         public string Contacto { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Por facor, selecione o tipo de conta.")]
+        [Required(ErrorMessage = "Por favor, selecione o tipo de conta.")]
         [Display(Name = "Tipo de Conta")]
         public TipoConta TipoConta { get; set; } = TipoConta.Comprador;
 

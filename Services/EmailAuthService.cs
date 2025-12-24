@@ -37,6 +37,12 @@ namespace AutoMarket.Services
                 // mas no fluxo de Registo existe sempre.
                 // passar o contexto
                 var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext == null)
+                    {
+                        _logger.LogWarning("HttpContext não disponível para renderizar template de email para {Email}", user.Email);
+                        // Consider using the static fallback method or a pre-rendered template
+                        return;
+                    }
 
                 var emailBody = await _emailTemplateService.GenerateEmailConfirmationTemplateAsync(
                     user.Nome,

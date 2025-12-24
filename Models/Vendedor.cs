@@ -4,13 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AutoMarket.Models
 {
-    public enum StatusAprovacao
-    {
-        Pendente = 0,
-        Aprovado = 1,
-        Rejeitado = 2
-    }
-
     public class Vendedor
     {
         [Key] //o Identity já define propriedades com "Id" no nome como Primary Key mas senior developers preferem explicitar na mesma caso o nome da propriedade seja alterado e serve de documentação
@@ -21,7 +14,7 @@ namespace AutoMarket.Models
         public string UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public Utilizador User { get; set; }
+        public Utilizador User { get; set; } = null!;
 
         [Required] // EF já faz por defeito a propriedade enum como NOT NULL na BD mas é boa prática explicitar
         public TipoConta TipoConta { get; set; }

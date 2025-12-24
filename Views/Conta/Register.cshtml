@@ -83,49 +83,53 @@
         <button type="submit" class="btn btn-primary w-100">Registar</button>
     </form>
 </main>
-<script>
-    $(document).ready(function () {
-        // Mapeamento dos valores do Enum (Para ficar legível)
-        // 0 = Comprador, 1 = Vendedor, 2 = Empresa
+@section Scripts {
+	@await Html.PartialAsync("_ValidationScriptsPartial");
 
-        const $radios = $('input[name="TipoConta"]');
-        const $sellerFields = $('#sellerFields');
-        const $nifInput = $('#NIF');
-        const $nifLabel = $('label[for="NIF"]');
-        const $nifHelp = $('#nifHelp');
+	<script>
+		$(document).ready(function () {
+			// Mapeamento dos valores do Enum (Para ficar legível)
+			// 0 = Comprador, 1 = Vendedor, 2 = Empresa
 
-        function atualizarFormulario() {
-            // Obtém o valor do radio selecionado (0, 1 ou 2)
-            const tipoSelecionado = $('input[name="TipoConta"]:checked').val();
+			const $radios = $('input[name="TipoConta"]');
+			const $sellerFields = $('#sellerFields');
+			const $nifInput = $('#NIF');
+			const $nifLabel = $('label[for="NIF"]');
+			const $nifHelp = $('#nifHelp');
 
-            if (tipoSelecionado === '0') {
-                // === COMPRADOR ===
-                $sellerFields.slideUp();
-                $nifInput.val(''); // Limpa o NIF se mudar de ideias
-            }
-            else {
-                // === VENDEDOR OU EMPRESA ===
-                $sellerFields.slideDown();
+			function atualizarFormulario() {
+				// Obtém o valor do radio selecionado (0, 1 ou 2)
+				const tipoSelecionado = $('input[name="TipoConta"]:checked').val();
 
-                // Lógica Específica: Empresa vs Particular
-                if (tipoSelecionado === '2') {
-                    // É Empresa: NIF Obrigatório e Rigoroso
-                    $nifLabel.html('NIF da Empresa <span class="text-danger">*</span>');
-                    $nifInput.attr('placeholder', 'NIF Obrigatório (9 dígitos)');
-                    $nifHelp.text('Empresas são obrigadas a apresentar NIF válido para faturação.');
-                } else {
-                    // É Particular: NIF Opcional (ou conforme a tua regra de negócio)
-                    $nifLabel.html('NIF (Particular)');
-                    $nifInput.attr('placeholder', 'Opcional');
-                    $nifHelp.text('Introduza o NIF se desejar fatura detalhada das taxas de serviço.');
-                }
-            }
-        }
+				if (tipoSelecionado === '0') {
+					// === COMPRADOR ===
+					$sellerFields.slideUp();
+					$nifInput.val(''); // Limpa o NIF se mudar de ideias
+				}
+				else {
+					// === VENDEDOR OU EMPRESA ===
+					$sellerFields.slideDown();
 
-        // Event Listeners
-        $radios.change(atualizarFormulario);
+					// Lógica Específica: Empresa vs Particular
+					if (tipoSelecionado === '2') {
+						// É Empresa: NIF Obrigatório e Rigoroso
+						$nifLabel.html('NIF da Empresa <span class="text-danger">*</span>');
+						$nifInput.attr('placeholder', 'NIF Obrigatório (9 dígitos)');
+						$nifHelp.text('Empresas são obrigadas a apresentar NIF válido para faturação.');
+					} else {
+						// É Particular: NIF Opcional (ou conforme a tua regra de negócio)
+						$nifLabel.html('NIF (Particular)');
+						$nifInput.attr('placeholder', 'Opcional');
+						$nifHelp.text('Introduza o NIF se desejar fatura detalhada das taxas de serviço.');
+					}
+				}
+			}
 
-        // Executar ao carregar a página (para manter o estado se houver erro de validação)
-        atualizarFormulario();
-    });
-</script>
+			// Event Listeners
+			$radios.change(atualizarFormulario);
+
+			// Executar ao carregar a página (para manter o estado se houver erro de validação)
+			atualizarFormulario();
+		});
+	</script>
+}

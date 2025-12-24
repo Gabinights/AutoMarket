@@ -34,6 +34,9 @@ namespace AutoMarket.Models
         //Campos para o bloqueio administrativo 
         public bool IsBlocked { get; set; } = false;
         public string? BlockReason { get; set; }    
+
+        // soft Delete
+        public bool IsDeleted { get; set; } = false;
     }
 }
 
