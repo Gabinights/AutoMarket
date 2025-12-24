@@ -23,11 +23,6 @@ namespace AutoMarket.Models
         [ForeignKey("UserId")]
         public Utilizador User { get; set; }
 
-        // -- Dados de Negócio -- //
-        [StringLength(9, MinimumLength = 9, ErrorMessage = "O NIF deve ter exatamente 9 caracteres.")] // performance (coluna na BD é criada com o número certo de dígitos)
-        [RegularExpression(@"^\d{9}$", ErrorMessage = "O NIF deve conter apenas 9 números")]
-        public string? NIF { get; set; }
-
         [Required] // EF já faz por defeito a propriedade enum como NOT NULL na BD mas é boa prática explicitar
         public TipoConta TipoConta { get; set; }
 
@@ -45,7 +40,7 @@ namespace AutoMarket.Models
         public string? MotivoRejeicao { get; set; } //Motivo da rejeição, se aplicável
 
         //Lista de carros que este vendedor tem à venda
-        public ICollection<Carro> CarrosAVenda { get; set; } = new List<Carro>();
+        public ICollection<Carro> CarrosAVenda { get; set; } = [];
 
         // -- Métodos de Domínio (Lógica de negócio) --
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AutoMarket.Attributes;
 using Microsoft.AspNetCore.Identity;
 
 namespace AutoMarket.Models
@@ -8,10 +9,12 @@ namespace AutoMarket.Models
         [Required(ErrorMessage = "O nome é obrigatório.")]
         [MaxLength(100, ErrorMessage = "O nome não pode exceder 100 caracteres.")]
         [Display(Name = "Nome Completo")]
+        [PersonalData]
         public string Nome { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "A morada é obrigatória.")]
         [MaxLength(200, ErrorMessage = "A morada não pode exceder 200 caracteres.")]
+        [PersonalData]
         public string Morada { get; set; } = string.Empty;
 
         [DataType(DataType.Date)]
@@ -19,7 +22,14 @@ namespace AutoMarket.Models
         public DateTime DataRegisto { get; set; } = DateTime.UtcNow;
 
         [MaxLength(50, ErrorMessage = "Os contactos não podem exceder 50 caracteres.")]
+        [PersonalData]
         public string Contacto { get; set; } = string.Empty;
+
+        [StringLength(9)]
+        [NifPortugues(ErrorMessage = "O NIF introduzido não é válido.")]
+        [PersonalData]
+        public string? NIF { get; set; }
+        // POde ser null se o utilizador ainda não tiver preenchido os dados fiscais
 
         //Campos para o bloqueio administrativo 
         public bool IsBlocked { get; set; } = false;

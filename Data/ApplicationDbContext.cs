@@ -14,6 +14,7 @@ namespace AutoMarket.Data
         // =========================================================
         // DbSets (Tabelas)
         // =========================================================
+        public DbSet<Utilizador> Utilizadores { get; set; }
         public DbSet<Vendedor> Vendedores { get; set; }
         public DbSet<Comprador> Compradores { get; set; }
         public DbSet<Carro> Carros { get; set; }
@@ -29,7 +30,7 @@ namespace AutoMarket.Data
 
             // #region 1. Configuracao de Propriedades (Enums & Tipos SQL) 
 
-            // Convers�o de Enums para String (Legibilidade na BD)
+            // Conversao de Enums para String (Legibilidade na BD)
             builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>();
             builder.Entity<Carro>().Property(c => c.Estado).HasConversion<string>();
             builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>();
@@ -52,6 +53,12 @@ namespace AutoMarket.Data
             builder.Entity<Vendedor>()
                 .HasIndex(v => v.UserId)
                 .IsUnique();
+
+            // 
+            builder.Entity<Utilizador>()
+                .HasIndex(u => u.NIF)
+                .IsUnique()
+                .HasFilter("[NIF] IS NOT NULL");
 
             // #endregion
 
@@ -89,7 +96,7 @@ namespace AutoMarket.Data
                 .HasForeignKey(t => t.CarroId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // --- Den�ncias (Auditoria) ---
+            // --- Denuncias (Auditoria) ---
             // Impedir apagar User se tiver feito denuncias (Opcional, mas boa pratica)
             builder.Entity<Denuncia>()
                 .HasOne(d => d.Denunciante)

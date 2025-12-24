@@ -57,6 +57,7 @@ namespace AutoMarket.Controllers
                     Nome = model.Nome,
                     Morada = model.Morada,
                     PhoneNumber = model.Contacto,
+                    NIF = model.NIF,
                     DataRegisto = DateTime.UtcNow
                 };
 
@@ -71,7 +72,6 @@ namespace AutoMarket.Controllers
                         var vendedor = new Vendedor
                         {
                             UserId = user.Id,
-                            NIF = model.NIF,
                             TipoConta = model.TipoConta,
                             Status = StatusAprovacao.Pendente
                         };
@@ -211,6 +211,45 @@ namespace AutoMarket.Controllers
                 // OPCIONAL: Request Id para debug técnico
                 // RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
             });
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult PreencherDadosFiscais()
+        {
+            return View(); // Uma view simples com um input "NIF"
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PreencherDadosFiscais(DadosFiscaisViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) { return Unauthorized(); }
+            user.NIF = model.NIF; // Grava no perfil para sempre
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+
+            // Se tínhamos uma transação pendente, voltamos para lá
+            if (TempData["ReturnUrl"] is string returnUrl)
+            {
+                TempData.Keep("ReturnUrl");
+                return Redirect(returnUrl); // Volta para o checkout
+            }
+            // Senão, volta para a home
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
