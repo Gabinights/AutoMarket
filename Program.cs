@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using AutoMarket.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -107,7 +108,7 @@ app.UseStatusCodePages(async context =>
     var user = context.HttpContext.User;
 
     // Se for erro 403 (Proibido) e for Vendedor
-    if (response.StatusCode == 403 && user.IsInRole("Vendedor"))
+    if (response.StatusCode == 403 && user.IsInRole(Roles.Vendedor))
     {
         response.Redirect("/Conta/AguardandoAprovacao");
     }

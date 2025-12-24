@@ -194,22 +194,28 @@ namespace AutoMarket.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmarEmail(string userId, string token)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new { Message = "Link de confirmação inválido." }); 
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new ErrorViewModel { Message = "Link de confirmação inválido ou incompleto." }); 
 
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return View("Error", new { Message = "Utilizador não encontrado." });
+            if (user == null) return View("Error", new ErrorViewModel { Message = "Utilizador não encontrado no sistema." });
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
             if (result.Succeeded)
-                return View("EmailConfirmado"); // Cria esta View simples ou redireciona
+                return View("EmailConfirmado");
 
-            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}",
-                userId, string.Join(", ", result.Errors.Select(e => e.Description)));
-            return View("Error", new { Message = "Não foi possível confirmar o email. O link pode ter expirado." });
+            var erros = string.Join(", ", result.Errors.Select(e => e.Description));
+
+            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}",userId, erros);
+            return View("Error", new ErrorViewModel
+            {
+                Message = "Não foi possível confirmar o email. O link pode ter expirado ou já foi utilizado."
+                // OPCIONAL: Request Id para debug técnico
+                // RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
 
         [HttpGet]
-        [Authorize(Roles = "Vendedor")]
+        [Authorize(Roles = Roles.Vendedor)]
         public IActionResult AguardandoAprovacao()
         {
             // Vamos buscar o utilizador para garantir que é mesmo um Vendedor

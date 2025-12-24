@@ -3,16 +3,40 @@
   "WorkspaceRootPath": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\security\\vendedoraprovadohandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:security\\vendedoraprovadohandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\run-script.ps1||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:run-script.ps1||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\.editorconfig||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:.editorconfig||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\.editorconfig||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:.editorconfig||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\controllers\\contacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:controllers\\contacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\views\\shared\\error.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\shared\\error.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\models\\viewmodels\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:models\\viewmodels\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\controllers\\contacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:controllers\\contacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\security\\vendedoraprovadohandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:security\\vendedoraprovadohandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\gabinights\\automarket\\services\\emailauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -79,58 +103,135 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "VendedorAprovadoHandler.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Security\\VendedorAprovadoHandler.cs",
-              "RelativeDocumentMoniker": "Security\\VendedorAprovadoHandler.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Security\\VendedorAprovadoHandler.cs*",
-              "RelativeToolTip": "Security\\VendedorAprovadoHandler.cs*",
-              "ViewState": "AgIAABAAAAAAAAAAAAA0wCwAAAAnAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T17:50:06.776Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "EmailAuthService.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Services\\EmailAuthService.cs",
-              "RelativeDocumentMoniker": "Services\\EmailAuthService.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Services\\EmailAuthService.cs*",
-              "RelativeToolTip": "Services\\EmailAuthService.cs*",
-              "ViewState": "AgIAABYAAAAAAAAAAAAYwC0AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T14:37:17.113Z",
+              "Title": "run-script.ps1",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\run-script.ps1",
+              "RelativeDocumentMoniker": "run-script.ps1",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\run-script.ps1",
+              "RelativeToolTip": "run-script.ps1",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-12-24T10:57:00.721Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
+              "Title": "HomeController.cs",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Controllers\\HomeController.cs",
+              "RelativeDocumentMoniker": "Controllers\\HomeController.cs",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Controllers\\HomeController.cs",
+              "RelativeToolTip": "Controllers\\HomeController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-24T10:52:09.917Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": ".editorconfig",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\.editorconfig",
+              "RelativeDocumentMoniker": ".editorconfig",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\.editorconfig",
+              "RelativeToolTip": ".editorconfig",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-12-24T10:51:28.722Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": ".editorconfig",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\.editorconfig",
+              "RelativeDocumentMoniker": ".editorconfig",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\.editorconfig",
+              "RelativeToolTip": ".editorconfig",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-12-24T10:50:57.711Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Error.cshtml",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Views\\Shared\\Error.cshtml",
+              "RelativeDocumentMoniker": "Views\\Shared\\Error.cshtml",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Views\\Shared\\Error.cshtml",
+              "RelativeToolTip": "Views\\Shared\\Error.cshtml",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-12-24T10:27:43.826Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ErrorViewModel.cs",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Models\\ViewModels\\ErrorViewModel.cs",
+              "RelativeDocumentMoniker": "Models\\ViewModels\\ErrorViewModel.cs",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Models\\ViewModels\\ErrorViewModel.cs",
+              "RelativeToolTip": "Models\\ViewModels\\ErrorViewModel.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAAA0wAgAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-24T10:27:08.586Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "ContaController.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Controllers\\ContaController.cs",
               "RelativeDocumentMoniker": "Controllers\\ContaController.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Controllers\\ContaController.cs*",
-              "RelativeToolTip": "Controllers\\ContaController.cs*",
-              "ViewState": "AgIAAFoAAAAAAAAAAAAwwG8AAAA9AAAAAAAAAA==",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Controllers\\ContaController.cs",
+              "RelativeToolTip": "Controllers\\ContaController.cs",
+              "ViewState": "AgIAADwAAAAAAAAAAAAwwNQAAABSAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-23T13:49:51.604Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 8,
+              "Title": "VendedorAprovadoHandler.cs",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Security\\VendedorAprovadoHandler.cs",
+              "RelativeDocumentMoniker": "Security\\VendedorAprovadoHandler.cs",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Security\\VendedorAprovadoHandler.cs",
+              "RelativeToolTip": "Security\\VendedorAprovadoHandler.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAiwCcAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-23T17:50:06.776Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "EmailAuthService.cs",
+              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Services\\EmailAuthService.cs",
+              "RelativeDocumentMoniker": "Services\\EmailAuthService.cs",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Services\\EmailAuthService.cs",
+              "RelativeToolTip": "Services\\EmailAuthService.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAYwC0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-23T14:37:17.113Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Program.cs*",
-              "RelativeToolTip": "Program.cs*",
-              "ViewState": "AgIAAGMAAAAAAAAAAAAAAG0AAAA9AAAAAAAAAA==",
+              "ToolTip": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAGAAAAAAAAAAAAAAAHIAAAADAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-23T14:47:23.63Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 10,
               "Title": "ApplicationDbContext.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Data\\ApplicationDbContext.cs",
               "RelativeDocumentMoniker": "Data\\ApplicationDbContext.cs",
@@ -138,12 +239,11 @@
               "RelativeToolTip": "Data\\ApplicationDbContext.cs",
               "ViewState": "AgIAAGUAAAAAAAAAAAAwwIYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T12:51:40.224Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T12:51:40.224Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 11,
               "Title": "Register.cshtml",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Views\\Conta\\Register.cshtml",
               "RelativeDocumentMoniker": "Views\\Conta\\Register.cshtml",
@@ -151,12 +251,11 @@
               "RelativeToolTip": "Views\\Conta\\Register.cshtml",
               "ViewState": "AgIAAGYAAAAAAAAAAAAAAIIAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-12-23T13:57:26.477Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T13:57:26.477Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 12,
               "Title": "Carro.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Models\\Carro.cs",
               "RelativeDocumentMoniker": "Models\\Carro.cs",
@@ -164,12 +263,11 @@
               "RelativeToolTip": "Models\\Carro.cs",
               "ViewState": "AgIAAEQAAAAAAAAAAAAzwFUAAABDAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T13:44:31.301Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T13:44:31.301Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 13,
               "Title": "RegisterViewModel.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Models\\ViewModels\\RegisterViewModel.cs",
               "RelativeDocumentMoniker": "Models\\ViewModels\\RegisterViewModel.cs",
@@ -177,12 +275,11 @@
               "RelativeToolTip": "Models\\ViewModels\\RegisterViewModel.cs",
               "ViewState": "AgIAAB8AAAAAAAAAAAAuwDIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T13:46:43.703Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T13:46:43.703Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 14,
               "Title": "VendedorAprovadoRequirement.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Security\\VendedorAprovadoRequirement.cs",
               "RelativeDocumentMoniker": "Security\\VendedorAprovadoRequirement.cs",
@@ -190,12 +287,11 @@
               "RelativeToolTip": "Security\\VendedorAprovadoRequirement.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T17:48:49.887Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T17:48:49.887Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 15,
               "Title": "AguardandoAprovacao.cshtml",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Views\\Conta\\AguardandoAprovacao.cshtml",
               "RelativeDocumentMoniker": "Views\\Conta\\AguardandoAprovacao.cshtml",
@@ -203,12 +299,11 @@
               "RelativeToolTip": "Views\\Conta\\AguardandoAprovacao.cshtml",
               "ViewState": "AgIAAAwAAAAAAAAAAAAAACYAAAAGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-12-23T17:42:09.465Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T17:42:09.465Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 16,
               "Title": "EstadoCarro.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Models\\Enums\\EstadoCarro.cs",
               "RelativeDocumentMoniker": "Models\\Enums\\EstadoCarro.cs",
@@ -216,12 +311,11 @@
               "RelativeToolTip": "Models\\Enums\\EstadoCarro.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T17:10:43.716Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T17:10:43.716Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 17,
               "Title": "NifPortuguesAttribute.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Attributes\\NifPortuguesAttribute.cs",
               "RelativeDocumentMoniker": "Attributes\\NifPortuguesAttribute.cs",
@@ -229,12 +323,11 @@
               "RelativeToolTip": "Attributes\\NifPortuguesAttribute.cs",
               "ViewState": "AgIAABMAAAAAAAAAAAAYwC4AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T15:45:26.252Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T15:45:26.252Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 18,
               "Title": "IEmailAuthService.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Services\\Interfaces\\IEmailAuthService.cs",
               "RelativeDocumentMoniker": "Services\\Interfaces\\IEmailAuthService.cs",
@@ -242,12 +335,11 @@
               "RelativeToolTip": "Services\\Interfaces\\IEmailAuthService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAABTAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T14:34:53.89Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T14:34:53.89Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 19,
               "Title": "TipoConta.cs",
               "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket\\Models\\Enums\\TipoConta.cs",
               "RelativeDocumentMoniker": "Models\\Enums\\TipoConta.cs",
@@ -255,8 +347,7 @@
               "RelativeToolTip": "Models\\Enums\\TipoConta.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-23T13:43:07.584Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-23T13:43:07.584Z"
             }
           ]
         }

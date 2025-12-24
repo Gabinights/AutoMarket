@@ -38,7 +38,6 @@ namespace AutoMarket.Security
             var userId = _userManager.GetUserId(userPrincipal);
 
             // 2. Ir à Base de Dados ver o Status
-            // Usamos AsNoTracking() porque é só leitura e é mais rápido
             var status = await _context.Vendedores
                 .Where(v => v.UserId == userId)
                 .Select(v => v.Status)
