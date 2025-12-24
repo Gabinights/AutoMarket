@@ -193,7 +193,7 @@ namespace AutoMarket.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmarEmail(string userId, string token)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new ErrorViewModel { Message = "Link de confirmação inválido ou incompleto." }); 
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new ErrorViewModel { Message = "Link de confirmação inválido ou incompleto." });
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return View("Error", new ErrorViewModel { Message = "Utilizador não encontrado no sistema." });
@@ -204,7 +204,7 @@ namespace AutoMarket.Controllers
 
             var erros = string.Join(", ", result.Errors.Select(e => e.Description));
 
-            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}",userId, erros);
+            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}", userId, erros);
             return View("Error", new ErrorViewModel
             {
                 Message = "Não foi possível confirmar o email. O link pode ter expirado ou já foi utilizado."
@@ -217,13 +217,17 @@ namespace AutoMarket.Controllers
         [Authorize]
         public IActionResult PreencherDadosFiscais()
         {
-            return View(); // Uma view simples com um input "NIF"
+            if (TempData["ReturnUrl"] != null)
+            { 
+                ViewBag.ReturnUrl = TempData["ReturnUrl"];
+            } 
+            return View();
         }
 
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PreencherDadosFiscais(DadosFiscaisViewModel model)
+        public async Task<IActionResult> PreencherDadosFiscais(DadosFiscaisViewModel model, string? returnUrl = null)
         {
             if (!ModelState.IsValid) return View(model);
 
@@ -239,16 +243,21 @@ namespace AutoMarket.Controllers
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
+                ViewBag.ReturnUrl = returnUrl;
                 return View(model);
             }
 
-            // Se tínhamos uma transação pendente, voltamos para lá
-            if (TempData["ReturnUrl"] is string returnUrl)
+            // Redirecionar para a URL original se existir (input hidden na View)
+            if (!string.IsNullOrEmpty(returnUrl))
             {
-                TempData.Keep("ReturnUrl");
-                return Redirect(returnUrl); // Volta para o checkout
+                return Redirect(returnUrl);
             }
-            // Senão, volta para a home
+            // Fallback de segurança para TempData (caso exista)
+            if (TempData["ReturnUrl"] is string tUrl)
+            {
+                return Redirect(tUrl);
+            }
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -269,32 +278,53 @@ namespace AutoMarket.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            // LÓGICA DE SOFT DELETE
-            // 1. Ofuscar dados pessoais (Opcional, mas recomendado por RGPD)
-            // user.Email = $"deleted_{Guid.NewGuid()}@automarket.com";
-            // user.UserName = user.Email;
-            // user.Nome = "Utilizador Eliminado";
-            // user.NIF = null; 
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // 2. Marcar como eliminado
-            user.IsDeleted = true;
-
-            // 3. Atualizar na BD
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
+            try
             {
-                // 4. Fazer Logout forçado
+                // --- SOFT DELETE DO USER ---
+                user.IsDeleted = true;
+                // Opcional: Limpar dados sensíveis agora para cumprir RGPD imediatamente
+
+                var resultUser = await _userManager.UpdateAsync(user);
+                if (!resultUser.Succeeded)
+                {
+                    return View("Error", new ErrorViewModel
+                    {
+                        Message = "Erro ao eliminar conta. Por favor, tente novamente."
+                    });
+                }
+
+                // --- DESATIVAR VENDEDOR ---
+                var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.UserId == user.Id);
+
+                if (vendedor != null)
+                {
+                    // Mudar status para Rejeitado para impedir novas vendas
+                    // garante que os carros não aparecem na listagem
+                    // se as queries filtrarem por v.Status == Aprovado
+                    vendedor.Status = StatusAprovacao.Rejeitado;
+                    vendedor.MotivoRejeicao = "Conta eliminada pelo utilizador.";
+
+                    _context.Vendedores.Update(vendedor);
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+
+                // Logout e Redirect
                 await _signInManager.SignOutAsync();
-                _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete).", user.Id);
+                _logger.LogInformation("Utilizador {Id} apagou a conta / Perfil de vendedor desativado.", user.Id);
 
                 return RedirectToAction("Index", "Home");
             }
-
-            // Tratar erro...
-            return View("Perfil");
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Erro ao apagar conta do utilizador {Id}", user.Id);
+                return StatusCode(500, "Ocorreu um erro ao apagar a conta. Tente novamente mais tarde.");
+            }
         }
     }
 }
-
 

@@ -24,8 +24,9 @@ namespace AutoMarket.Controllers
         public async Task<IActionResult> Checkout(int id) // id do Carro
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) { return Challenge(); } // Nunca deve acontecer devido ao [Authorize]
 
-            // === A TUA LÓGICA DE VALIDAÇÃO ===
+            // === LÓGICA DE VALIDAÇÃO ===
             if (string.IsNullOrEmpty(user.NIF))
             {
                 // Guardamos a URL atual completa para voltar exatamente aqui

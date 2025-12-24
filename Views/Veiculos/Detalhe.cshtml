@@ -5,10 +5,8 @@
 }
 <header>
     <div class="nav">
-        <!-- <a href="/" class="logo">AutoMarket</a> redundante removido -->
         <nav>
             <ul>
-                <!-- <li><a href="/">Início</a></li> redundante removido -->
                 <li><a href="/Veiculos">Veículos</a></li>
                 <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
                 <li><a href="/Home/Sobre">Sobre</a></li>
@@ -68,10 +66,20 @@
         <aside style="flex:1;min-width:260px;">
             <div style="background: #fff; padding:2rem 1rem;border-radius:6px;box-shadow:0 2px 8px #00214710;margin-bottom: 1.5rem;">
                 <h2>Sobre o Vendedor</h2>
-                <div><b>Stand AutoLis</b></div>
-                <div>Localização: Lisboa</div>
-                <div>Tel: 912345678</div>
-                <div>Email: vendedor@exemplo.pt</div>
+
+                @if (Model.Vendedor?.User != null)
+                {
+                    <div><b>@(Model.Vendedor.User.Nome ?? "Nome Indisponível")</b></div>
+                    <div>Localização: @(Model.Vendedor.User.Morada ?? "Localização não indicada")</div>
+                    <div>Email: @Model.Vendedor.User.Email</div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <b>Vendedor Indisponível</b><br />
+                        Este utilizador já não se encontra ativo na plataforma.
+                    </div>
+                }
             </div>
         </aside>
     </section>
