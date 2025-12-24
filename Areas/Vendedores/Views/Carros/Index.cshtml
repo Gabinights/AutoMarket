@@ -1,0 +1,144 @@
+@model IEnumerable<AutoMarket.Models.Veiculo>
+@{
+    ViewData["Title"] = "Meus Carros";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-main">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>Meus Carros</h1>
+        <a asp-action="Create" class="btn-cta">+ Novo Carro</a>
+    </div>
+
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success" role="alert">
+            @TempData["Sucesso"]
+        </div>
+    }
+
+    @if (TempData["Erro"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @TempData["Erro"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="card card-lg">
+            <p style="text-align: center; color: #666;">Ainda não tem carros publicados.</p>
+            <p style="text-align: center;">
+                <a asp-action="Create" class="btn-cta">Publicar o seu primeiro carro</a>
+            </p>
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Marca & Modelo</th>
+                    <th>Matrícula</th>
+                    <th>Preço</th>
+                    <th>Estado</th>
+                    <th>Data Criação</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var veiculo in Model)
+                {
+                    <tr>
+                        <td>@veiculo.Marca @veiculo.Modelo</td>
+                        <td><code>@veiculo.Matricula</code></td>
+                        <td>€@veiculo.Preco.ToString("F2")</td>
+                        <td>
+                            @switch (veiculo.Estado)
+                            {
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Ativo:
+                                    <span class="status-badge status-active">Ativo</span>
+                                    break;
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Vendido:
+                                    <span class="status-badge" style="background: #d1e7dd; color: #0f5132;">Vendido</span>
+                                    break;
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Arquivado:
+                                    <span class="status-badge status-paused">Arquivado</span>
+                                    break;
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Removido:
+                                    <span class="status-badge" style="background: #f8d7da; color: #842029;">Removido</span>
+                                    break;
+                            }
+                        </td>
+                        <td>@veiculo.DataCriacao.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@veiculo.Id" class="btn btn-sm btn-primary" title="Editar">
+                                ?
+                            </a>
+                            @if (veiculo.Estado != AutoMarket.Models.Enums.EstadoVeiculo.Removido)
+                            {
+                                <a asp-action="Delete" asp-route-id="@veiculo.Id" class="btn btn-sm btn-danger" title="Remover">
+                                    ?
+                                </a>
+                            }
+                            <a asp-action="Details" asp-route-id="@veiculo.Id" class="btn btn-sm btn-info" title="Detalhes">
+                                ??
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<style>
+    .table {
+        margin-top: 1rem;
+        border-collapse: collapse;
+        width: 100%;
+    }
+    .table thead {
+        background: var(--cor-primaria);
+        color: #fff;
+    }
+    .table th, .table td {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    .table tbody tr:hover {
+        background: #f9f9f9;
+    }
+    .btn {
+        padding: 0.4rem 0.8rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-primary { background: #0066cc; color: #fff; }
+    .btn-primary:hover { background: #0052a3; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-info { background: #17a2b8; color: #fff; }
+    .btn-info:hover { background: #138496; }
+    .btn-sm { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+    .alert {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+    }
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>

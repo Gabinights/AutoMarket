@@ -1,0 +1,132 @@
+@model AutoMarket.Models.Veiculo
+@{
+    ViewData["Title"] = $"{Model.Marca} {Model.Modelo} - Detalhes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-main" style="max-width: 800px;">
+    <div style="margin-bottom: 2rem;">
+        <a asp-action="Index" class="btn-primario" style="padding: 0.5rem 1rem; text-decoration: none; display: inline-block;">
+            ? Voltar para a lista
+        </a>
+    </div>
+
+    <div class="card card-lg">
+        <h1 style="margin-bottom: 1rem;">@Model.Marca @Model.Modelo</h1>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <!-- Informações Principais -->
+            <div>
+                <h2 style="font-size: 1.5rem; color: var(--cor-cta); margin-bottom: 1rem;">€@Model.Preco.ToString("F2")</h2>
+
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #eee; padding: 0.5rem 0;">
+                        <td style="padding: 0.5rem 0;"><strong>Matrícula:</strong></td>
+                        <td style="padding: 0.5rem 0;"><code>@Model.Matricula</code></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Ano:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Ano</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Quilometros:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Quilometros?.ToString("N0") km</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Condição:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Condicao</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Estado:</strong></td>
+                        <td style="padding: 0.5rem 0;">
+                            @switch (Model.Estado)
+                            {
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Ativo:
+                                    <span class="status-badge status-active">Ativo</span>
+                                    break;
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Vendido:
+                                    <span class="status-badge" style="background: #d1e7dd; color: #0f5132;">Vendido</span>
+                                    break;
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Arquivado:
+                                    <span class="status-badge status-paused">Arquivado</span>
+                                    break;
+                                case AutoMarket.Models.Enums.EstadoVeiculo.Removido:
+                                    <span class="status-badge" style="background: #f8d7da; color: #842029;">Removido</span>
+                                    break;
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Especificações -->
+            <div>
+                <h3 style="margin-bottom: 1rem;">Especificações</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Combustível:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Combustivel</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Caixa:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Caixa</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Potência:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Potencia cv</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Cor:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Cor</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.5rem 0;"><strong>Categoria:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Categoria</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem 0;"><strong>Portas:</strong></td>
+                        <td style="padding: 0.5rem 0;">@Model.Portas</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Descricao))
+        {
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 6px; margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Descrição</h3>
+                <p>@Model.Descricao</p>
+            </div>
+        }
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 2rem;">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-primario" style="padding: 0.6rem 1.5rem; text-decoration: none; display: inline-block;">
+                ? Editar
+            </a>
+            @if (Model.Estado != AutoMarket.Models.Enums.EstadoVeiculo.Removido)
+            {
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn-danger" style="padding: 0.6rem 1.5rem; background: #dc3545; color: #fff; text-decoration: none; border-radius: 4px; display: inline-block;">
+                    ? Remover
+                </a>
+            }
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee; font-size: 0.9rem; color: #666;">
+            <p><strong>Criado em:</strong> @Model.DataCriacao.ToString("dd/MM/yyyy HH:mm")</p>
+            @if (Model.DataModificacao.HasValue)
+            {
+                <p><strong>Última modificação:</strong> @Model.DataModificacao.Value.ToString("dd/MM/yyyy HH:mm")</p>
+            }
+            @if (Model.DataRemocao.HasValue)
+            {
+                <p><strong>Removido em:</strong> @Model.DataRemocao.Value.ToString("dd/MM/yyyy HH:mm")</p>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-danger:hover {
+        background: #c82333 !important;
+    }
+</style>

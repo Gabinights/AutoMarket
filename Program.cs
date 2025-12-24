@@ -69,6 +69,27 @@ builder.Services.AddScoped<ViewRenderService>();
 // Adiciona o serviço de templates de email
 builder.Services.AddScoped<EmailTemplateService>();
 
+// Adicionar políticas de autorização
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("VendedorAprovado", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var user = context.User;
+            if (!user.Identity?.IsAuthenticated ?? false)
+                return false;
+
+            // Verifica se o utilizador tem email confirmado
+            if (!user.HasClaim(c => c.Type == "email_verified" && c.Value == "true"))
+            {
+                // Fallback: Verificar se email foi confirmado no AspNetUsers
+                return user.Claims.Any(c => c.Type == System.Security.Claims.ClaimTypes.Email);
+            }
+
+            return true;
+        }));
+});
+
 var app = builder.Build();
 
 
@@ -96,5 +117,10 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapAreaControllerRoute(
+    name: "vendedores",
+    areaName: "Vendedores",
+    pattern: "Vendedores/{controller=Carros}/{action=Index}/{id?}");
 
 app.Run();
