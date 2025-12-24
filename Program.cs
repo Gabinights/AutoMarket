@@ -5,10 +5,8 @@ using AutoMarket.Security;
 using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
+using Microsoft.AspNetCore.Http;
 using AutoMarket.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -102,7 +100,7 @@ app.UseRequestLocalization(localizationOptions);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStatusCodePages(async context =>
+app.UseStatusCodePages(context =>
 {
     var response = context.HttpContext.Response;
     var user = context.HttpContext.User;
@@ -112,6 +110,7 @@ app.UseStatusCodePages(async context =>
     {
         response.Redirect("/Conta/AguardandoAprovacao");
     }
+    return Task.CompletedTask;
 });
 
 app.MapControllerRoute(
