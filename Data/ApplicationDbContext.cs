@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+ï»¿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using AutoMarket.Models;
 
@@ -29,22 +29,22 @@ namespace AutoMarket.Data
 
             // #region 1. Configuracao de Propriedades (Enums & Tipos SQL) 
 
-            // Conversão de Enums para String (Legibilidade na BD)
+            // Conversï¿½o de Enums para String (Legibilidade na BD)
             builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>();
             builder.Entity<Carro>().Property(c => c.Estado).HasConversion<string>();
             builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>();
             builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>();
             builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>();
 
-            // Tipos SQL Específicos (Money)
+            // Tipos SQL Especï¿½ficos (Money)
             builder.Entity<Carro>().Property(c => c.Preco).HasColumnType("decimal(18,2)");
             builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("decimal(18,2)");
 
             // #endregion
 
-            // #region 2. Índices e Restrições (Unicidade)
+            // #region 2. ï¿½ndices e Restriï¿½ï¿½es (Unicidade)
 
-            // Garante relação 1:1 estrita (Um User só pode ter 1 perfil de cada tipo)
+            // Garante relaï¿½ï¿½o 1:1 estrita (Um User sï¿½ pode ter 1 perfil de cada tipo)
             builder.Entity<Comprador>()
                 .HasIndex(c => c.UserId)
                 .IsUnique();
@@ -55,7 +55,7 @@ namespace AutoMarket.Data
 
             // #endregion
 
-            // #region 3. Relações: Delete CASCADE (Pai morre -> Filhos morrem)
+            // #region 3. Relaï¿½ï¿½es: Delete CASCADE (Pai morre -> Filhos morrem)
 
             // Se apagar Vendedor -> Apaga os seus Carros
             builder.Entity<Carro>()
@@ -73,10 +73,10 @@ namespace AutoMarket.Data
 
             // #endregion
 
-            // #region 4. Relações: Delete RESTRICT (Segurança & Histórico)
+            // #region 4. Relaï¿½ï¿½es: Delete RESTRICT (Seguranï¿½a & Histï¿½rico)
 
-            // --- Transações (Financeiro) ---
-            // Impedir apagar Comprador ou Carro se houver histórico financeiro
+            // --- Transaï¿½ï¿½es (Financeiro) ---
+            // Impedir apagar Comprador ou Carro se houver histï¿½rico financeiro
             builder.Entity<Transacao>()
                 .HasOne(t => t.Comprador)
                 .WithMany()
@@ -89,23 +89,23 @@ namespace AutoMarket.Data
                 .HasForeignKey(t => t.CarroId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // --- Denúncias (Auditoria) ---
-            // Impedir apagar User se tiver feito denúncias (Opcional, mas boa prática)
+            // --- Denï¿½ncias (Auditoria) ---
+            // Impedir apagar User se tiver feito denï¿½ncias (Opcional, mas boa prï¿½tica)
             builder.Entity<Denuncia>()
                 .HasOne(d => d.Denunciante)
                 .WithMany()
                 .HasForeignKey(d => d.DenuncianteId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Impedir apagar Admin se ele resolveu denúncias (Preservar auditoria)
+            // Impedir apagar Admin se ele resolveu denï¿½ncias (Preservar auditoria)
             builder.Entity<Denuncia>()
                 .HasOne(d => d.AnalisadoPorAdmin)
                 .WithMany()
                 .HasForeignKey(d => d.AnalisadoPorAdminId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // --- Vendedores (Aprovações) ---
-            // Preservar histórico de quem aprovou o vendedor
+            // --- Vendedores (Aprovaï¿½ï¿½es) ---
+            // Preservar histï¿½rico de quem aprovou o vendedor
             builder.Entity<Vendedor>()
                 .HasOne(v => v.ApprovedByAdmin)
                 .WithMany()

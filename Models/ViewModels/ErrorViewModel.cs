@@ -1,4 +1,4 @@
-namespace AutoMarket.Models.ViewModels
+﻿namespace AutoMarket.Models.ViewModels
 {
     public class ErrorViewModel
     {

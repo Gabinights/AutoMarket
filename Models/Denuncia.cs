@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+ï»¿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AutoMarket.Models
@@ -21,21 +21,21 @@ namespace AutoMarket.Models
         [ForeignKey("DenuncianteId")]
         public Utilizador? Denunciante { get; set; }
 
-        // Alvos (Opcionais na BD, Obrigatórios na Lógica)
+        // Alvos (Opcionais na BD, Obrigatï¿½rios na Lï¿½gica)
         public int? TargetCarroId { get; set; }
         public Carro? TargetCarro { get; set; }
 
         public string? TargetUserId { get; set; }
         public Utilizador? TargetUser { get; set; }
 
-        [Required(ErrorMessage = "O motivo é obrigatório.")]
+        [Required(ErrorMessage = "O motivo ï¿½ obrigatï¿½rio.")]
         [StringLength(500)]
         public string Motivo { get; set; } = string.Empty;
 
         public EstadoDenuncia Estado { get; set; } = EstadoDenuncia.Aberta;
         public DateTime DataCriacao { get; set; } = DateTime.Now;
 
-        // Gestão Admin
+        // Gestï¿½o Admin
         public string? DecisaoAdmin { get; set; }
 
         [StringLength(450)]
@@ -44,13 +44,13 @@ namespace AutoMarket.Models
         [ForeignKey("AnalisadoPorAdminId")]
         public Utilizador? AnalisadoPorAdmin { get; set; }
 
-        // Validação: Garante que escolheu pelo menos um alvo
+        // Validaï¿½ï¿½o: Garante que escolheu pelo menos um alvo
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (TargetCarroId == null && string.IsNullOrEmpty(TargetUserId))
             {
                 yield return new ValidationResult(
-                    "Tem de denunciar um Veículo ou um Utilizador.",
+                    "Tem de denunciar um Veï¿½culo ou um Utilizador.",
                     new[] { nameof(TargetCarroId), nameof(TargetUserId) }
                 );
             }

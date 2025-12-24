@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+ï»¿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AutoMarket.Models
@@ -27,7 +27,7 @@ namespace AutoMarket.Models
         [ForeignKey("DestinatarioId")]
         public Utilizador Destinatario { get; set; }
 
-        // Contexto: Sobre que carro estão a falar?
+        // Contexto: Sobre que carro estï¿½o a falar?
         public int? CarroId { get; set; }
         public Carro? Carro { get; set; }
     }

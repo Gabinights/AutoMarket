@@ -1,4 +1,4 @@
-using AutoMarket.Models.ViewModels;
+﻿using AutoMarket.Models.ViewModels;
 
 namespace AutoMarket.Services
 {
