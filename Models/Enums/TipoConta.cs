@@ -1,4 +1,4 @@
-﻿namespace AutoMarket.Models.Enums
+namespace AutoMarket.Models.Enums
 {
     public enum TipoConta
     {

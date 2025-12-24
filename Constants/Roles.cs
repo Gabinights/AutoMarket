@@ -1,4 +1,4 @@
-﻿namespace AutoMarket.Constants
+namespace AutoMarket.Constants
 {
     public static class Roles
     {

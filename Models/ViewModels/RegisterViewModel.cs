@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using AutoMarket.Models.Enums;
 using AutoMarket.Attributes;
 
@@ -37,12 +37,9 @@ namespace AutoMarket.Models.ViewModels
         [Display(Name = "Contacto")]
         public string Contacto { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Por facor, selecione o tipo de conta.")]
         [Display(Name = "Tipo de Conta")]
-        [Required]
         public TipoConta TipoConta { get; set; } = TipoConta.Comprador;
-
-        [Display(Name = "Sou uma Empresa/Stand?")]
-        public bool IsEmpresa { get; set; } //TODO: Atualizar View
 
         // --- Campos específicos para Vendedor --- (Nullable para não dar erro de validação ao comprador)
         [Display(Name ="NIF")]

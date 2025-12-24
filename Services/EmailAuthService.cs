@@ -1,4 +1,4 @@
-﻿using AutoMarket.Models;
+using AutoMarket.Models;
 using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 

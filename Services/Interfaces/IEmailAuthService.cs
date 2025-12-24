@@ -1,4 +1,4 @@
-﻿using AutoMarket.Models;
+using AutoMarket.Models;
 
 namespace AutoMarket.Services.Interfaces
 {

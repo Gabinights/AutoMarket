@@ -1,7 +1,7 @@
 ﻿root = true
 
 [*]
-charset = utf-8-bom
+charset = utf-8  <-- MUDAR DE utf-8-bom PARA utf-8
 end_of_line = crlf
 indent_style = space
 indent_size = 4
@@ -13,4 +13,3 @@ indent_size = 2
 
 [*.xml]
 indent_size = 2
-

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AutoMarket.Models
@@ -28,7 +28,7 @@ namespace AutoMarket.Models
         public string? TargetUserId { get; set; }
         public Utilizador? TargetUser { get; set; }
 
-        [Required(ErrorMessage = "O motivo � obrigat�rio.")]
+        [Required(ErrorMessage = "O motivo é obrigatório.")]
         [StringLength(500)]
         public string Motivo { get; set; } = string.Empty;
 
@@ -50,7 +50,7 @@ namespace AutoMarket.Models
             if (TargetCarroId == null && string.IsNullOrEmpty(TargetUserId))
             {
                 yield return new ValidationResult(
-                    "Tem de denunciar um Ve�culo ou um Utilizador.",
+                    "Tem de denunciar um Veículo ou um Utilizador.",
                     new[] { nameof(TargetCarroId), nameof(TargetUserId) }
                 );
             }

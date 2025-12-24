@@ -1,4 +1,4 @@
-﻿using AutoMarket.Constants;
+using AutoMarket.Constants;
 using AutoMarket.Data;
 using AutoMarket.Models;
 using AutoMarket.Models.Enums;
@@ -73,7 +73,7 @@ namespace AutoMarket.Controllers
                         {
                             UserId = user.Id,
                             NIF = model.NIF,
-                            IsEmpresa = model.TipoConta == TipoConta.Empresa,
+                            TipoConta = model.TipoConta,
                             Status = StatusAprovacao.Pendente
                         };
                         _context.Vendedores.Add(vendedor);

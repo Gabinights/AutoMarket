@@ -1,4 +1,4 @@
-﻿// AutoMarket JS
+// AutoMarket JS
 // Interatividade inicial (abas, formulários, etc.)
 
 document.addEventListener('DOMContentLoaded', function() {

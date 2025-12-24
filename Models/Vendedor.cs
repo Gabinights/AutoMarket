@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using AutoMarket.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AutoMarket.Models
@@ -27,9 +28,8 @@ namespace AutoMarket.Models
         [RegularExpression(@"^\d{9}$", ErrorMessage = "O NIF deve conter apenas 9 números")]
         public string? NIF { get; set; }
 
-        //Dados específicos do Vendedor
-        [Display(Name = "É Empresa?")]
-        public bool IsEmpresa { get; set; } //Indica se o vendedor é uma empresa (=true) ou um particular (=false)
+        [Required] // EF já faz por defeito a propriedade enum como NOT NULL na BD mas é boa prática explicitar
+        public TipoConta TipoConta { get; set; }
 
         //Gestão de Aprovação - usado no backoffice admin  
         public StatusAprovacao Status { get; set; } = StatusAprovacao.Pendente;

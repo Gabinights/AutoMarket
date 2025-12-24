@@ -1,4 +1,4 @@
-﻿namespace AutoMarket.Services
+namespace AutoMarket.Services
 {
     /// <summary>
     /// Interface for sending emails.

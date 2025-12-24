@@ -1,4 +1,4 @@
-﻿using AutoMarket.Data;
+using AutoMarket.Data;
 using AutoMarket.Constants;
 using AutoMarket.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
