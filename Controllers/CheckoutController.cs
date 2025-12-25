@@ -1,7 +1,8 @@
-﻿using AutoMarket.Controllers;
-using AutoMarket.Data;
+﻿using AutoMarket.Data;
 using AutoMarket.Models;
+using AutoMarket.Models.Enums;
 using AutoMarket.Models.ViewModels;
+using AutoMarket.Services;
 using AutoMarket.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -16,22 +17,27 @@ namespace AutoMarket.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
+        private readonly ICarrinhoService _carrinhoService;
 
         public CheckoutController(
             ApplicationDbContext context,
-            UserManager<Utilizador> userManager)
+            UserManager<Utilizador> userManager,
+            ICarrinhoService carrinhoService)
         {
             _context = context;
             _userManager = userManager;
+            _carrinhoService = carrinhoService;
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Conta");
 
-            // Criar o ViewModel
+            var carrinhoItens = _carrinhoService.GetItens();
+            if (!carrinhoItens.Any()) return RedirectToAction("Index", "Carrinho");
+
             var model = new CheckoutViewModel
             {
                 // Pré-preenchemos com os dados do perfil para facilitar a vida ao user
@@ -39,69 +45,111 @@ namespace AutoMarket.Controllers
 
                 // Se o user já tiver NIF no perfil, ativamos a opção de fatura e preenchemos
                 NifFaturacao = user.NIF,
-                QueroFaturaComNif = !string.IsNullOrEmpty(user.NIF)
+                QueroFaturaComNif = !string.IsNullOrEmpty(user.NIF),
+                ValorTotal = _carrinhoService.GetTotal()
             };
 
             return View(model);
         }
 
-        /*
-
-        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessarCompra(CheckoutViewModel model)
         {
+            if (_carrinhoService.GetContagem() == 0) return RedirectToAction("Index", "Carrinho");
+
+            // 1. Validação inicial do Modelo (inclui a lógica do NIF que definimos antes)
             if (!ModelState.IsValid)
             {
+                model.ValorTotal = _carrinhoService.GetTotal();
                 return View("Index", model);
             }
 
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Conta");
 
-            // 1. Criar a Encomenda (Snapshot dos dados atuais)
-            var encomenda = new Encomenda
+            // 2. Obter o Perfil de Comprador
+            // (O User é o login, o Comprador é a entidade de negócio. Precisamos do ID do Comprador)
+            var comprador = await _context.Compradores
+                                          .FirstOrDefaultAsync(c => c.UserId == user.Id);
+
+            if (comprador == null)
             {
-                UserId = user.Id,
-                Data = DateTime.UtcNow,
-                Estado = EstadoEncomenda.Pendente,
-                Total = _carrinhoService.GetTotal(), // Exemplo
+                comprador = new Comprador { UserId = user.Id };
+                _context.Add(comprador);
+                await _context.SaveChangesAsync();
+            }
 
-                // DADOS FISCAIS DA TRANSAÇÃO (Ficam aqui para sempre)
-                NifFaturacao = model.QueroFaturaComNif ? model.NifFaturacao : null,
-                NomeFaturacao = model.QueroFaturaComNif ? model.NomeFaturacao : model.NomeCompleto,
-                MoradaEntrega = model.Morada + ", " + model.CodigoPostal
+            // 3. Obter o Carro (O ID deve vir do ViewModel, Hidden Input ou CarrinhoService)
+            // Assumindo que tens o CarroId no model ou serviço
+            // var carroId = model.CarroId; ou _carrinhoService.GetCarroId();
+            // Exemplo usando um serviço de carrinho fictício:
+            var itemCarrinho = _carrinhoService.GetItens().FirstOrDefault();
+            if (itemCarrinho == null) return RedirectToAction("Index", "Carrinho");
+
+            // 4. Criar a Transação (Mapeamento)
+            var transacao = new Transacao
+            {
+                DataTransacao = DateTime.UtcNow,
+                ValorTotal = itemCarrinho.Preco,
+                MetodoPagamento = model.MetodoPagamento, // Vem do CheckoutViewModel
+                Estado = EstadoTransacao.Pendente,
+
+                // RELAÇÕES
+                CompradorId = comprador.Id,
+                CarroId = itemCarrinho.CarroId,
+
+                // SNAPSHOTS (O segredo da faturação correta)
+                // Se pediu fatura com NIF, usamos os dados do form. Se não, usamos dados genéricos ou do user.
+                NomeFaturacao = model.QueroFaturaComNif && !string.IsNullOrEmpty(model.NomeFaturacao)
+                                ? model.NomeFaturacao
+                                : model.NomeCompleto,
+
+                NifFaturacao = model.QueroFaturaComNif
+                               ? model.NifFaturacao
+                               : null, // Null = Consumidor Final
+
+                MoradaSnapshot = $"{model.Morada}, {model.CodigoPostal}",
+                Observacoes = "Compra online"
             };
 
-            // 2. (Opcional) Atualizar o Perfil do User "Silenciosamente"
-            // Se o user forneceu um NIF válido agora e não tinha nenhum no perfil, guardamos para a próxima.
+            // 5. (Opcional) Atualizar o Perfil do User "Silenciosamente"
+            // Guardamos o NIF no perfil para a próxima vez ser automático
             if (model.QueroFaturaComNif && string.IsNullOrEmpty(user.NIF) && !string.IsNullOrEmpty(model.NifFaturacao))
             {
                 user.NIF = model.NifFaturacao;
+                // Não validamos o resultado aqui para não bloquear a venda por erro de perfil
                 await _userManager.UpdateAsync(user);
             }
 
-            _context.Encomendas.Add(encomenda);
-            await _context.SaveChangesAsync();
-
-            // Limpar carrinho, enviar email, etc.
-            return RedirectToAction("Sucesso");
-        }
-                */
-
-        /*
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (QueroFaturaComNif)
+            // 6. Persistência
+            try
             {
-                if (string.IsNullOrWhiteSpace(NifFaturacao))
-                    yield return new ValidationResult("Insira o NIF", new[] { nameof(NifFaturacao) });
+                _context.Transacoes.Add(transacao);
 
-                // Apenas valida se o número é real, não importa se é 1, 2, 5 ou 9.
-                else if (!NifValidator.IsValid(NifFaturacao))
-                    yield return new ValidationResult("NIF Inválido", new[] { nameof(NifFaturacao) });
+                // Importante: Marcar o carro como "Reservado" para ninguém comprar ao mesmo tempo
+                var carroDb = await _context.Carros.FindAsync(itemCarrinho.CarroId);
+                if (carroDb != null) carroDb.Estado = EstadoCarro.Reservado;
+
+                await _context.SaveChangesAsync();
+
+                // Limpar carrinho
+                _carrinhoService.LimparCarrinho();
+
+                // Redirecionar para página de Sucesso/Pagamento
+                return RedirectToAction("Sucesso", new { id = transacao.Id });
             }
+            catch (Exception ex)
+            {
+                // Log do erro real
+                ModelState.AddModelError("", "Erro ao processar a encomenda. Tente novamente.");
+                model.ValorTotal = _carrinhoService.GetTotal();
+                return View("Index", model);
+            }
+        }   
+        public IActionResult Sucesso(int id)
+        {
+            return View(id);
         }
-        */
     }
 }

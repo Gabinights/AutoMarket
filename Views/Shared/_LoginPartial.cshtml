@@ -1,0 +1,32 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using AutoMarket.Models
+
+@inject SignInManager<Utilizador> SignInManager
+@inject UserManager<Utilizador> UserManager
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        // === UTILIZADOR LOGADO ===
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Conta" asp-action="Index" title="Gerir Conta">
+                Olá, @UserManager.GetUserName(User)!
+            </a>
+        </li>
+        <li class="nav-item">
+            <form class="form-inline" asp-controller="Conta" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="nav-link btn btn-link text-dark border-0" style="cursor: pointer;">Sair</button>
+            </form>
+        </li>
+    }
+    else
+    {
+        // === UTILIZADOR NÃO LOGADO ===
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Conta" asp-action="Register">Registar</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Conta" asp-action="Login">Entrar</a>
+        </li>
+    }
+</ul>

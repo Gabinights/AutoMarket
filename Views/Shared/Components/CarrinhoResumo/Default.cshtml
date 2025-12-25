@@ -1,0 +1,20 @@
+﻿@model AutoMarket.Models.ViewModels.CarrinhoWidgetViewModel
+
+<li class="nav-item">
+    <a class="nav-link position-relative" asp-controller="Carrinho" asp-action="Index">
+        <i class="bi bi-cart3 fs-5"></i>
+
+        @if (Model.QuantidadeItens > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  style="font-size: 0.7rem;">
+                @Model.QuantidadeItens
+                <span class="visually-hidden">itens no carrinho</span>
+            </span>
+
+            <span class="d-none d-lg-inline ms-1 fw-bold small text-success">
+                @Model.ValorTotal.ToString("N0")€
+            </span>
+        }
+    </a>
+</li>

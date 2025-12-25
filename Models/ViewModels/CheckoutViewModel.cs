@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AutoMarket.Models.Enums;
 using AutoMarket.Utils;
 
 namespace AutoMarket.Models.ViewModels
@@ -25,6 +26,15 @@ namespace AutoMarket.Models.ViewModels
 
         [Display(Name = "Nome na Fatura (Opcional)")]
         public string? NomeFaturacao { get; set; }
+
+        [Required(ErrorMessage ="Escolha um método de pagamento")]
+        [Display(Name ="Método de Pagamento")]
+        public MetodoPagamento MetodoPagamento { get; set; }
+
+        public int CarroId { get; set; }
+        public decimal ValorTotal { get; set; }
+
+        // Implementar carrinho service
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

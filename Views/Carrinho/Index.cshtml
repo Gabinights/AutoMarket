@@ -1,0 +1,79 @@
+﻿@model List<AutoMarket.Models.CarrinhoItem>
+
+@{
+    ViewData["Title"] = "O meu Carrinho";
+}
+
+<div class="container mt-5">
+    <h2><i class="bi bi-cart3"></i> O meu Carrinho</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning mt-4">
+            O seu carrinho está vazio. <a asp-controller="Veiculos" asp-action="Index">Ver carros disponíveis</a>.
+        </div>
+    }
+    else
+    {
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Viatura</th>
+                            <th>Preço</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="~/images/carros/@item.ImagemCapa"
+                                             alt="@item.Titulo"
+                                             class="rounded me-3"
+                                             style="width: 80px; height: 60px; object-fit: cover;">
+                                        <div>
+                                            <h5 class="mb-0">@item.Marca @item.Modelo</h5>
+                                            <small class="text-muted">@item.Titulo</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="fw-bold text-primary">@item.Preco.ToString("C0")</td>
+                                <td>
+                                    <a asp-action="Remover" asp-route-id="@item.CarroId" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i> Remover
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Resumo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Total:</span>
+                            <span class="fw-bold fs-4">@ViewBag.Total.ToString("C0")</span>
+                        </div>
+                        <div class="d-grid">
+                            <a asp-controller="Checkout" asp-action="Index" class="btn btn-success btn-lg">
+                                <i class="bi bi-credit-card"></i> Finalizar Compra
+                            </a>
+                        </div>
+                        <div class="mt-3 text-center">
+                            <a asp-controller="Veiculos" asp-action="Index" class="text-decoration-none">Continuar a ver carros</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

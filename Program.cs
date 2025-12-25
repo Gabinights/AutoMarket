@@ -49,6 +49,15 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+builder.Services.AddScoped<AutoMarket.Services.ICarrinhoService, AutoMarket.Services.CarrinhoService>();
 builder.Services.AddScoped<IAuthorizationHandler, VendedorAprovadoHandler>();
 builder.Services.AddSingleton<EmailFailureTracker>(sp =>
     new EmailFailureTracker(maxFailures: 5, failureWindow: TimeSpan.FromMinutes(5), circuitBreakerTimeout: TimeSpan.FromMinutes(1)));
@@ -102,7 +111,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
+app.UseSession();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

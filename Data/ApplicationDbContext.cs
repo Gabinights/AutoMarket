@@ -37,13 +37,13 @@ namespace AutoMarket.Data
             builder.Entity<Carro>().Property(c => c.Estado).HasConversion<string>().HasMaxLength(50);
 
             builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Transacao>().Property(t => t.MetodoPagamento).HasConversion<string>().HasMaxLength(50);
 
             builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>().HasMaxLength(50);
 
             // Tipos SQL Especificos (Money)
             builder.Entity<Carro>().Property(c => c.Preco).HasColumnType("decimal(18,2)");
-            builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("decimal(18,2)");
+            builder.Entity<Transacao>().Property(t => t.ValorTotal).HasColumnType("decimal(18,2)");
 
             // #endregion
 
