@@ -1,10 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using AutoMarket.Attributes;
 using Microsoft.AspNetCore.Identity;
 
 namespace AutoMarket.Models
 {// Utilizador é a classe base para todos os tipos de utilizadores no sistema
-    public class Utilizador : IdentityUser
+    public class Utilizador : IdentityUser // Identity User já inclui os campos básicos como Id, UserName, Email, PasswordHash, etc.
     {
         [Required(ErrorMessage = "O nome é obrigatório.")]
         [MaxLength(100, ErrorMessage = "O nome não pode exceder 100 caracteres.")]
@@ -26,7 +25,6 @@ namespace AutoMarket.Models
         public string Contacto { get; set; } = string.Empty;
 
         [StringLength(9)]
-        [NifPortugues(ErrorMessage = "O NIF introduzido não é válido.")]
         [PersonalData]
         public string? NIF { get; set; }
         // POde ser null se o utilizador ainda não tiver preenchido os dados fiscais

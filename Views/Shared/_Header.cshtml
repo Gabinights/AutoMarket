@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Identity;
 @using AutoMarket.Models;
+@using AutoMarket.Constants;
 @inject SignInManager<Utilizador> SignInManager
 
 <header>
@@ -32,6 +33,14 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Conta" asp-action="Register">Registar</a>
+                        </li>
+                    }
+                    @if (User.IsInRole(Roles.Admin))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-danger fw-bold" asp-controller="Admin" asp-action="Index">
+                                <i class="bi bi-shield-lock"></i> Backoffice
+                            </a>
                         </li>
                     }
                 </ul>

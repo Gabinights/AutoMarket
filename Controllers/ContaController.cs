@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AutoMarket.Controllers
 {
@@ -43,13 +44,12 @@ namespace AutoMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
-
-            // 1. Iniciar Transação
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
+            if (ModelState.IsValid)
             {
+
+                // 1. Iniciar Transação
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
                 var user = new Utilizador
                 {
                     UserName = model.Email,
@@ -97,7 +97,7 @@ namespace AutoMarket.Controllers
                     var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
                     var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
-                        new { userId = user.Id, token }, Request.Scheme);
+                    new { userId = user.Id, token }, Request.Scheme);
 
                     if (string.IsNullOrEmpty(confirmationLink))
                     {
@@ -113,19 +113,22 @@ namespace AutoMarket.Controllers
                 // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    // Verificamos os códigos internos do Identity
+                    if (error.Code == "DuplicateUserName" || error.Code == "DuplicateEmail")
+                    {
+                        // MENSAGEM GENÉRICA: O atacante não sabe se o email existe ou se falhou outra coisa
+                        ModelState.AddModelError(string.Empty, "Ocorreu um erro ao processar o registo. Por favor, verifique os dados ou tente novamente.");
+                    }
+                    else
+                    {
+                        // Outros erros (ex: Password fraca, precisa de letra maiúscula) 
+                        // continuam a ser úteis para o utilizador legítimo corrigir.
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                // Se ocorrer um erro, reverter a transação
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Erro ao registar utilizador {Email}", model.Email);
-                ModelState.AddModelError(string.Empty, "Ocorreu um erro interno. Tente novamente.");
             }
             return View(model);
         }
-
         [HttpGet]
         public IActionResult Login()
         {
@@ -176,7 +179,6 @@ namespace AutoMarket.Controllers
 
                 return RedirectToAction("Index", "Home");
             }
-
             ModelState.AddModelError(string.Empty, "Login inválido.");
             return View(model);
         }
@@ -214,54 +216,6 @@ namespace AutoMarket.Controllers
         }
 
         [HttpGet]
-        [Authorize]
-        public IActionResult PreencherDadosFiscais()
-        {
-            if (TempData["ReturnUrl"] != null)
-            { 
-                ViewBag.ReturnUrl = TempData["ReturnUrl"];
-            } 
-            return View();
-        }
-
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PreencherDadosFiscais(DadosFiscaisViewModel model, string? returnUrl = null)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) { return Unauthorized(); }
-            user.NIF = model.NIF; // Grava no perfil para sempre
-
-            var result = await _userManager.UpdateAsync(user);
-
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                ViewBag.ReturnUrl = returnUrl;
-                return View(model);
-            }
-
-            // Redirecionar para a URL original se existir (input hidden na View)
-            if (!string.IsNullOrEmpty(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            // Fallback de segurança para TempData (caso exista)
-            if (TempData["ReturnUrl"] is string tUrl)
-            {
-                return Redirect(tUrl);
-            }
-
-            return RedirectToAction("Index", "Home");
-        }
-
-        [HttpGet]
         [Authorize(Roles = Roles.Vendedor)]
         public IActionResult AguardandoAprovacao()
         {
@@ -284,7 +238,11 @@ namespace AutoMarket.Controllers
             {
                 // --- SOFT DELETE DO USER ---
                 user.IsDeleted = true;
-                // Opcional: Limpar dados sensíveis agora para cumprir RGPD imediatamente
+                // Limpar dados sensíveis para cumprir RGPD
+                user.UserName = $"deleted_{Guid.NewGuid()}_{user.UserName}";
+                user.Email = null; // Ou um dummy se for required
+                user.NormalizedEmail = null;
+                user.NIF = null; // Liberta o NIF para uso futuro
 
                 var resultUser = await _userManager.UpdateAsync(user);
                 if (!resultUser.Succeeded)

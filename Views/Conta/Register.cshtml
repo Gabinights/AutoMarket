@@ -47,21 +47,19 @@
         <div class="form-group mb-4">
             <label class="form-label fw-bold d-block">Tipo de Conta:</label>
 
-            <div class="btn-group w-100" role="group" aria-label="Seleção de tipo de conta">
-                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoComprador" value="0" autocomplete="off">
-                <label class="btn btn-outline-primary" for="tipoComprador">
-                    <i class="bi bi-search"></i> Comprador
-                </label>
+            <div class="form-group">
+                <label class="d-block">Tipo de Conta</label>
 
-                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoVendedor" value="1" autocomplete="off">
-                <label class="btn btn-outline-primary" for="tipoVendedor">
-                    <i class="bi bi-car-front"></i> Vendedor Particular
-                </label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" asp-for="TipoConta" value="Particular" checked>
+                    <label class="form-check-label">Particular</label>
+                </div>
 
-                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoEmpresa" value="2" autocomplete="off">
-                <label class="btn btn-outline-primary" for="tipoEmpresa">
-                    <i class="bi bi-building"></i> Empresa
-                </label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" asp-for="TipoConta" value="Empresa">
+                    <label class="form-check-label">Empresa</label>
+                </div>
+                <span asp-validation-for="TipoConta" class="text-danger"></span>
             </div>
             <small class="text-muted">Escolha "Comprador" apenas para ver carros. Escolha as outras opções para vender.</small>
         </div>
