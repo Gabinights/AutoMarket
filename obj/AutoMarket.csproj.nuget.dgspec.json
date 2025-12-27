@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket-1\\AutoMarket.csproj": {}
+    "C:\\_Dev\\AutoMarket\\AutoMarket.csproj": {}
   },
   "projects": {
-    "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket-1\\AutoMarket.csproj": {
+    "C:\\_Dev\\AutoMarket\\AutoMarket.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket-1\\AutoMarket.csproj",
+        "projectUniqueName": "C:\\_Dev\\AutoMarket\\AutoMarket.csproj",
         "projectName": "AutoMarket",
-        "projectPath": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket-1\\AutoMarket.csproj",
+        "projectPath": "C:\\_Dev\\AutoMarket\\AutoMarket.csproj",
         "packagesPath": "C:\\Users\\gabri\\.nuget\\packages\\",
-        "outputPath": "C:\\_Dev\\AutoMarket\\Gabinights\\AutoMarket-1\\obj\\",
+        "outputPath": "C:\\_Dev\\AutoMarket\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

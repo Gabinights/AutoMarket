@@ -3,12 +3,10 @@ using AutoMarket.Models;
 using AutoMarket.Models.Enums;
 using AutoMarket.Models.ViewModels;
 using AutoMarket.Services;
-using AutoMarket.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace AutoMarket.Controllers
 {
@@ -61,9 +59,9 @@ namespace AutoMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessarCompra(CheckoutViewModel model)
         {
-            if (_carrinhoService.GetContagem() == 0) return RedirectToAction("Index", "Carrinho");
+            var itensCarrinho = _carrinhoService.GetItens();
+            if (!itensCarrinho.Any()) return RedirectToAction("Index", "Carrinho");
 
-            // 1. Validação inicial do Modelo (inclui a lógica do NIF que definimos antes)
             if (!ModelState.IsValid)
             {
                 model.ValorTotal = _carrinhoService.GetTotal();
@@ -73,82 +71,78 @@ namespace AutoMarket.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Conta");
 
-            // 2. Obter o Perfil de Comprador
-            // (O User é o login, o Comprador é a entidade de negócio. Precisamos do ID do Comprador)
-            var comprador = await _context.Compradores
-                                          .FirstOrDefaultAsync(c => c.UserId == user.Id);
+            // 1. Iniciar transação de BD
+            using var dbTransaction = await _context.Database.BeginTransactionAsync();
 
-            if (comprador == null)
-            {
-                comprador = new Comprador { UserId = user.Id };
-                _context.Add(comprador);
-                await _context.SaveChangesAsync();
-            }
-
-            // 3. Obter o Carro (O ID deve vir do ViewModel, Hidden Input ou CarrinhoService)
-            // Assumindo que tens o CarroId no model ou serviço
-            // var carroId = model.CarroId; ou _carrinhoService.GetCarroId();
-            // Exemplo usando um serviço de carrinho fictício:
-            var itemCarrinho = _carrinhoService.GetItens().FirstOrDefault();
-            if (itemCarrinho == null) return RedirectToAction("Index", "Carrinho");
-
-            // 4. Criar a Transação (Mapeamento)
-            var transacao = new Transacao
-            {
-                DataTransacao = DateTime.UtcNow,
-                ValorTotal = itemCarrinho.Preco,
-                MetodoPagamento = model.MetodoPagamento, // Vem do CheckoutViewModel
-                Estado = EstadoTransacao.Pendente,
-
-                // RELAÇÕES
-                CompradorId = comprador.Id,
-                CarroId = itemCarrinho.CarroId,
-
-                // SNAPSHOTS (O segredo da faturação correta)
-                // Se pediu fatura com NIF, usamos os dados do form. Se não, usamos dados genéricos ou do user.
-                NomeFaturacao = model.QueroFaturaComNif && !string.IsNullOrEmpty(model.NomeFaturacao)
-                                ? model.NomeFaturacao
-                                : model.NomeCompleto,
-
-                NifFaturacao = model.QueroFaturaComNif
-                               ? model.NifFaturacao
-                               : null, // Null = Consumidor Final
-
-                MoradaSnapshot = $"{model.Morada}, {model.CodigoPostal}",
-                Observacoes = "Compra online"
-            };
-
-            // 5. (Opcional) Atualizar o Perfil do User "Silenciosamente"
-            // Guardamos o NIF no perfil para a próxima vez ser automático
-            if (model.QueroFaturaComNif && string.IsNullOrEmpty(user.NIF) && !string.IsNullOrEmpty(model.NifFaturacao))
-            {
-                user.NIF = model.NifFaturacao;
-                // Não validamos o resultado aqui para não bloquear a venda por erro de perfil
-                await _userManager.UpdateAsync(user);
-            }
-
-            // 6. Persistência
             try
             {
-                _context.Transacoes.Add(transacao);
+                // 2. Obter ou criar comprador
+                var comprador = await _context.Compradores.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                if (comprador == null)
+                {
+                    comprador = new Comprador { UserId = user.Id };
+                    _context.Add(comprador);
+                    await _context.SaveChangesAsync();
+                }
 
-                var carroDb = await _context.Carros.FindAsync(itemCarrinho.CarroId);
-                if (carroDb != null) carroDb.Estado = EstadoCarro.Reservado;
+                // 3. Atualizar NIF
+                if (model.QueroFaturaComNif && string.IsNullOrEmpty(user.NIF) && !string.IsNullOrEmpty(model.NifFaturacao))
+                {
+                    user.NIF = model.NifFaturacao;
+                    await _userManager.UpdateAsync(user);
+                }
 
-                await _context.SaveChangesAsync();
+                var transacoesIds = new List<int>();
+
+                // 4. Processar cada item do carrinho
+                foreach (var item in itensCarrinho)
+                {
+                    var carroDb = await _context.Carros.FindAsync(item.CarroId);
+                    if (carroDb == null || carroDb.Estado != EstadoCarro.Ativo)
+                    {
+                        throw new InvalidOperationException($"O veículo {item.Marca} {item.Modelo} já não está disponível.");
+                    }
+
+                    var transacao = new Transacao
+                    {
+                        DataTransacao = DateTime.UtcNow,
+                        ValorTotal = item.Preco,
+                        MetodoPagamento = model.MetodoPagamento,
+                        Estado = EstadoTransacao.Pendente,
+                        CompradorId = comprador.Id,
+                        CarroId = item.CarroId,
+                        NomeFaturacao = model.QueroFaturaComNif && !string.IsNullOrEmpty(model.NomeFaturacao)
+                                        ? model.NomeFaturacao
+                                        : model.NomeCompleto,
+                        NifFaturacao = model.QueroFaturaComNif
+                                       ? model.NifFaturacao
+                                       : null,
+                        MoradaSnapshot = $"{model.Morada}, {model.CodigoPostal}",
+                        Observacoes = "Compra online"
+                    };
+                    _context.Transacoes.Add(transacao);
+                    carroDb.Estado = EstadoCarro.Reservado;
+                    await _context.SaveChangesAsync();
+                    transacoesIds.Add(transacao.Id);
+                }
+                // 5. Commit da transação de BD
+                await dbTransaction.CommitAsync();
 
                 _carrinhoService.LimparCarrinho();
 
-                return RedirectToAction("Sucesso", new { id = transacao.Id });
+                return RedirectToAction("Sucesso", new { id = transacoesIds.First() }); // TODO: ALTERAR ( redirecionar para página de sucesso )
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro crítico ao processar transação para o User {UserId}. Carro: {CarroId}", user.Id, itemCarrinho.CarroId);
-                ModelState.AddModelError("", "Erro ao processar a encomenda. Tente novamente.");
+                await dbTransaction.RollbackAsync();
+                _logger.LogError(ex, "Erro ao processar compra para o utilizador {UserId}", user.Id);
+                ModelState.AddModelError("", ex.Message);
                 model.ValorTotal = _carrinhoService.GetTotal();
                 return View("Index", model);
             }
         }   
+
+        [HttpGet]
         public async Task<IActionResult> Sucesso(int id)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -166,7 +160,7 @@ namespace AutoMarket.Controllers
                 return Forbid();
             }
                     
-            return View(id);
+            return View(transacao);
         }
     }
 }

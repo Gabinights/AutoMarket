@@ -253,10 +253,13 @@ namespace AutoMarket.Controllers
             {
                 // --- SOFT DELETE DO USER ---
                 user.IsDeleted = true;
+                
+                var deleteToken = Guid.NewGuid().ToString();
                 // Limpar dados sensíveis para cumprir RGPD
-                user.UserName = $"deleted_{Guid.NewGuid()}_{user.UserName}";
-                user.Email = $"deleted_{Guid.NewGuid()}@automarket.com";
-                user.NormalizedEmail = $"DELETED_{Guid.NewGuid()}@AUTOMARKET.COM";
+                user.UserName = $"deleted_{deleteToken}";
+                user.Email = $"deleted_{deleteToken}@automarket.com";
+                user.NormalizedUserName = user.UserName.ToUpper();
+                user.NormalizedEmail = user.Email.ToUpper();
                 user.NIF = null; // Liberta o NIF para uso futuro
 
                 var resultUser = await _userManager.UpdateAsync(user);

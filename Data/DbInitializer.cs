@@ -31,17 +31,17 @@ namespace AutoMarket.Data
             var adminEmail = configuration["DefaultAdmin:Email"] ?? "admin@automarket.com";
             var adminPwd = configuration["DefaultAdmin:Password"];
 
-            if (string.IsNullOrwhiteSpace(adminPwd))
+            if (string.IsNullOrWhiteSpace(adminPwd))
             {
                 // Em produção, falha para obrigar a usar secrets
                 if (environment.IsProduction())
                 {
-                    throw new InvalidOperation("A password do Admin não está configurada (DefaultAdmin:Password).");
+                    throw new InvalidOperationException("A password do Admin não está configurada (DefaultAdmin:Password).");
                 }
                 adminPwd = "Password1231"; // Apenas para dev/local
             }
 
-            await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
+            var adminUser = await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
 
             if (environment.IsDevelopment())
             {
@@ -106,6 +106,7 @@ namespace AutoMarket.Data
                     UserName = email,
                     Email = email,
                     Nome = nome,
+                    Contacto = "N/A", 
                     EmailConfirmed = true,
                     DataRegisto = DateTime.UtcNow
                 };
@@ -117,7 +118,10 @@ namespace AutoMarket.Data
                 }
                 else
                 {
-                    // Em env real, logar erro
+                    foreach (var error in result.Errors)
+                    {
+                        Console.WriteLine($"[DBInitializer] Erro ao criar utilizador {email}: {error.Description}");
+                    }
                     return null;
                 }
             }

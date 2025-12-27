@@ -12,11 +12,13 @@ namespace AutoMarket.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
+        private readonly ILogger<TransacoesController> _logger;
 
-        public TransacoesController(ApplicationDbContext context, UserManager<Utilizador> userManager)
+        public TransacoesController(ApplicationDbContext context, UserManager<Utilizador> userManager, ILogger<TransacoesController> logger)
         {
             _context = context;
             _userManager = userManager;
+            _logger = logger;
         }
 
         // GET: Transacoes/Checkout/5
@@ -31,7 +33,11 @@ namespace AutoMarket.Controllers
                 .ThenInclude(v => v.User)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (carro == null) return NotFound();
+            if (carro == null)
+            {
+                _logger.LogWarning("Tentativa de checkout para carro inexistente: {Id}", id);
+                return NotFound();
+            }
 
             if (carro.Estado != AutoMarket.Models.Enums.EstadoCarro.Ativo)
             {

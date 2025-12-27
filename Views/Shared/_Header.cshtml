@@ -27,14 +27,11 @@
                         </li>
                     }
                 </ul>
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                @await Component.InvokeAsync("CarrinhoResumo")
 
-                    @await Component.InvokeAsync("CarrinhoResumo")
-
-                    <partial name="_LoginPartial" />
-                </ul>
+                <partial name="_LoginPartial" />
+                
             </div>
         </div>
     </nav>
 </header>
-

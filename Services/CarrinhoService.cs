@@ -7,7 +7,7 @@ namespace AutoMarket.Services
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private const string SessionKey = "CarrinhoCompras";
-
+        private const string DefaultImagePlaceholder = "sem-imagem.jpg";
         // Precisamos do IHttpContextAccessor para aceder à Session fora de um Controller
         public CarrinhoService(IHttpContextAccessor httpContextAccessor)
         {
@@ -53,7 +53,7 @@ namespace AutoMarket.Services
                     Modelo = carro.Modelo,
                     Preco = carro.Preco,
                     // Pega a primeira imagem ou uma placeholder
-                    ImagemCapa = carro.Imagens?.FirstOrDefault()?.CaminhoFicheiro ?? "sem-imagem.jpg"
+                    ImagemCapa = carro.Imagens?.FirstOrDefault()?.CaminhoFicheiro ?? DefaultImagePlaceholder
                 });
 
                 Session.SetObjectAsJson(SessionKey, itens);
