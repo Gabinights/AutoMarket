@@ -23,6 +23,10 @@ namespace AutoMarket.Services
                 {
                     throw new InvalidOperationException("HttpContext is null. Ensure this service is called within an HTTP request context.");
                 }
+                if (context.Session == null)
+                {
+                    throw new InvalidOperationException("Session is not available. Ensure that session middleware is configured.");
+                }
                 return context.Session;
             }
         }
@@ -34,6 +38,8 @@ namespace AutoMarket.Services
 
         public void AdicionarItem(Carro carro)
         {
+            if (carro == null) { throw new ArgumentNullException(nameof(carro)); }
+
             var itens = GetItens();
 
             // Como é um carro único, verificamos se já lá está

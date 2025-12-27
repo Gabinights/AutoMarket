@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AutoMarket.Controllers
 {
@@ -153,7 +152,7 @@ namespace AutoMarket.Controllers
             if (!ModelState.IsValid) return View(model);
 
             // 1. Tentar Login
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
 
             if (result.Succeeded)
             {
@@ -189,6 +188,11 @@ namespace AutoMarket.Controllers
                 }
 
                 return RedirectToAction("Index", "Home");
+            }
+            if (result.IsLockedOut)
+            {
+                _logger.LogWarning("Conta bloqueada temporariamente devido a tentativas falhadas: {Email}", model.Email);
+                return View("Lockout"); 
             }
             ModelState.AddModelError(string.Empty, "Login inválido.");
             return View(model);

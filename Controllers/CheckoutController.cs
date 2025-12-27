@@ -132,21 +132,18 @@ namespace AutoMarket.Controllers
             {
                 _context.Transacoes.Add(transacao);
 
-                // Importante: Marcar o carro como "Reservado" para ninguém comprar ao mesmo tempo
                 var carroDb = await _context.Carros.FindAsync(itemCarrinho.CarroId);
                 if (carroDb != null) carroDb.Estado = EstadoCarro.Reservado;
 
                 await _context.SaveChangesAsync();
 
-                // Limpar carrinho
                 _carrinhoService.LimparCarrinho();
 
-                // Redirecionar para página de Sucesso/Pagamento
                 return RedirectToAction("Sucesso", new { id = transacao.Id });
             }
             catch (Exception ex)
             {
-                // Log do erro real
+                _logger.LogError(ex, "Erro crítico ao processar transação para o User {UserId}. Carro: {CarroId}", user.Id, itemCarrinho.CarroId);
                 ModelState.AddModelError("", "Erro ao processar a encomenda. Tente novamente.");
                 model.ValorTotal = _carrinhoService.GetTotal();
                 return View("Index", model);
@@ -168,7 +165,7 @@ namespace AutoMarket.Controllers
             {
                 return Forbid();
             }
-
+                    
             return View(id);
         }
     }

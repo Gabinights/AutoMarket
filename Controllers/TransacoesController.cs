@@ -21,12 +21,11 @@ namespace AutoMarket.Controllers
 
         // GET: Transacoes/Checkout/5
         [HttpGet]
-        public async Task<IActionResult> Checkout(int id) // id do Carro
+        public async Task<IActionResult> Checkout(int id)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) { return Challenge(); } // Nunca deve acontecer devido ao [Authorize]
+            if (user == null) { return Challenge(); }
 
-            // === LÓGICA DE VALIDAÇÃO ===
             var carro = await _context.Carros
                 .Include(c => c.Vendedor)
                 .ThenInclude(v => v.User)
@@ -34,20 +33,23 @@ namespace AutoMarket.Controllers
 
             if (carro == null) return NotFound();
 
-            // === VALIDAÇÕES ADICIONAIS ===
             if (carro.Estado != AutoMarket.Models.Enums.EstadoCarro.Ativo)
             {
                  TempData["Erro"] = "Este veículo já não está disponível.";
                  return RedirectToAction("Index", "Veiculos");
             }
 
+            if (carro.Vendedor.UserId == null || carro.Vendedor == null)
+            {
+                _logger.LogError("Carro {CarroId} tem Vendedor ou UserId nulos.", id);
+                return NotFound();
+            }
+
             if (carro.Vendedor.UserId == user.Id)
             {
                 TempData["Erro"] = "Não pode comprar o seu próprio veículo.";
-                return RedirectToAction("Detalhe", "Veiculos", new { id = id });
+                return RedirectToAction("Detalhes", "Veiculos", new { id = carro.Id });
             }
-
-            // Aqui passarias um 'TransacaoViewModel' ou o próprio Carro para a View
             return View(carro);
         }
     }

@@ -13,8 +13,8 @@ namespace AutoMarket.Models
 
         [MaxLength(200, ErrorMessage = "A morada não pode exceder 200 caracteres.")]
         [PersonalData]
-        public string? Morada { get; set; } = string.Empty;
-
+        public string? Morada { get; set; }
+            
         [DataType(DataType.Date)]
         [Display(Name = "Data de Registo")]
         public DateTime DataRegisto { get; set; } = DateTime.UtcNow;
