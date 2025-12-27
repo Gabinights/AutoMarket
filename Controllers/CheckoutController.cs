@@ -18,15 +18,18 @@ namespace AutoMarket.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
         private readonly ICarrinhoService _carrinhoService;
+        private readonly ILogger<CheckoutController> _logger;
 
         public CheckoutController(
             ApplicationDbContext context,
             UserManager<Utilizador> userManager,
-            ICarrinhoService carrinhoService)
+            ICarrinhoService carrinhoService,
+            ILogger<CheckoutController> logger)
         {
             _context = context;
             _userManager = userManager;
             _carrinhoService = carrinhoService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -41,7 +44,9 @@ namespace AutoMarket.Controllers
             var model = new CheckoutViewModel
             {
                 // Pré-preenchemos com os dados do perfil para facilitar a vida ao user
-                NomeCompleto = user.Nome, // Assumindo que tens esta prop
+                NomeCompleto = user.Nome, 
+                Morada = user.Morada ?? string.Empty, // Garante que não é null
+                // CodigoPostal não existe no Utilizador, user tem de preencher
 
                 // Se o user já tiver NIF no perfil, ativamos a opção de fatura e preenchemos
                 NifFaturacao = user.NIF,
@@ -147,8 +152,23 @@ namespace AutoMarket.Controllers
                 return View("Index", model);
             }
         }   
-        public IActionResult Sucesso(int id)
+        public async Task<IActionResult> Sucesso(int id)
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Conta");
+
+            var transacao = await _context.Transacoes
+                .Include(t => t.Comprador)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (transacao == null) return NotFound();
+
+            // Verificar se a transação pertence ao user logado
+            if (transacao.Comprador.UserId != user.Id)
+            {
+                return Forbid();
+            }
+
             return View(id);
         }
     }

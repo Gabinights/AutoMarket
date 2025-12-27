@@ -31,6 +31,12 @@ namespace AutoMarket.Controllers
 
             if (carro == null) return NotFound();
 
+            if (carro.Estado != AutoMarket.Models.Enums.EstadoCarro.Ativo)
+            {
+                TempData["Erro"] = "Este veículo não está disponível para compra.";
+                return RedirectToAction("Index", "Veiculos"); // Ou volta para onde estava
+            }
+
             _carrinhoService.AdicionarItem(carro);
 
             TempData["Sucesso"] = "Carro adicionado ao carrinho!";

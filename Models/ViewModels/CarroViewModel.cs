@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using AutoMarket.Models.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace AutoMarket.Models.ViewModels
 {
@@ -14,10 +15,12 @@ namespace AutoMarket.Models.ViewModels
 
         [Display(Name = "Marca")]
         [Required(ErrorMessage = "A marca é obrigatória.")]
+        [StringLength(50, ErrorMessage = "A marca não pode exceder 50 caracteres.")]
         public string Marca { get; set; }
 
         [Display(Name = "Modelo")]
         [Required(ErrorMessage = "O modelo é obrigatório.")]
+        [StringLength(50, ErrorMessage = "O modelo não pode exceder 50 caracteres.")]
         public string Modelo { get; set; }
 
         [Display(Name = "Categoria")]
@@ -40,14 +43,17 @@ namespace AutoMarket.Models.ViewModels
 
         [Display(Name = "Combustível")]
         [Required(ErrorMessage = "Selecione o tipo de combustível.")]
+        [StringLength(30, ErrorMessage = "O combustível não pode exceder 30 caracteres.")]
         public string Combustivel { get; set; }
 
         [Display(Name = "Caixa de Velocidades")]
         [Required(ErrorMessage = "Selecione o tipo de caixa.")]
+        [StringLength(30, ErrorMessage = "A caixa não pode exceder 30 caracteres.")]
         public string Caixa { get; set; }
 
         [Display(Name = "Localização")]
         [Required(ErrorMessage = "A localização é obrigatória.")]
+        [StringLength(100, ErrorMessage = "A localização não pode exceder 100 caracteres.")]
         public string Localizacao { get; set; }
 
         [Display(Name = "Descrição Detalhada")]

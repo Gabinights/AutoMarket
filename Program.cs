@@ -100,7 +100,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocorreu um erro ao popular a base de dados.");
+        logger.LogError(ex, "Ocorreu um erro ao popular a base de dados. A aplicação continuará a iniciar, mas pode falhar.");
     }
 }
 

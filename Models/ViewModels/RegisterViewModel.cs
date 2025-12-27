@@ -18,6 +18,7 @@ namespace AutoMarket.Models.ViewModels
         [Display(Name = "Password")]
         public string Password { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "A confirmação da password é obrigatória.")]
         [DataType(DataType.Password)]
         [Display(Name = "Confirmar password")]
         [Compare("Password", ErrorMessage = "As passwords não coincidem.")]

@@ -11,10 +11,9 @@ namespace AutoMarket.Models
         [PersonalData]
         public string Nome { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "A morada é obrigatória.")]
         [MaxLength(200, ErrorMessage = "A morada não pode exceder 200 caracteres.")]
         [PersonalData]
-        public string Morada { get; set; } = string.Empty;
+        public string? Morada { get; set; } = string.Empty;
 
         [DataType(DataType.Date)]
         [Display(Name = "Data de Registo")]

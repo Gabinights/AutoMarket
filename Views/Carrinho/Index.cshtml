@@ -31,7 +31,7 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="~/images/carros/@item.ImagemCapa"
+                                        <img src="~/images/carros/@(item.ImagemCapa ?? "sem-imagem.jpg")"
                                              alt="@item.Titulo"
                                              class="rounded me-3"
                                              style="width: 80px; height: 60px; object-fit: cover;">
@@ -61,7 +61,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-3">
                             <span>Total:</span>
-                            <span class="fw-bold fs-4">@ViewBag.Total.ToString("C0")</span>
+                            <span class="fw-bold fs-4">@((ViewBag.Total as decimal?)?.ToString("C0") ?? "0 €")</span>
                         </div>
                         <div class="d-grid">
                             <a asp-controller="Checkout" asp-action="Index" class="btn btn-success btn-lg">

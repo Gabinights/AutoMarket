@@ -44,8 +44,19 @@ namespace AutoMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+
             if (ModelState.IsValid)
             {
+                // 0. Verificar unicidade do NIF antes de começar
+                if (!string.IsNullOrEmpty(model.NIF))
+                {
+                    bool nifExists = await _context.Users.AnyAsync(u => u.NIF == model.NIF);
+                    if (nifExists)
+                    {
+                         ModelState.AddModelError("NIF", "Este NIF já está associado a outra conta.");
+                         return View(model);
+                    }
+                }
 
                 // 1. Iniciar Transação
                 using var transaction = await _context.Database.BeginTransactionAsync();
@@ -240,8 +251,8 @@ namespace AutoMarket.Controllers
                 user.IsDeleted = true;
                 // Limpar dados sensíveis para cumprir RGPD
                 user.UserName = $"deleted_{Guid.NewGuid()}_{user.UserName}";
-                user.Email = null; // Ou um dummy se for required
-                user.NormalizedEmail = null;
+                user.Email = $"deleted_{Guid.NewGuid()}@automarket.com";
+                user.NormalizedEmail = $"DELETED_{Guid.NewGuid()}@AUTOMARKET.COM";
                 user.NIF = null; // Liberta o NIF para uso futuro
 
                 var resultUser = await _userManager.UpdateAsync(user);
@@ -280,7 +291,10 @@ namespace AutoMarket.Controllers
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Erro ao apagar conta do utilizador {Id}", user.Id);
-                return StatusCode(500, "Ocorreu um erro ao apagar a conta. Tente novamente mais tarde.");
+                return View("Error", new ErrorViewModel 
+                { 
+                    Message = "Ocorreu um erro ao apagar a conta. Tente novamente mais tarde." 
+                });
             }
         }
     }

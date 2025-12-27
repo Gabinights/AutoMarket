@@ -12,6 +12,7 @@ using AutoMarket.Models.ViewModels;
 namespace AutoMarket.Controllers
 {
     [Authorize(Roles = Roles.Vendedor)]
+    [Authorize(Policy = "VendedorAprovado")]
     public class VeiculosController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -107,8 +108,14 @@ namespace AutoMarket.Controllers
                 {
                     if (img.Length > 0)
                     {
+                        // Validação básica
+                        if (!img.ContentType.StartsWith("image/")) continue; 
+                        if (img.Length > 5 * 1024 * 1024) continue; // Max 5MB
                         var uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(img.FileName);
-                        var path = Path.Combine(_webHostEnvironment.WebRootPath, "images/carros", uniqueName);
+                        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images/carros");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+                        
+                        var path = Path.Combine(uploadsFolder, uniqueName);
 
                         using (var stream = new FileStream(path, FileMode.Create))
                         {
@@ -138,7 +145,9 @@ namespace AutoMarket.Controllers
             if (vendedor == null) return Forbid();
 
             // Verificar se o carro existe E SE PERTENCE AO VENDEDOR LOGADO
-            var carro = await _context.Carros.FirstOrDefaultAsync(c => c.Id == id && c.VendedorId == vendedor.Id);
+            var carro = await _context.Carros
+                .Include(c => c.Imagens)
+                .FirstOrDefaultAsync(c => c.Id == id && c.VendedorId == vendedor.Id);
             if (carro == null) { return NotFound(); }
 
             // --- Mapeamento Inverso (Domain -> ViewModel) ---
@@ -209,8 +218,15 @@ namespace AutoMarket.Controllers
                 {
                     if (img.Length > 0)
                     {
+                        // Validação básica
+                        if (!img.ContentType.StartsWith("image/")) continue; 
+                        if (img.Length > 5 * 1024 * 1024) continue; // Max 5MB
+
                         var uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(img.FileName);
-                        var path = Path.Combine(_webHostEnvironment.WebRootPath, "images/carros", uniqueName);
+                        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images/carros");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                        var path = Path.Combine(uploadsFolder, uniqueName);
 
                         using (var stream = new FileStream(path, FileMode.Create))
                         {
@@ -234,7 +250,8 @@ namespace AutoMarket.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                throw;
+                if (!_context.Carros.Any(e => e.Id == id)) return NotFound();
+                else throw;
             }
             return RedirectToAction(nameof(Index));
         }

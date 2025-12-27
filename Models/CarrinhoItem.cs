@@ -7,6 +7,6 @@
         public string Marca { get; set; }
         public string Modelo { get; set; }
         public decimal Preco { get; set; }
-        public string ImagemCapa { get; set; } // Para mostrar miniatura
+        public string? ImagemCapa { get; set; } // Para mostrar miniatura
     }
 }

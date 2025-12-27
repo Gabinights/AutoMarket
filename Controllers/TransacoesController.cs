@@ -27,22 +27,25 @@ namespace AutoMarket.Controllers
             if (user == null) { return Challenge(); } // Nunca deve acontecer devido ao [Authorize]
 
             // === LÓGICA DE VALIDAÇÃO ===
-            if (string.IsNullOrEmpty(user.NIF))
-            {
-                // Guardamos a URL atual completa para voltar exatamente aqui
-                TempData["ReturnUrl"] = Url.Action(nameof(Checkout), new { id = id });
-
-                return RedirectToAction("PreencherDadosFiscais", "Conta");
-            }
-            // ================================
-
-            // Se tem NIF, prossegue com a busca do carro para mostrar o resumo
             var carro = await _context.Carros
                 .Include(c => c.Vendedor)
                 .ThenInclude(v => v.User)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (carro == null) return NotFound();
+
+            // === VALIDAÇÕES ADICIONAIS ===
+            if (carro.Estado != AutoMarket.Models.Enums.EstadoCarro.Ativo)
+            {
+                 TempData["Erro"] = "Este veículo já não está disponível.";
+                 return RedirectToAction("Index", "Veiculos");
+            }
+
+            if (carro.Vendedor.UserId == user.Id)
+            {
+                TempData["Erro"] = "Não pode comprar o seu próprio veículo.";
+                return RedirectToAction("Detalhe", "Veiculos", new { id = id });
+            }
 
             // Aqui passarias um 'TransacaoViewModel' ou o próprio Carro para a View
             return View(carro);

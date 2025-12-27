@@ -1,6 +1,31 @@
 ﻿@model AutoMarket.Models.ViewModels.CheckoutViewModel
 
 <form asp-action="ProcessarCompra" method="post">
+    @Html.AntiForgeryToken()
+    
+    <h4>Dados de Envio</h4>
+    <div class="form-group mb-3">
+        <label asp-for="NomeCompleto"></label>
+        <input asp-for="NomeCompleto" class="form-control" />
+        <span asp-validation-for="NomeCompleto" class="text-danger"></span>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label asp-for="Morada"></label>
+                <input asp-for="Morada" class="form-control" />
+                <span asp-validation-for="Morada" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="CodigoPostal"></label>
+                <input asp-for="CodigoPostal" class="form-control" placeholder="xxxx-xxx" />
+                <span asp-validation-for="CodigoPostal" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
 
     <h4>Dados de Faturação</h4>
     <div class="form-check mb-3">

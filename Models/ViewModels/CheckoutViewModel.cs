@@ -8,13 +8,14 @@ namespace AutoMarket.Models.ViewModels
     {
         // Dados de Envio / Contacto
         [Required(ErrorMessage = "O nome completo é obrigatório.")]
-        public string NomeCompleto { get; set; }
+        public string NomeCompleto { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "A morada é obrigatória.")]
-        public string Morada { get; set; }
+        public string Morada { get; set; } = string.Empty;
 
-        [Required]
-        public string CodigoPostal { get; set; }
+        [Required(ErrorMessage = "O código postal é obrigatório.")]
+        [RegularExpression(@"^\d{4}-\d{3}$", ErrorMessage = "Formato inválido (ex: 1234-567).")]
+        public string CodigoPostal { get; set; } = string.Empty;
 
         // --- DADOS FISCAIS ---
 
@@ -34,7 +35,7 @@ namespace AutoMarket.Models.ViewModels
         public int CarroId { get; set; }
         public decimal ValorTotal { get; set; }
 
-        // Implementar carrinho service
+
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

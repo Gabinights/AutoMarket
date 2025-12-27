@@ -14,7 +14,18 @@ namespace AutoMarket.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        private ISession Session => _httpContextAccessor.HttpContext.Session;
+        private ISession Session
+        {
+            get
+            {
+                var context = _httpContextAccessor.HttpContext;
+                if (context == null)
+                {
+                    throw new InvalidOperationException("HttpContext is null. Ensure this service is called within an HTTP request context.");
+                }
+                return context.Session;
+            }
+        }
 
         public List<CarrinhoItem> GetItens()
         {

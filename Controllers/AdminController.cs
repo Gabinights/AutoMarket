@@ -22,16 +22,23 @@ namespace AutoMarket.Controllers
         }
 
         // GET: Admin/Index (Lista de Pendentes)
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
-            // Busca apenas os vendedores pendentes e inclui os dados do Utilizador (Nome, Email)
-            var vendedoresPendentes = await _context.Vendedores
+            int pageSize = 10;
+            var query = _context.Vendedores
                 .Include(v => v.User)
                 .Where(v => v.Status == StatusAprovacao.Pendente)
-                .OrderBy(v => v.User.DataRegisto)
+                .OrderBy(v => v.User.DataRegisto);
+
+            var model = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return View(vendedoresPendentes);
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize);
+
+            return View(model);
         }
 
         // POST: Admin/Aprovar/5
@@ -42,11 +49,7 @@ namespace AutoMarket.Controllers
             var vendedor = await _context.Vendedores.FindAsync(id);
             if (vendedor == null) return NotFound();
 
-            // Lógica de Domínio
-            vendedor.Status = StatusAprovacao.Aprovado;
-            vendedor.ApprovedByAdminId = _userManager.GetUserId(User); // Regista quem aprovou
-            vendedor.MotivoRejeicao = null; // Limpa rejeições antigas se houver
-
+            vendedor.Aprovar(_userManager.GetUserId(User));
             await _context.SaveChangesAsync();
 
             TempData["MensagemStatus"] = "Vendedor aprovado com sucesso!";
@@ -56,16 +59,17 @@ namespace AutoMarket.Controllers
         // POST: Admin/Rejeitar/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Rejeitar(int id)
+        public async Task<IActionResult> Rejeitar(int id, string motivo)
         {
             var vendedor = await _context.Vendedores.FindAsync(id);
             if (vendedor == null) return NotFound();
 
-            // Lógica de Domínio
-            vendedor.Status = StatusAprovacao.Rejeitado;
-            vendedor.ApprovedByAdminId = _userManager.GetUserId(User); // Regista quem rejeitou
-            vendedor.MotivoRejeicao = "Documentação insuficiente ou dados incorretos."; // Podes melhorar isto para receber um input de texto
+            if (string.IsNullOrWhiteSpace(motivo))
+            {
+                motivo = "Documentação insuficiente ou dados incorretos.";
+            }
 
+            vendedor.Rejeitar(_userManager.GetUserId(User), motivo);
             await _context.SaveChangesAsync();
 
             TempData["MensagemStatus"] = "Vendedor rejeitado.";
@@ -73,20 +77,28 @@ namespace AutoMarket.Controllers
         }
 
         // GET: Admin/HistoricoTransacoes
-        public async Task<IActionResult> HistoricoTransacoes()
+        public async Task<IActionResult> HistoricoTransacoes(int page = 1)
         {
-            // O .IgnoreQueryFilters() é CRÍTICO aqui.
-            // Sem ele, se o Comprador ou Vendedor tiverem IsDeleted=true,
-            // o EF Core devolve 'null' nas propriedades de navegação ou exclui a linha (dependendo do join).
-            var transacoes = await _context.Transacoes
+            int pageSize = 20;
+
+            var query = _context.Transacoes
                 .IgnoreQueryFilters()
                 .Include(t => t.Carro)
+                    .ThenInclude(c => c.Vendedor)
+                        .ThenInclude(v => v.User)
                 .Include(t => t.Comprador)
-                    .ThenInclude(c => c.User) // Vai buscar o User mesmo se IsDeleted = true
-                .OrderByDescending(t => t.DataTransacao)
-                .ToListAsync();
+                    .ThenInclude(c => c.User)
+                .OrderByDescending(t => t.DataTransacao);
 
-            return View(transacoes);
+            var model = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize);
+
+            return View(model);
         }
     }
 }

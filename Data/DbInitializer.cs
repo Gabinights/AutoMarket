@@ -1,6 +1,8 @@
-﻿using AutoMarket.Constants; // Onde tens a classe Roles
+﻿using AutoMarket.Constants;
 using AutoMarket.Models;
+using AutoMarket.Models.Enums;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Data
 {
@@ -8,14 +10,13 @@ namespace AutoMarket.Data
     {
         public static async Task InitializeAsync(IServiceProvider serviceProvider)
         {
-            // 1. Obter os serviços necessários
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<Utilizador>>();
+            var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
-            // 2. Garantir que as Roles existem
+            // 1. Roles
             string[] roles = { Roles.Admin, Roles.Vendedor, Roles.Comprador };
-
             foreach (var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
@@ -24,39 +25,88 @@ namespace AutoMarket.Data
                 }
             }
 
-            // 3. Verificar se existe algum Admin
-            // Procuramos por qualquer utilizador que tenha a Role 'Admin'
-            var usersInRole = await userManager.GetUsersInRoleAsync(Roles.Admin);
+            // 2. Default Admin
+            var adminEmail = configuration["DefaultAdmin:Email"] ?? "admin@automarket.com";
+            var adminPwd = configuration["DefaultAdmin:Password"] ?? "Password123!"; // Fallback for dev
 
-            if (usersInRole.Count == 0)
+            var adminUser = await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
+
+            // 3. Comprador Teste
+            var compradorUser = await EnsureUserAsync(userManager, "comprador@automarket.com", "Password123!", "Comprador Exemplo", Roles.Comprador);
+            if (compradorUser != null)
             {
-                // 4. Ler credenciais seguras do appsettings.json ou Secrets
-                var adminEmail = configuration["DefaultAdmin:Email"] ?? "admin@automarket.com";
-                var adminPassword = configuration["DefaultAdmin:Password"];
-
-                if (string.IsNullOrEmpty(adminPassword))
+                if (!await context.Compradores.AnyAsync(c => c.UserId == compradorUser.Id))
                 {
-                    // Log de aviso ou throw exception se for crítico
-                    // Para dev, podemos definir uma default, mas em prod é perigoso
-                    return;
+                    context.Compradores.Add(new Comprador
+                    {
+                        UserId = compradorUser.Id,
+                        ReceberNotificacoes = true
+                    });
+                    await context.SaveChangesAsync();
                 }
+            }
 
-                var newAdmin = new Utilizador
+            // 4. Vendedor Particular (Aprovado)
+            var vendedorPartUser = await EnsureUserAsync(userManager, "vendedor_part@automarket.com", "Password123!", "Vendedor Particular", Roles.Vendedor);
+            if (vendedorPartUser != null)
+            {
+                if (!await context.Vendedores.AnyAsync(v => v.UserId == vendedorPartUser.Id))
                 {
-                    UserName = adminEmail,
-                    Email = adminEmail,
-                    Nome = "Administrador Sistema",
-                    EmailConfirmed = true, // Importante para não bloquear login
+                    context.Vendedores.Add(new Vendedor
+                    {
+                        UserId = vendedorPartUser.Id,
+                        TipoConta = TipoConta.Vendedor,
+                        Status = StatusAprovacao.Aprovado,
+                        ApprovedByAdminId = adminUser?.Id // Auto-aprovado pelo sistema/admin
+                    });
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            // 5. Vendedor Empresa (Aprovado)
+            var vendedorEmpUser = await EnsureUserAsync(userManager, "vendedor_emp@automarket.com", "Password123!", "Stand AutoMarket Lda", Roles.Vendedor);
+            if (vendedorEmpUser != null)
+            {
+                if (!await context.Vendedores.AnyAsync(v => v.UserId == vendedorEmpUser.Id))
+                {
+                    context.Vendedores.Add(new Vendedor
+                    {
+                        UserId = vendedorEmpUser.Id,
+                        TipoConta = TipoConta.Empresa,
+                        Status = StatusAprovacao.Aprovado,
+                        ApprovedByAdminId = adminUser?.Id
+                    });
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
+
+        private static async Task<Utilizador?> EnsureUserAsync(UserManager<Utilizador> userManager, string email, string password, string nome, string role)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                user = new Utilizador
+                {
+                    UserName = email,
+                    Email = email,
+                    Nome = nome,
+                    EmailConfirmed = true,
                     DataRegisto = DateTime.UtcNow
                 };
 
-                var result = await userManager.CreateAsync(newAdmin, adminPassword);
-
+                var result = await userManager.CreateAsync(user, password);
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(newAdmin, Roles.Admin);
+                    await userManager.AddToRoleAsync(user, role);
+                }
+                else
+                {
+                    // Em env real, logar erro
+                    return null;
                 }
             }
+            return user;
         }
     }
 }
