@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Conta Bloqueada";
+}
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="card shadow text-center p-4 border-danger" style="max-width: 500px; width: 100%;">
+        <div class="card-body">
+            <div class="mb-4 text-danger">
+                <i class="bi bi-shield-lock-fill" style="font-size: 4rem;"></i>
+            </div>
+
+            <h2 class="card-title fw-bold text-danger mb-3">Acesso Temporariamente Bloqueado</h2>
+
+            <p class="card-text text-muted mb-4">
+                Detetámos demasiadas tentativas de login falhadas. Para sua segurança, esta conta foi bloqueada temporariamente.
+            </p>
+
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-clock-history"></i> Por favor, aguarde <strong>15 minutos</strong> antes de tentar novamente.
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                    Voltar à Página Inicial
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

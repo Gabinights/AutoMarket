@@ -1,0 +1,49 @@
+# --- .NET Build & Cache (CRÍTICO: Isso economiza 90% dos tokens) ---
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.pdb
+*.dll
+*.exe
+*.cache
+
+# --- Dependências de Frontend (O LLM já conhece jQuery/Bootstrap) ---
+# Ignoramos as libs baixadas, mas mantemos seu código customizado em css/ e js/
+wwwroot/lib/
+node_modules/
+package-lock.json
+yarn.lock
+jspm_packages/
+
+# --- Entity Framework Core ---
+# Geralmente as classes de Modelo (Entities) e o DbContext são suficientes.
+# Os arquivos de migração são gerados automaticamente e gastam muitos tokens.
+Migrations/
+
+# --- Arquivos de Sistema e Logs ---
+*.log
+*.ds_store
+Thumbs.db
+
+# --- Assets Binários (Imagens/Fontes não são legíveis por texto) ---
+wwwroot/images/
+wwwroot/favicon.ico
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.svg
+**/*.ico
+**/*.woff
+**/*.woff2
+**/*.ttf
+**/*.eot
+
+# --- Configurações Sensíveis (Opcional, mas recomendado) ---
+# Cuidado para não enviar senhas de banco de dados para a IA
+appsettings.Development.json
+Properties/launchSettings.json
