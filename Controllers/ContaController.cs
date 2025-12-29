@@ -43,22 +43,34 @@ namespace AutoMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                // 0. Verificar unicidade do NIF antes de começar
+                return View(model);
+            }
+
+            // Validação Backend: Empresa DEVE ter NIF (reforço da validação do modelo)
+            if (model.TipoConta == TipoConta.Empresa && string.IsNullOrWhiteSpace(model.NIF))
+            {
+                ModelState.AddModelError("NIF", "O NIF é obrigatório para contas empresariais.");
+                return View(model);
+            }
+
+            // 1. Iniciar Transação
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // 2. Verificar unicidade do NIF DENTRO da transação (evita race condition)
                 if (!string.IsNullOrEmpty(model.NIF))
                 {
                     bool nifExists = await _context.Users.AnyAsync(u => u.NIF == model.NIF);
                     if (nifExists)
                     {
-                         ModelState.AddModelError("NIF", "Este NIF já está associado a outra conta.");
-                         return View(model);
+                        ModelState.AddModelError("NIF", "Este NIF já está associado a outra conta.");
+                        await transaction.RollbackAsync();
+                        return View(model);
                     }
                 }
-
-                // 1. Iniciar Transação
-                using var transaction = await _context.Database.BeginTransactionAsync();
 
                 var user = new Utilizador
                 {
@@ -71,12 +83,12 @@ namespace AutoMarket.Controllers
                     DataRegisto = DateTime.UtcNow
                 };
 
-                // 2. Criar o User (Identity)
+                // 3. Criar o User (Identity)
                 var result = await _userManager.CreateAsync(user, model.Password);
 
                 if (result.Succeeded)
                 {
-                    // 3. Criar o Perfil Específico (Vendedor ou Comprador) baseado no enum
+                    // 4. Criar o Perfil Específico (Vendedor ou Comprador) baseado no enum
                     if (model.TipoConta == TipoConta.Vendedor || model.TipoConta == TipoConta.Empresa)
                     {
                         var vendedor = new Vendedor
@@ -98,32 +110,44 @@ namespace AutoMarket.Controllers
                         _context.Compradores.Add(comprador);
                         await _userManager.AddToRoleAsync(user, Roles.Comprador);
                     }
-                    // 4. Gravar Perfil na BD
+
+                    // 5. Gravar Perfil na BD
                     await _context.SaveChangesAsync();
-                    // 5. Se chegámos aqui sem erros, confirmar a transação
+                    
+                    // 6. Confirmar a transação
                     await transaction.CommitAsync();
 
                     // Lógica de envio de email de confirmação
-                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                    var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
-                    new { userId = user.Id, token }, Request.Scheme);
-
-                    if (string.IsNullOrEmpty(confirmationLink))
+                    try
                     {
-                        _logger.LogError("Falha ao gerar link de confirmação para {Email}", user.Email);
-                        // allow registration to complete, but log the issue
+                        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                        var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
+                            new { userId = user.Id, token }, Request.Scheme);
+
+                        if (string.IsNullOrEmpty(confirmationLink))
+                        {
+                            _logger.LogError("Falha ao gerar link de confirmação para {Email}", user.Email);
+                        }
+                        else
+                        {
+                            await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
+                        _logger.LogError(ex, "Erro ao enviar email de confirmação para {Email}", user.Email);
+                        // Registo completa mesmo se email falhar
                     }
+
                     return RedirectToAction("Index", "Home");
                 }
-                // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
+
+                // Se o Identity falhar, fazer rollback
+                await transaction.RollbackAsync();
+
+                // Adicionar erros ao ModelState
                 foreach (var error in result.Errors)
                 {
-                    // Verificamos os códigos internos do Identity
                     if (error.Code == "DuplicateUserName" || error.Code == "DuplicateEmail")
                     {
                         // MENSAGEM GENÉRICA: O atacante não sabe se o email existe ou se falhou outra coisa
@@ -131,12 +155,33 @@ namespace AutoMarket.Controllers
                     }
                     else
                     {
-                        // Outros erros (ex: Password fraca, precisa de letra maiúscula) 
-                        // continuam a ser úteis para o utilizador legítimo corrigir.
+                        // Outros erros (ex: Password fraca, precisa de letra maiúscula)
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
                 }
             }
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Erro de base de dados ao registar utilizador");
+
+                // Verificar se é violação de constraint do NIF
+                if (ex.InnerException?.Message.Contains("NIF") == true)
+                {
+                    ModelState.AddModelError("NIF", "Este NIF já está associado a outra conta.");
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Ocorreu um erro ao processar o registo. Por favor, tente novamente.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Erro inesperado ao registar utilizador");
+                ModelState.AddModelError(string.Empty, "Ocorreu um erro inesperado. Por favor, tente novamente.");
+            }
+
             return View(model);
         }
         [HttpGet]

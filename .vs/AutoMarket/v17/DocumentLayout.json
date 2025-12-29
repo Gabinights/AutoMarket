@@ -1,49 +1,49 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\_Dev\\AutoMarket\\",
+  "WorkspaceRootPath": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\views\\conta\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\conta\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\controllers\\transacoescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:controllers\\transacoescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\services\\carrinhoservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:services\\carrinhoservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\controllers\\contacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\controllers\\contacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:controllers\\contacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\controllers\\checkoutcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\services\\carrinhoservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:services\\carrinhoservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\views\\conta\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\conta\\register.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\controllers\\transacoescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:controllers\\transacoescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\controllers\\checkoutcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:controllers\\checkoutcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\views\\shared\\_header.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\views\\shared\\_header.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\shared\\_header.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\views\\conta\\lockout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\views\\conta\\lockout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\conta\\lockout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\views\\carrinho\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\carrinho\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\viewcomponents\\carrinhoresumoviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\viewcomponents\\carrinhoresumoviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:viewcomponents\\carrinhoresumoviewcomponent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\_dev\\automarket\\models\\utilizador.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\views\\carrinho\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:views\\carrinho\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|c:\\users\\nunos\\source\\repos\\automarket\\models\\utilizador.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{734FFC5B-3D81-4DFF-9C7C-97B4350DAA1A}|AutoMarket.csproj|solutionrelative:models\\utilizador.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -58,54 +58,65 @@
           "Children": [
             {
               "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Bookmark",
               "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 0,
               "Title": "ContaController.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Controllers\\ContaController.cs",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Controllers\\ContaController.cs",
               "RelativeDocumentMoniker": "Controllers\\ContaController.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Controllers\\ContaController.cs",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Controllers\\ContaController.cs",
               "RelativeToolTip": "Controllers\\ContaController.cs",
-              "ViewState": "AgIAAPYAAAAAAAAAAAAqwAcBAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAACEAAAAAAAAAAAASwFUBAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-27T18:12:49.596Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "CarrinhoService.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Services\\CarrinhoService.cs",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Services\\CarrinhoService.cs",
               "RelativeDocumentMoniker": "Services\\CarrinhoService.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Services\\CarrinhoService.cs",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Services\\CarrinhoService.cs",
               "RelativeToolTip": "Services\\CarrinhoService.cs",
-              "ViewState": "AgIAACEAAAAAAAAAAAAiwDcAAABsAAAAAAAAAA==",
+              "ViewState": "AgIAABgAAAAAAAAAAAAYwAgAAAA8AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-27T18:22:46.529Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "TransacoesController.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Controllers\\TransacoesController.cs",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Controllers\\TransacoesController.cs",
               "RelativeDocumentMoniker": "Controllers\\TransacoesController.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Controllers\\TransacoesController.cs",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Controllers\\TransacoesController.cs",
               "RelativeToolTip": "Controllers\\TransacoesController.cs",
               "ViewState": "AgIAAA4AAAAAAAAAAAAIwC0AAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-27T18:16:22.642Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-27T18:16:22.642Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "Register.cshtml",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Views\\Conta\\Register.cshtml",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Conta\\Register.cshtml",
               "RelativeDocumentMoniker": "Views\\Conta\\Register.cshtml",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Views\\Conta\\Register.cshtml",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Conta\\Register.cshtml",
               "RelativeToolTip": "Views\\Conta\\Register.cshtml",
               "ViewState": "AgIAACQAAAAAAAAAAAAAADwAAABbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
@@ -116,61 +127,57 @@
               "$type": "Document",
               "DocumentIndex": 4,
               "Title": "CheckoutController.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Controllers\\CheckoutController.cs",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Controllers\\CheckoutController.cs",
               "RelativeDocumentMoniker": "Controllers\\CheckoutController.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Controllers\\CheckoutController.cs",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Controllers\\CheckoutController.cs",
               "RelativeToolTip": "Controllers\\CheckoutController.cs",
               "ViewState": "AgIAAHQAAAAAAAAAAAAmwKAAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-27T18:11:05.127Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-27T18:11:05.127Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 5,
               "Title": "_Header.cshtml",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Views\\Shared\\_Header.cshtml",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Shared\\_Header.cshtml",
               "RelativeDocumentMoniker": "Views\\Shared\\_Header.cshtml",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Views\\Shared\\_Header.cshtml",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Shared\\_Header.cshtml",
               "RelativeToolTip": "Views\\Shared\\_Header.cshtml",
               "ViewState": "AgIAAAwAAAAAAAAAAAAAACQAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-12-27T18:38:43.868Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-27T18:38:43.868Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 6,
               "Title": "Lockout.cshtml",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Views\\Conta\\Lockout.cshtml",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Conta\\Lockout.cshtml",
               "RelativeDocumentMoniker": "Views\\Conta\\Lockout.cshtml",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Views\\Conta\\Lockout.cshtml",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Conta\\Lockout.cshtml",
               "RelativeToolTip": "Views\\Conta\\Lockout.cshtml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAAGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2025-12-27T18:33:04.641Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-27T18:33:04.641Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 7,
               "Title": "DbInitializer.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Data\\DbInitializer.cs",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Data\\DbInitializer.cs",
               "RelativeDocumentMoniker": "Data\\DbInitializer.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Data\\DbInitializer.cs",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Data\\DbInitializer.cs",
               "RelativeToolTip": "Data\\DbInitializer.cs",
               "ViewState": "AgIAAGoAAAAAAAAAAAAswHoAAABjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-27T18:24:53.519Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-27T18:24:53.519Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 8,
               "Title": "CarrinhoResumoViewComponent.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\ViewComponents\\CarrinhoResumoViewComponent.cs",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\ViewComponents\\CarrinhoResumoViewComponent.cs",
               "RelativeDocumentMoniker": "ViewComponents\\CarrinhoResumoViewComponent.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\ViewComponents\\CarrinhoResumoViewComponent.cs",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\ViewComponents\\CarrinhoResumoViewComponent.cs",
               "RelativeToolTip": "ViewComponents\\CarrinhoResumoViewComponent.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
@@ -178,11 +185,11 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "Index.cshtml",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Views\\Carrinho\\Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Carrinho\\Index.cshtml",
               "RelativeDocumentMoniker": "Views\\Carrinho\\Index.cshtml",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Views\\Carrinho\\Index.cshtml",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Views\\Carrinho\\Index.cshtml",
               "RelativeToolTip": "Views\\Carrinho\\Index.cshtml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
@@ -192,9 +199,9 @@
               "$type": "Document",
               "DocumentIndex": 10,
               "Title": "Utilizador.cs",
-              "DocumentMoniker": "C:\\_Dev\\AutoMarket\\Models\\Utilizador.cs",
+              "DocumentMoniker": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Models\\Utilizador.cs",
               "RelativeDocumentMoniker": "Models\\Utilizador.cs",
-              "ToolTip": "C:\\_Dev\\AutoMarket\\Models\\Utilizador.cs",
+              "ToolTip": "C:\\Users\\nunos\\source\\repos\\AutoMarket\\Models\\Utilizador.cs",
               "RelativeToolTip": "Models\\Utilizador.cs",
               "ViewState": "AgIAAAkAAAAAAAAAAAAAABAAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
