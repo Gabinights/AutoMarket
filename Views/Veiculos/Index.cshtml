@@ -1,104 +1,205 @@
-@using Microsoft.AspNetCore.Identity;
-@inject SignInManager<AutoMarket.Models.Utilizador> SignInManager
+@model IEnumerable<AutoMarket.Models.Veiculo>
 @{
-    ViewData["Title"] = "Ve√≠culos Dispon√≠veis";
+    ViewData["Title"] = "Pesquisa de VeÌculos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<header>
-    <div class="nav">
-        <!-- <a href="/" class="logo">AutoMarket</a>  removido link redundante -->
-        <nav>
-            <ul>
-                <!-- <li><a href="/">In√≠cio</a></li> removido link redundante -->
-                <li><a href="/Veiculos">Ve√≠culos</a></li>
-                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
-                <li><a href="/Home/Sobre">Sobre</a></li>
-            </ul>
-        </nav>
-        <div class="header-actions">
-            @if (SignInManager.IsSignedIn(User))
-            {
-                <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
-            }
-            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
+
+<div class="pesquisa-container" style="display: flex; gap: 2rem; max-width: 1400px; margin: 2rem auto; padding: 0 1rem;">
+    
+    <!-- SIDEBAR FILTROS (Esquerda) -->
+    <aside class="filtros-sidebar" style="min-width: 280px; flex-shrink: 0;">
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px #00214710;">
+            <h2 style="color: var(--cor-primaria); margin-bottom: 1.5rem; font-size: 1.2rem;">Filtros</h2>
+
+            <form method="get" action="/Veiculos/Index" id="filtrosForm">
+                
+                <!-- Marca -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">Marca</label>
+                    <select name="marca" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
+                        <option value="">-- Todas as marcas --</option>
+                        @foreach (var m in (ViewData["Marcas"] as List<string>) ?? new List<string>())
+                        {
+                            <option value="@m" selected="@(ViewData["MarcaSelecionada"]?.ToString() == m)">@m</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Modelo -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">Modelo</label>
+                    <select name="modelo" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
+                        <option value="">-- Todos os modelos --</option>
+                        @foreach (var m in (ViewData["Modelos"] as List<string>) ?? new List<string>())
+                        {
+                            <option value="@m" selected="@(ViewData["ModeloSelecionado"]?.ToString() == m)">@m</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Cor -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">Cor</label>
+                    <select name="cor" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
+                        <option value="">-- Todas as cores --</option>
+                        @foreach (var c in (ViewData["Cores"] as List<string>) ?? new List<string>())
+                        {
+                            <option value="@c" selected="@(ViewData["CorSelecionada"]?.ToString() == c)">@c</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- CombustÌvel -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">CombustÌvel</label>
+                    <select name="combustivel" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
+                        <option value="">-- Todos --</option>
+                        @foreach (var c in (ViewData["Combustiveis"] as List<string>) ?? new List<string>())
+                        {
+                            <option value="@c" selected="@(ViewData["CombustivelSelecionado"]?.ToString() == c)">@c</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Ano -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">Ano</label>
+                    <select name="ano" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
+                        <option value="">-- Todos os anos --</option>
+                        @foreach (var a in (ViewData["Anos"] as List<int?>) ?? new List<int?>())
+                        {
+                            <option value="@a" selected="@(ViewData["AnoSelecionado"]?.ToString() == a.ToString())">@a</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Tipo/Segmento -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">Tipo (Segmento)</label>
+                    <select name="categoria" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;">
+                        <option value="">-- Todos os tipos --</option>
+                        @foreach (var cat in (ViewData["Categorias"] as List<string>) ?? new List<string>())
+                        {
+                            <option value="@cat" selected="@(ViewData["CategoriaSelecionada"]?.ToString() == cat)">@cat</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- PreÁo Min-Max -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">PreÁo (Ä)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" name="precoMin" placeholder="MÌn" value="@ViewData["PrecoMin"]" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+                        <input type="number" name="precoMax" placeholder="M·x" value="@ViewData["PrecoMax"]" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+                    </div>
+                </div>
+
+                <!-- KM Min-Max -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--cor-primaria);">QuilÛmetros</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" name="kmMin" placeholder="MÌn" value="@ViewData["KmMin"]" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+                        <input type="number" name="kmMax" placeholder="M·x" value="@ViewData["KmMax"]" style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+                    </div>
+                </div>
+
+                <!-- Botıes -->
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn-cta" style="flex: 1; padding: 0.6rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Pesquisar</button>
+                    <a href="/Veiculos/Index" class="btn-primario" style="flex: 1; padding: 0.6rem; text-decoration: none; text-align: center; border-radius: 4px; cursor: pointer; font-weight: 600;">Limpar</a>
+                </div>
+            </form>
         </div>
-    </div>
-</header>
-<main style="display:flex;gap:3rem;max-width:1200px;margin:2rem auto 3rem auto;">
-    <aside class="filter-sidebar">
-        <h2 style="margin-bottom:1rem;font-size:1.2rem">Filtros</h2>
-        <div class="filter-group">
-            <label>Marca</label>
-            <input type="text" name="marca" />
-        </div>
-        <div class="filter-group">
-            <label>Modelo</label>
-            <input type="text" name="modelo" />
-        </div>
-        <div class="filter-group">
-            <label>Pre√ßo at√©</label>
-            <input type="number" name="preco" />
-        </div>
-        <div class="filter-group">
-            <label>Ano</label>
-            <input type="number" name="ano" />
-        </div>
-        <div class="filter-group">
-            <label>Quilometragem</label>
-            <input type="number" name="km" />
-        </div>
-        <div class="filter-group">
-            <label>Condi√ß√£o</label>
-            <select name="condicao"><option value="">Qualquer</option><option>Novo</option><option>Usado</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Combust√≠vel</label>
-            <select name="combustivel"><option value="">Qualquer</option><option>Gasolina</option><option>Gas√≥leo</option><option>H√≠brido</option><option>El√©trico</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Caixa</label>
-            <select name="caixa"><option value="">Qualquer</option><option>Manual</option><option>Autom√°tica</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Localiza√ß√£o</label>
-            <input type="text" name="localizacao" />
-        </div>
-        <button class="btn-primario" style="width:100%;margin-top:1rem">Aplicar Filtros</button>
     </aside>
-    <section style="flex:1;">
-        <h1 style="margin-bottom:1.4rem;">Ve√≠culos Dispon√≠veis</h1>
-        <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content:flex-start;">
-            <!-- TODO: Implementar fetch() para buscar ve√≠culos da API (RF1) -->
-            <div class="vehicle-card">
-                <img src="/images/carro_exemplo1.jpg" alt="Ve√≠culo 1" />
-                <h3>BMW S√©rie 1</h3>
-                <div class="price">‚Ç¨19.900</div>
-                <div class="meta">2019 ‚Ä¢ 45.000km ‚Ä¢ Lisboa</div>
+
+    <!-- AN⁄NCIOS (Direita) -->
+    <section style="flex: 1;">
+        <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px #00214710;">
+            <!-- OrdenaÁ„o -->
+            <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="color: var(--cor-primaria); margin: 0; font-size: 1.2rem;">VeÌculos DisponÌveis</h2>
+                <div>
+                    <label style="margin-right: 0.5rem; font-weight: 600;">Ordenar:</label>
+                    <select id="ordenacao" onchange="document.getElementById('filtrosForm').submit()" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="recente" selected="@(ViewData["Ordenacao"]?.ToString() == "recente")">Mais recente</option>
+                        <option value="preco_asc" selected="@(ViewData["Ordenacao"]?.ToString() == "preco_asc")">PreÁo ascendente</option>
+                        <option value="preco_desc" selected="@(ViewData["Ordenacao"]?.ToString() == "preco_desc")">PreÁo descendente</option>
+                        <option value="km_asc" selected="@(ViewData["Ordenacao"]?.ToString() == "km_asc")">KM ascendentes</option>
+                        <option value="km_desc" selected="@(ViewData["Ordenacao"]?.ToString() == "km_desc")">KM descendentes</option>
+                        <option value="ano_asc" selected="@(ViewData["Ordenacao"]?.ToString() == "ano_asc")">Ano ascendente</option>
+                        <option value="ano_desc" selected="@(ViewData["Ordenacao"]?.ToString() == "ano_desc")">Ano descendente</option>
+                    </select>
+                </div>
             </div>
-            <div class="vehicle-card">
-                <img src="/images/carro_exemplo2.jpg" alt="Ve√≠culo 2" />
-                <h3>Renault Clio</h3>
-                <div class="price">‚Ç¨13.400</div>
-                <div class="meta">2018 ‚Ä¢ 33.000km ‚Ä¢ Porto</div>
-            </div>
-            <div class="vehicle-card">
-                <img src="/images/carro_exemplo3.jpg" alt="Ve√≠culo 3" />
-                <h3>Volkswagen Golf</h3>
-                <div class="price">‚Ç¨22.500</div>
-                <div class="meta">2020 ‚Ä¢ 29.900km ‚Ä¢ Braga</div>
-            </div>
+
+            <!-- Grid de An˙ncios -->
+            @if (Model.Any())
+            {
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+                    @foreach (var veiculo in Model)
+                    {
+                        <div class="vehicle-card" style="background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: all 0.2s;">
+                            @if (!string.IsNullOrEmpty(veiculo.ImagemPrincipal))
+                            {
+                                <img src="/images/@veiculo.ImagemPrincipal" alt="@veiculo.Marca @veiculo.Modelo" style="width: 100%; height: 180px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <div style="width: 100%; height: 180px; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #999;">
+                                    Sem imagem
+                                </div>
+                            }
+                            <div style="padding: 1rem;">
+                                <h3 style="color: var(--cor-primaria); margin: 0 0 0.5rem 0; font-size: 1rem;">@veiculo.Marca @veiculo.Modelo</h3>
+                                <p style="color: var(--cor-cta); font-size: 1.3rem; font-weight: bold; margin: 0.5rem 0;">Ä@veiculo.Preco.ToString("F2")</p>
+                                <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                    <p style="margin: 0.25rem 0;">?? @veiculo.Ano</p>
+                                    <p style="margin: 0.25rem 0;">?? @veiculo.Quilometros?.ToString("N0") km</p>
+                                    <p style="margin: 0.25rem 0;">? @veiculo.Combustivel</p>
+                                </div>
+                                <p style="color: #888; font-size: 0.85rem; margin: 0.5rem 0;">@(veiculo.Categoria ?? "Sem categoria")</p>
+                                <a href="/Veiculos/Detalhe/@veiculo.Id" class="btn-primario" style="display: block; text-align: center; padding: 0.5rem; text-decoration: none; border-radius: 4px; margin-top: 1rem;">Ver Detalhes</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; padding: 3rem 1rem; color: #999;">
+                    <p style="font-size: 1.1rem;">Nenhum veÌculo encontrado com os filtros selecionados.</p>
+                    <a href="/Veiculos/Index" class="btn-cta" style="padding: 0.6rem 2rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 1rem;">Limpar Filtros</a>
+                </div>
+            }
         </div>
     </section>
-</main>
-<footer>
-    &copy; 2025 AutoMarket<br/>
-    Plataforma de compra e venda de ve√≠culos usados.
-</footer>
-@section Styles {
-    <link rel="stylesheet" href="/css/style.css" />
-}
-@section Scripts {
-    <script src="/js/script.js"></script>
-}
+</div>
 
+<style>
+    .vehicle-card:hover {
+        box-shadow: 0 4px 12px #00214720;
+        transform: translateY(-2px);
+    }
+</style>
 
+<link rel="stylesheet" href="~/css/pesquisa.css" />
 
+<script>
+    // Atualizar o campo de ordenaÁ„o
+    document.getElementById('ordenacao').addEventListener('change', function() {
+        var ordenacao = this.value;
+        var form = document.getElementById('filtrosForm');
+        
+        // Adicionar campo oculto se n„o existir
+        var ordenacaoInput = form.querySelector('input[name="ordenacao"]');
+        if (!ordenacaoInput) {
+            ordenacaoInput = document.createElement('input');
+            ordenacaoInput.type = 'hidden';
+            ordenacaoInput.name = 'ordenacao';
+            form.appendChild(ordenacaoInput);
+        }
+        
+        ordenacaoInput.value = ordenacao;
+        form.submit();
+    });
+</script>

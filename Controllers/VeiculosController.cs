@@ -22,7 +22,7 @@ namespace AutoMarket.Controllers
         /// Exibe a página de pesquisa e filtros de veículos.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Pesquisa(
+        public async Task<IActionResult> Index(
             string? marca = null,
             string? modelo = null,
             string? cor = null,
