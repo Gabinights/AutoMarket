@@ -7,71 +7,129 @@
     <form asp-controller="Conta" asp-action="Register" method="post">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="form-group mb-2">
-            <label asp-for="TipoConta"></label><br />
-            <select asp-for="TipoConta" class="form-control">
-                <option value="Comprador">Comprador</option>
-                <option value="Vendedor">Vendedor</option>
-            </select>
-            <span asp-validation-for="TipoConta" class="text-danger"></span>
-            <span class="text-warning" style="font-size:0.95em;display:block;margin-top:4px;" id="msgVendedor">Contas de vendedor requerem aprovação do administrador!</span>
-        </div>
-        <div class="form-group">
-            <label asp-for="Nome"></label>
-            <input asp-for="Nome" class="form-control" />
-            <span asp-validation-for="Nome" class="text-danger"></span>
-        </div>
+
         <div class="form-group">
             <label asp-for="Email"></label>
             <input asp-for="Email" class="form-control" />
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
-        <div class="form-group">
-            <label asp-for="Contactos"></label>
-            <input asp-for="Contactos" class="form-control" />
-            <span asp-validation-for="Contactos" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label asp-for="Morada"></label>
-            <input asp-for="Morada" class="form-control" />
-            <span asp-validation-for="Morada" class="text-danger"></span>
-        </div>
+
         <div class="form-group">
             <label asp-for="Password"></label>
             <input asp-for="Password" class="form-control" />
             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
+
         <div class="form-group">
             <label asp-for="ConfirmPassword"></label>
             <input asp-for="ConfirmPassword" class="form-control" />
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
-        <button type="submit" class="btn btn-success w-100 mt-3">Registar</button>
-        <div class="mt-3 text-center">
-            <a asp-controller="Conta" asp-action="Login">Já tem conta? Entrar</a>
+
+        <div class="form-group">
+            <label asp-for="Nome"></label>
+            <input asp-for="Nome" class="form-control" />
+            <span asp-validation-for="Nome" class="text-danger"></span>
         </div>
+
+        <div class="form-group">
+            <label asp-for="Morada"></label>
+            <input asp-for="Morada" class="form-control" />
+            <span asp-validation-for="Morada" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Contacto"></label>
+            <input asp-for="Contacto" class="form-control" />
+            <span asp-validation-for="Contacto" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="form-label fw-bold d-block">Tipo de Conta:</label>
+
+            <div class="btn-group w-100" role="group" aria-label="Seleção de tipo de conta">
+                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoComprador" value="0" autocomplete="off">
+                <label class="btn btn-outline-primary" for="tipoComprador">
+                    <i class="bi bi-search"></i> Comprador
+                </label>
+
+                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoVendedor" value="1" autocomplete="off">
+                <label class="btn btn-outline-primary" for="tipoVendedor">
+                    <i class="bi bi-car-front"></i> Vendedor Particular
+                </label>
+
+                <input type="radio" class="btn-check" asp-for="TipoConta" id="tipoEmpresa" value="2" autocomplete="off">
+                <label class="btn btn-outline-primary" for="tipoEmpresa">
+                    <i class="bi bi-building"></i> Empresa
+                </label>
+            </div>
+            <small class="text-muted">Escolha "Comprador" apenas para ver carros. Escolha as outras opções para vender.</small>
+        </div>
+
+        <div id="sellerFields" style="display:none;">
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <h6 class="card-title text-primary">Dados de Vendedor</h6>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="NIF" class="control-label fw-bold"></label>
+                        <input asp-for="NIF" class="form-control" placeholder="Introduza o NIF" />
+                        <span asp-validation-for="NIF" class="text-danger"></span>
+                        <div id="nifHelp" class="form-text"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Registar</button>
     </form>
 </main>
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-    const msgVendedor = document.getElementById('msgVendedor');
-    const tipoConta = document.querySelector('select[name="TipoConta"]');
-    const toggleMsg = () => {
-        msgVendedor.style.display = tipoConta.value === 'Vendedor' ? 'block' : 'none';
-    };
-    toggleMsg();
-    tipoConta.addEventListener('change', toggleMsg);
-    </script>
+	@await Html.PartialAsync("_ValidationScriptsPartial");
+
+	<script>
+		$(document).ready(function () {
+			// Mapeamento dos valores do Enum (Para ficar legível)
+			// 0 = Comprador, 1 = Vendedor, 2 = Empresa
+
+			const $radios = $('input[name="TipoConta"]');
+			const $sellerFields = $('#sellerFields');
+			const $nifInput = $('#NIF');
+			const $nifLabel = $('label[for="NIF"]');
+			const $nifHelp = $('#nifHelp');
+
+			function atualizarFormulario() {
+				// Obtém o valor do radio selecionado (0, 1 ou 2)
+				const tipoSelecionado = $('input[name="TipoConta"]:checked').val();
+
+				if (tipoSelecionado === '0') {
+					// === COMPRADOR ===
+					$sellerFields.slideUp();
+					$nifInput.val(''); // Limpa o NIF se mudar de ideias
+				}
+				else {
+					// === VENDEDOR OU EMPRESA ===
+					$sellerFields.slideDown();
+
+					// Lógica Específica: Empresa vs Particular
+					if (tipoSelecionado === '2') {
+						// É Empresa: NIF Obrigatório e Rigoroso
+						$nifLabel.html('NIF da Empresa <span class="text-danger">*</span>');
+						$nifInput.attr('placeholder', 'NIF Obrigatório (9 dígitos)');
+						$nifHelp.text('Empresas são obrigadas a apresentar NIF válido para faturação.');
+					} else {
+						// É Particular: NIF Opcional (ou conforme a tua regra de negócio)
+						$nifLabel.html('NIF (Particular)');
+						$nifInput.attr('placeholder', 'Opcional');
+						$nifHelp.text('Introduza o NIF se desejar fatura detalhada das taxas de serviço.');
+					}
+				}
+			}
+
+			// Event Listeners
+			$radios.change(atualizarFormulario);
+
+			// Executar ao carregar a página (para manter o estado se houver erro de validação)
+			atualizarFormulario();
+		});
+	</script>
 }
-
-
-
-
-
-
-
-
-
-
-

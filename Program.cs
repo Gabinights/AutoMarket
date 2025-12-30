@@ -1,11 +1,13 @@
 using AutoMarket.Data;
 using AutoMarket.Models;
 using AutoMarket.Services;
+using AutoMarket.Security;
+using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
+using Microsoft.AspNetCore.Http;
+using AutoMarket.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,10 +48,14 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuthorizationHandler, VendedorAprovadoHandler>();
 builder.Services.AddSingleton<EmailFailureTracker>(sp =>
     new EmailFailureTracker(maxFailures: 5, failureWindow: TimeSpan.FromMinutes(5), circuitBreakerTimeout: TimeSpan.FromMinutes(1)));
 // Adiciona o serviço de email
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<EmailTemplateService>();
+builder.Services.AddScoped<IEmailAuthService, EmailAuthService>();
 
 // --- Configuração de Cookies de Sessão ---
 builder.Services.ConfigureApplicationCookie(options =>
@@ -66,8 +72,11 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Adiciona o serviço de renderização de views
 builder.Services.AddScoped<ViewRenderService>();
 
-// Adiciona o serviço de templates de email
-builder.Services.AddScoped<EmailTemplateService>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("VendedorAprovado", policy =>
+    policy.AddRequirements(new VendedorAprovadoRequirement()));
+});
 
 // Adicionar políticas de autorização
 builder.Services.AddAuthorization(options =>
@@ -92,8 +101,6 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -113,6 +120,19 @@ app.UseRequestLocalization(localizationOptions);
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseStatusCodePages(context =>
+{
+    var response = context.HttpContext.Response;
+    var user = context.HttpContext.User;
+
+    // Se for erro 403 (Proibido) e for Vendedor
+    if (response.StatusCode == 403 && user.IsInRole(Roles.Vendedor))
+    {
+        response.Redirect("/Conta/AguardandoAprovacao");
+    }
+    return Task.CompletedTask;
+});
 
 app.MapControllerRoute(
     name: "default",

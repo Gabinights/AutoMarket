@@ -218,6 +218,11 @@ footer {
     color: #b88301;
 }
 
+.seller-fields {
+    border-left: 3px solid #0d6efd;
+    padding-left: 15px;
+}
+
 .badge-container {
     margin: 0.8rem 0;
 }
