@@ -43,6 +43,11 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
     options.Lockout.AllowedForNewUsers = true;
     // --- Configuração de Utilizador / SignIn ---
     options.User.RequireUniqueEmail = true;
+    
+    // CONFIRMAÇÃO DE EMAIL:
+    // true = Requer confirmação (use para produção - veja CONFIGURAR_EMAIL.md)
+    // false = Permite login imediato (útil para desenvolvimento/testes)
+    // EM DESENVOLVIMENTO: O link de confirmação aparece nos logs do Visual Studio (View → Output)
     options.SignIn.RequireConfirmedEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()

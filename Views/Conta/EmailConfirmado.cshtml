@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Email Confirmado";
+}
+
+<main class="container text-center" style="max-width:600px; margin:4rem auto;">
+    <div class="card">
+        <div class="card-body p-5">
+            <div class="mb-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+            </div>
+            <h2 class="card-title text-success mb-3">Email Confirmado com Sucesso!</h2>
+            <p class="card-text mb-4">
+                A sua conta foi ativada. Já pode fazer login no AutoMarket.
+            </p>
+            <a asp-controller="Conta" asp-action="Login" class="btn btn-primary btn-lg">
+                Ir para Login
+            </a>
+        </div>
+    </div>
+</main>

@@ -18,19 +18,25 @@ namespace AutoMarket.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailAuthService _emailAuthService;
         private readonly ILogger<ContaController> _logger;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
         public ContaController(
             UserManager<Utilizador> userManager,
             SignInManager<Utilizador> signInManager,
             ApplicationDbContext context,
             IEmailAuthService emailAuthService,
-            ILogger<ContaController> logger)
+            ILogger<ContaController> logger,
+            IWebHostEnvironment environment,
+            IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
             _logger = logger;
             _emailAuthService = emailAuthService;
+            _environment = environment;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -112,13 +118,34 @@ namespace AutoMarket.Controllers
                     if (string.IsNullOrEmpty(confirmationLink))
                     {
                         _logger.LogError("Falha ao gerar link de confirmação para {Email}", user.Email);
-                        // allow registration to complete, but log the issue
+                        TempData["ErrorMessage"] = "Erro ao gerar link de confirmação. Por favor, contacte o suporte.";
+                        return RedirectToAction(nameof(Login));
                     }
-                    else
+
+                    // Verificar se email está configurado
+                    var smtpConfigured = !string.IsNullOrEmpty(_configuration["EmailSettings:SmtpServer"]) &&
+                                        !string.IsNullOrEmpty(_configuration["EmailSettings:SmtpUsername"]) &&
+                                        !string.IsNullOrEmpty(_configuration["EmailSettings:SmtpPassword"]);
+
+                    try
                     {
                         await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
                     }
-                    return RedirectToAction("Index", "Home");
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Erro ao enviar email de confirmação para {Email}", user.Email);
+                    }
+
+                    // Se está em desenvolvimento OU o email não está configurado, mostrar o link diretamente
+                    if (_environment.IsDevelopment() || !smtpConfigured)
+                    {
+                        _logger.LogWarning("Link de confirmação gerado: {Link}", confirmationLink);
+                        return View("AguardarConfirmacao", confirmationLink);
+                    }
+
+                    // Em produção com email configurado, redirecionar para login com mensagem
+                    TempData["SuccessMessage"] = "Registo efetuado com sucesso! Verifique o seu email para confirmar a sua conta.";
+                    return RedirectToAction(nameof(Login));
                 }
                 // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
                 foreach (var error in result.Errors)
@@ -151,12 +178,31 @@ namespace AutoMarket.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            // Check if user exists first
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user != null)
+            {
+                // Check if email is confirmed
+                if (!await _userManager.IsEmailConfirmedAsync(user))
+                {
+                    _logger.LogWarning("Tentativa de login com email não confirmado: {Email}", model.Email);
+                    ModelState.AddModelError(string.Empty, "Por favor, confirme o seu email antes de fazer login. Verifique a sua caixa de entrada.");
+                    return View(model);
+                }
+
+                // Check if account is blocked or deleted
+                if (user.IsBlocked || user.IsDeleted)
+                {
+                    ModelState.AddModelError(string.Empty, "Conta bloqueada ou eliminada.");
+                    return View(model);
+                }
+            }
+
             // 1. Tentar Login
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
 
             if (result.Succeeded)
             {
-                var user = await _userManager.FindByEmailAsync(model.Email);
                 if (user == null)
                 {
                     await _signInManager.SignOutAsync();
@@ -164,15 +210,7 @@ namespace AutoMarket.Controllers
                     return View(model);
                 }
 
-                // 2. Verificar Bloqueio Global
-                if (user.IsBlocked || user.IsDeleted)
-                {
-                    await _signInManager.SignOutAsync();
-                    ModelState.AddModelError(string.Empty, "Conta bloqueada ou eliminada.");
-                    return View(model);
-                }
-
-                // 3. Verificar Vendedor
+                // 2. Verificar Vendedor
                 if (await _userManager.IsInRoleAsync(user, Roles.Vendedor))
                 {
                     var vendedor = await _context.Vendedores
@@ -194,7 +232,8 @@ namespace AutoMarket.Controllers
                 _logger.LogWarning("Conta bloqueada temporariamente devido a tentativas falhadas: {Email}", model.Email);
                 return View("Lockout"); 
             }
-            ModelState.AddModelError(string.Empty, "Login inválido.");
+            
+            ModelState.AddModelError(string.Empty, "Email ou password inválidos.");
             return View(model);
         }
 
@@ -237,6 +276,62 @@ namespace AutoMarket.Controllers
             // Vamos buscar o utilizador para garantir que é mesmo um Vendedor
             // (Otimização: Injetar IAuthMessageService aqui se quiseres reenviar email, etc.)
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult ReenviarConfirmacao()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReenviarConfirmacao(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ModelState.AddModelError(string.Empty, "Por favor, introduza o seu email.");
+                return View();
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            
+            // Não revelar se o utilizador existe ou não (segurança)
+            if (user == null)
+            {
+                TempData["SuccessMessage"] = "Se o email existir no sistema, receberá um novo link de confirmação.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Verificar se já está confirmado
+            if (await _userManager.IsEmailConfirmedAsync(user))
+            {
+                TempData["InfoMessage"] = "Este email já está confirmado. Pode fazer login.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            try
+            {
+                // Gerar novo token e enviar email
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
+                    new { userId = user.Id, token }, Request.Scheme);
+
+                if (!string.IsNullOrEmpty(confirmationLink))
+                {
+                    await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
+                    _logger.LogInformation("Email de confirmação reenviado para {Email}", user.Email);
+                }
+
+                TempData["SuccessMessage"] = "Se o email existir no sistema, receberá um novo link de confirmação.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao reenviar email de confirmação para {Email}", email);
+                TempData["SuccessMessage"] = "Se o email existir no sistema, receberá um novo link de confirmação.";
+            }
+
+            return RedirectToAction(nameof(Login));
         }
 
         [HttpPost]
