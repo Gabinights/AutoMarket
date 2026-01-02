@@ -62,6 +62,10 @@ namespace AutoMarket.Models
         [Display(Name = "Localização")]
         public string Localizacao { get; set; } // Ex: "Lisboa"
 
+        [StringLength(50)]
+        [Display(Name = "Condição")]
+        public string? Condicao { get; set; }
+
         [Required]
         [DataType(DataType.MultilineText)]
         [StringLength(2000, ErrorMessage = "A descrição é demasiado longa.")]
