@@ -1,195 +1,198 @@
-@model AutoMarket.Models.Veiculo
+@model AutoMarket.Models.ViewModels.Carros.CreateCarroViewModel
 @{
     ViewData["Title"] = "Criar Novo Carro";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container-main" style="max-width: 700px;">
-    <h1 style="margin-bottom: 2rem;">Criar Novo Carro</h1>
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="h3 mb-4">Criar Novo Carro</h1>
 
-    <form asp-action="Create" method="post" class="form-step">
-        @Html.AntiForgeryToken()
+            <form asp-action="Create" asp-controller="Carros" asp-area="Vendedores" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
 
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
-        <!-- Informação Básica -->
-        <fieldset style="margin-bottom: 2rem;">
-            <legend style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem;">Informação Básica</legend>
+                <!-- Seção 1: Informações Básicas -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Informações Básicas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Titulo" class="form-label">Título do Anúncio *</label>
+                            <input asp-for="Titulo" class="form-control" placeholder="Ex: BMW 320i 2018 em perfeito estado" required />
+                            <span asp-validation-for="Titulo" class="text-danger"></span>
+                        </div>
 
-            <div class="form-group">
-                <label asp-for="Matricula"></label>
-                <input asp-for="Matricula" class="form-control" placeholder="ex: 12-AB-34" />
-                <span asp-validation-for="Matricula" class="text-danger"></span>
-            </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Marca" class="form-label">Marca *</label>
+                                <input asp-for="Marca" class="form-control" placeholder="Ex: BMW" required />
+                                <span asp-validation-for="Marca" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Modelo" class="form-label">Modelo *</label>
+                                <input asp-for="Modelo" class="form-control" placeholder="Ex: 320i" required />
+                                <span asp-validation-for="Modelo" class="text-danger"></span>
+                            </div>
+                        </div>
 
-            <div class="form-group">
-                <label asp-for="Marca"></label>
-                <input asp-for="Marca" class="form-control" placeholder="ex: BMW, Renault" />
-                <span asp-validation-for="Marca" class="text-danger"></span>
-            </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Ano" class="form-label">Ano *</label>
+                                <input asp-for="Ano" type="number" class="form-control" placeholder="2023" required />
+                                <span asp-validation-for="Ano" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CategoriaId" class="form-label">Tipo/Segmento *</label>
+                                <select asp-for="CategoriaId" class="form-select" required>
+                                    <option value="">-- Selecione uma categoria --</option>
+                                    @if (Model.CategoriesDropdown.Any())
+                                    {
+                                        @foreach (var cat in Model.CategoriesDropdown)
+                                        {
+                                            <option value="@cat.Id">@cat.Nome</option>
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Modelo"></label>
-                <input asp-for="Modelo" class="form-control" placeholder="ex: Série 1, Clio" />
-                <span asp-validation-for="Modelo" class="text-danger"></span>
-            </div>
+                <!-- Seção 2: Especificações Técnicas -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Especificações Técnicas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Combustivel" class="form-label">Combustível *</label>
+                                <select asp-for="Combustivel" class="form-select" required>
+                                    <option value="">-- Selecione --</option>
+                                    <option value="Gasolina">Gasolina</option>
+                                    <option value="Gasóleo">Gasóleo</option>
+                                    <option value="Híbrido">Híbrido</option>
+                                    <option value="Elétrico">Elétrico</option>
+                                    <option value="GLP">GLP</option>
+                                </select>
+                                <span asp-validation-for="Combustivel" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Caixa" class="form-label">Caixa *</label>
+                                <select asp-for="Caixa" class="form-select" required>
+                                    <option value="">-- Selecione --</option>
+                                    <option value="Manual">Manual</option>
+                                    <option value="Automática">Automática</option>
+                                    <option value="CVT">CVT</option>
+                                </select>
+                                <span asp-validation-for="Caixa" class="text-danger"></span>
+                            </div>
+                        </div>
 
-            <div class="form-group">
-                <label asp-for="Versao"></label>
-                <input asp-for="Versao" class="form-control" placeholder="Opcional" />
-                <span asp-validation-for="Versao" class="text-danger"></span>
-            </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Km" class="form-label">Quilómetros</label>
+                                <input asp-for="Km" type="number" class="form-control" placeholder="45000" />
+                                <span asp-validation-for="Km" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Condicao" class="form-label">Condição</label>
+                                <input asp-for="Condicao" class="form-control" placeholder="Ex: Usado, Novo" />
+                                <span asp-validation-for="Condicao" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Preco" class="form-label">Preço (€) *</label>
+                                <input asp-for="Preco" type="number" step="0.01" class="form-control" placeholder="25000.00" required />
+                                <span asp-validation-for="Preco" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Ano"></label>
-                <input asp-for="Ano" type="number" class="form-control" placeholder="ex: 2020" />
-                <span asp-validation-for="Ano" class="text-danger"></span>
-            </div>
+                <!-- Seção 3: Localização e Descrição -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Localização e Descrição</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Localizacao" class="form-label">Localização *</label>
+                            <input asp-for="Localizacao" class="form-control" placeholder="Ex: Lisboa, Portugal" required />
+                            <span asp-validation-for="Localizacao" class="text-danger"></span>
+                        </div>
 
-            <div class="form-group">
-                <label asp-for="Preco"></label>
-                <input asp-for="Preco" type="number" step="0.01" class="form-control" placeholder="ex: 15000.00" />
-                <span asp-validation-for="Preco" class="text-danger"></span>
-            </div>
+                        <div class="mb-3">
+                            <label asp-for="Descricao" class="form-label">Descrição Detalhada *</label>
+                            <textarea asp-for="Descricao" class="form-control" rows="5" placeholder="Descreva em detalhe o estado do veículo, histórico de manutenção, reparações, etc." required></textarea>
+                            <small class="form-text text-muted">Máximo 2000 caracteres</small>
+                            <span asp-validation-for="Descricao" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Condicao"></label>
-                <select asp-for="Condicao" class="form-control">
-                    <option value="">-- Selecione --</option>
-                    <option value="Novo">Novo</option>
-                    <option value="Usado">Usado</option>
-                </select>
-                <span asp-validation-for="Condicao" class="text-danger"></span>
-            </div>
-        </fieldset>
+                <!-- Seção 4: Fotos -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Fotos (Máximo 10 imagens)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Fotos" class="form-label">Selecione as Fotos *</label>
+                            <input asp-for="Fotos" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple required />
+                            <small class="form-text text-muted">
+                                Formatos: JPG, JPEG, PNG, WebP | Máximo 10 imagens | Máximo 5 MB por imagem
+                            </small>
+                            <span asp-validation-for="Fotos" class="text-danger"></span>
+                        </div>
 
-        <!-- Especificações -->
-        <fieldset style="margin-bottom: 2rem;">
-            <legend style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem;">Especificações Técnicas</legend>
+                        <div id="preview" class="row mt-3"></div>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Combustivel"></label>
-                <select asp-for="Combustivel" class="form-control">
-                    <option value="">-- Selecione --</option>
-                    <option value="Gasolina">Gasolina</option>
-                    <option value="Gasóleo">Gasóleo</option>
-                    <option value="Híbrido">Híbrido</option>
-                    <option value="Elétrico">Elétrico</option>
-                </select>
-                <span asp-validation-for="Combustivel" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Caixa"></label>
-                <select asp-for="Caixa" class="form-control">
-                    <option value="">-- Selecione --</option>
-                    <option value="Manual">Manual</option>
-                    <option value="Automática">Automática</option>
-                </select>
-                <span asp-validation-for="Caixa" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Quilometros"></label>
-                <input asp-for="Quilometros" type="number" class="form-control" placeholder="ex: 45000" />
-                <span asp-validation-for="Quilometros" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Potencia"></label>
-                <input asp-for="Potencia" type="number" class="form-control" placeholder="ex: 150" />
-                <span asp-validation-for="Potencia" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Cor"></label>
-                <input asp-for="Cor" class="form-control" placeholder="ex: Azul, Preto" />
-                <span asp-validation-for="Cor" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Categoria"></label>
-                <input asp-for="Categoria" class="form-control" placeholder="ex: SUV, Sedan, Hatchback" />
-                <span asp-validation-for="Categoria" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Portas"></label>
-                <input asp-for="Portas" type="number" class="form-control" placeholder="ex: 5" />
-                <span asp-validation-for="Portas" class="text-danger"></span>
-            </div>
-        </fieldset>
-
-        <!-- Descrição -->
-        <fieldset style="margin-bottom: 2rem;">
-            <legend style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem;">Detalhes Adicionais</legend>
-
-            <div class="form-group">
-                <label asp-for="Descricao"></label>
-                <textarea asp-for="Descricao" class="form-control" rows="5" placeholder="Descreva o veículo..."></textarea>
-                <span asp-validation-for="Descricao" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="ImagemPrincipal"></label>
-                <input asp-for="ImagemPrincipal" class="form-control" placeholder="Nome da imagem (ex: carro_001.jpg)" />
-                <span asp-validation-for="ImagemPrincipal" class="text-danger"></span>
-            </div>
-        </fieldset>
-
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-            <button type="submit" class="btn-cta">Criar Carro</button>
-            <a asp-action="Index" class="btn-primario">Cancelar</a>
+                <!-- Botões -->
+                <div class="d-flex gap-2 mb-5">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle"></i> Criar Carro
+                    </button>
+                    <a href="@Url.Action("Index", "Carros", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 
-<style>
-    .form-group {
-        margin-bottom: 1rem;
-    }
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: var(--cor-primaria);
-    }
-    .form-control {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 1rem;
-    }
-    .form-control:focus {
-        outline: none;
-        border-color: var(--cor-cta);
-        box-shadow: 0 0 5px rgba(255, 112, 0, 0.3);
-    }
-    .text-danger {
-        color: #dc3545;
-        font-size: 0.9rem;
-        display: block;
-        margin-top: 0.25rem;
-    }
-    .alert-danger {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-    }
-    fieldset {
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        padding: 1.5rem;
-    }
-    legend {
-        color: var(--cor-primaria);
-    }
-</style>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.querySelector('input[type="file"]').addEventListener('change', function(e) {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            
+            Array.from(this.files).slice(0, 10).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-4 col-6 mb-3';
+                    col.innerHTML = `
+                        <div class="position-relative">
+                            <img src="${event.target.result}" class="img-fluid rounded" style="width: 100%; height: 200px; object-fit: cover;">
+                            <small class="d-block mt-1 text-muted">${file.name}</small>
+                        </div>
+                    `;
+                    preview.appendChild(col);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            if (this.files.length > 10) {
+                alert('Máximo de 10 imagens permitidas. Apenas as primeiras 10 serão usadas.');
+            }
+        });
+    </script>
 }

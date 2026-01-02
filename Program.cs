@@ -57,6 +57,9 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<EmailTemplateService>();
 builder.Services.AddScoped<IEmailAuthService, EmailAuthService>();
 
+// Adiciona o serviço de ficheiros
+builder.Services.AddScoped<IFileService, FileService>();
+
 // --- Configuração de Cookies de Sessão ---
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -72,13 +75,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Adiciona o serviço de renderização de views
 builder.Services.AddScoped<ViewRenderService>();
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("VendedorAprovado", policy =>
-    policy.AddRequirements(new VendedorAprovadoRequirement()));
-});
-
-// Adicionar políticas de autorização
+// Registar políticas de autorização
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("VendedorAprovado", policy =>
