@@ -37,5 +37,11 @@ namespace AutoMarket.Models
 
         [ForeignKey("CompradorId")]
         public Comprador Comprador { get; set; }
+
+        [Required]
+        public int VendedorId { get; set; }
+
+        [ForeignKey("VendedorId")]
+        public Vendedor Vendedor { get; set; }
     }
 }

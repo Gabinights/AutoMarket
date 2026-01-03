@@ -1,0 +1,353 @@
+@model AutoMarket.Models.ViewModels.EditarPerfilViewModel
+@{
+    ViewData["Title"] = "O Meu Perfil";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Hero Header -->
+<section class="bg-primary text-white py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-1">
+                    <i class="bi bi-person-circle"></i> O Meu Perfil
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Gerir a sua conta e preferências
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="badge bg-light text-dark fs-6">
+                    @if (ViewBag.IsVendedor)
+                    {
+                        <i class="bi bi-shop"></i> @: Vendedor
+                    }
+                    else
+                    {
+                        <i class="bi bi-cart-check"></i> @: Comprador
+                    }
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mensagens de Feedback -->
+@if (TempData["MensagemSucesso"] != null)
+{
+    <div class="container mt-3">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["MensagemSucesso"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+}
+
+<!-- Conteúdo Principal -->
+<div class="container my-5">
+    <div class="row">
+        <!-- Sidebar com Estatísticas -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle text-primary" style="font-size: 5rem;"></i>
+                    </div>
+                    <h5 class="card-title fw-bold">@Model.Nome</h5>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-envelope"></i> @Model.Email
+                    </p>
+                    <p class="text-muted small">
+                        <i class="bi bi-calendar-check"></i> 
+                        Membro desde @Model.DataRegisto.ToString("dd/MM/yyyy")
+                    </p>
+                </div>
+            </div>
+
+            <!-- Estatísticas -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-graph-up"></i> Estatísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.IsComprador)
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Compras:</span>
+                            <strong class="text-primary">@(ViewBag.TotalCompras ?? 0)</strong>
+                        </div>
+                    }
+                    @if (ViewBag.IsVendedor)
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Vendas:</span>
+                            <strong class="text-success">@(ViewBag.TotalVendas ?? 0)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Veículos:</span>
+                            <strong class="text-info">@(ViewBag.TotalVeiculos ?? 0)</strong>
+                        </div>
+                        <hr />
+                        <div class="text-center">
+                            <span class="badge bg-@(ViewBag.StatusVendedor == "Aprovado" ? "success" : "warning")">
+                                Status: @ViewBag.StatusVendedor
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Links Rápidos -->
+            <div class="card shadow-sm border-0 mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-link-45deg"></i> Links Rápidos
+                    </h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    @if (ViewBag.IsComprador)
+                    {
+                        <a asp-controller="Transacoes" asp-action="MinhasCompras" class="list-group-item list-group-item-action">
+                            <i class="bi bi-bag-check"></i> Minhas Compras
+                        </a>
+                    }
+                    @if (ViewBag.IsVendedor)
+                    {
+                        <a asp-controller="Transacoes" asp-action="MinhasVendas" class="list-group-item list-group-item-action">
+                            <i class="bi bi-cash-stack"></i> Minhas Vendas
+                        </a>
+                        <a asp-area="Vendedores" asp-controller="Carros" asp-action="Index" class="list-group-item list-group-item-action">
+                            <i class="bi bi-car-front"></i> Meus Veículos
+                        </a>
+                    }
+                    <a asp-controller="Home" asp-action="Ajuda" class="list-group-item list-group-item-action">
+                        <i class="bi bi-question-circle"></i> Centro de Ajuda
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal com Tabs -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm border-0">
+                <!-- Tabs Navigation -->
+                <div class="card-header bg-white">
+                    <ul class="nav nav-tabs card-header-tabs" id="perfilTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="dados-tab" data-bs-toggle="tab" data-bs-target="#dados" type="button" role="tab">
+                                <i class="bi bi-person"></i> Dados Pessoais
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab">
+                                <i class="bi bi-key"></i> Password
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="seguranca-tab" data-bs-toggle="tab" data-bs-target="#seguranca" type="button" role="tab">
+                                <i class="bi bi-shield-check"></i> Segurança
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tabs Content -->
+                <div class="card-body">
+                    <div class="tab-content" id="perfilTabsContent">
+                        
+                        <!-- Tab: Dados Pessoais -->
+                        <div class="tab-pane fade show active" id="dados" role="tabpanel">
+                            <h5 class="card-title mb-4">
+                                <i class="bi bi-pencil-square"></i> Editar Dados Pessoais
+                            </h5>
+                            
+                            <form asp-action="Perfil" method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="Nome" class="form-label fw-bold"></label>
+                                        <input asp-for="Nome" class="form-control" placeholder="Nome completo" />
+                                        <span asp-validation-for="Nome" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="Email" class="form-label fw-bold"></label>
+                                        <input asp-for="Email" class="form-control" readonly disabled />
+                                        <small class="text-muted">O email não pode ser alterado</small>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="Contacto" class="form-label fw-bold"></label>
+                                        <input asp-for="Contacto" class="form-control" placeholder="+351 912 345 678" />
+                                        <span asp-validation-for="Contacto" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="NIF" class="form-label fw-bold"></label>
+                                        <input asp-for="NIF" class="form-control" placeholder="123456789" maxlength="9" />
+                                        <span asp-validation-for="NIF" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label asp-for="Morada" class="form-label fw-bold"></label>
+                                        <textarea asp-for="Morada" class="form-control" rows="3" placeholder="Rua, Número, Código Postal, Localidade"></textarea>
+                                        <span asp-validation-for="Morada" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="bi bi-save"></i> Guardar Alterações
+                                        </button>
+                                        <a asp-action="Perfil" class="btn btn-outline-secondary btn-lg ms-2">
+                                            <i class="bi bi-x-circle"></i> Cancelar
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Tab: Password -->
+                        <div class="tab-pane fade" id="password" role="tabpanel">
+                            <h5 class="card-title mb-4">
+                                <i class="bi bi-key-fill"></i> Alterar Password
+                            </h5>
+
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle-fill"></i> 
+                                <strong>Requisitos de Segurança:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Mínimo de 16 caracteres</li>
+                                    <li>Pelo menos uma letra maiúscula</li>
+                                    <li>Pelo menos uma letra minúscula</li>
+                                    <li>Pelo menos um número</li>
+                                    <li>Pelo menos um carácter especial (@@, #, $, etc.)</li>
+                                </ul>
+                            </div>
+
+                            <a asp-action="AlterarPassword" class="btn btn-warning btn-lg">
+                                <i class="bi bi-key"></i> Ir para Alteração de Password
+                            </a>
+                        </div>
+
+                        <!-- Tab: Segurança -->
+                        <div class="tab-pane fade" id="seguranca" role="tabpanel">
+                            <h5 class="card-title mb-4 text-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Zona de Perigo
+                            </h5>
+
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-shield-exclamation"></i> Apagar Conta
+                                </h6>
+                                <p>
+                                    Ao apagar a sua conta:
+                                </p>
+                                <ul>
+                                    <li>A conta será <strong>desativada permanentemente</strong></li>
+                                    <li>Não poderá fazer login novamente</li>
+                                    <li>Os seus anúncios ficam ocultos</li>
+                                    <li>O histórico de transações é mantido (obrigação legal)</li>
+                                </ul>
+                                <hr />
+                                <p class="mb-0">
+                                    <strong>Esta ação não pode ser revertida!</strong>
+                                </p>
+                            </div>
+
+                            <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#confirmarApagarModal">
+                                <i class="bi bi-trash-fill"></i> Apagar a Minha Conta
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Apagar Conta -->
+<div class="modal fade" id="confirmarApagarModal" tabindex="-1" aria-labelledby="confirmarApagarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmarApagarLabel">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Confirmar Eliminação
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold">Tem a certeza absoluta que deseja apagar a sua conta?</p>
+                <p>Esta ação é <strong>irreversível</strong> e irá:</p>
+                <ul>
+                    <li>Desativar permanentemente a sua conta</li>
+                    <li>Impedir futuros logins</li>
+                    <li>Ocultar todos os seus anúncios</li>
+                </ul>
+                <p class="text-danger">
+                    <i class="bi bi-exclamation-circle-fill"></i> 
+                    <strong>Não será possível recuperar esta conta!</strong>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <form asp-action="ApagarConta" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash-fill"></i> Sim, Apagar Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Manter tab ativa após refresh
+        document.addEventListener('DOMContentLoaded', function() {
+            var activeTab = localStorage.getItem('activePerfilTab');
+            if (activeTab) {
+                var tab = new bootstrap.Tab(document.querySelector('#' + activeTab));
+                tab.show();
+            }
+        });
+
+        // Guardar tab ativa
+        document.querySelectorAll('#perfilTabs button').forEach(function(tab) {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                localStorage.setItem('activePerfilTab', e.target.id);
+            });
+        });
+    </script>
+}
+
+<style>
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 3px solid transparent;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border-color: #dee2e6;
+        color: #0d6efd;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background-color: transparent;
+        border-color: #0d6efd;
+    }
+
+    .list-group-item-action:hover {
+        background-color: #f8f9fa;
+    }
+</style>

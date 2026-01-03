@@ -1,0 +1,158 @@
+@model AutoMarket.Models.Transacao
+@{
+    ViewData["Title"] = "Compra Realizada com Sucesso";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10 col-12">
+            <!-- Card de Sucesso -->
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-body text-center py-5">
+                    <!-- Ícone de Sucesso -->
+                    <div class="mb-4">
+                        <div class="success-icon-wrapper">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                        </div>
+                    </div>
+
+                    <h2 class="fw-bold text-success mb-3">
+                        ?? Compra Realizada com Sucesso!
+                    </h2>
+                    <p class="text-muted lead mb-4">
+                        A sua transação foi registada e está a ser processada.
+                    </p>
+
+                    <!-- Número da Transação -->
+                    <div class="alert alert-info">
+                        <strong>Número da Transação:</strong> #@Model.Id.ToString("D6")
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalhes da Compra -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-receipt"></i> Detalhes da Compra
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6 col-12 mb-3">
+                            <strong>Data da Transação:</strong><br>
+                            <span class="text-muted">@Model.DataTransacao.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div class="col-md-6 col-12 mb-3">
+                            <strong>Valor Pago:</strong><br>
+                            <span class="text-success fw-bold fs-5">@Model.ValorPago.ToString("C2")</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 col-12 mb-3">
+                            <strong>Método de Pagamento:</strong><br>
+                            <span class="text-muted">@Model.Metodo</span>
+                        </div>
+                        <div class="col-md-6 col-12 mb-3">
+                            <strong>Estado:</strong><br>
+                            <span class="badge 
+                                @(Model.Estado == AutoMarket.Models.Enums.EstadoTransacao.Pago ? "bg-success" : 
+                                  Model.Estado == AutoMarket.Models.Enums.EstadoTransacao.Pendente ? "bg-warning" : "bg-danger")">
+                                @Model.Estado
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.MoradaEnvioSnapshot))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <strong>Morada de Envio:</strong><br>
+                                <span class="text-muted">
+                                    <i class="bi bi-geo-alt-fill"></i> @Model.MoradaEnvioSnapshot
+                                </span>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.NifFaturacaoSnapshot))
+                    {
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-file-text-fill"></i>
+                            <strong>Fatura com NIF solicitada:</strong> @Model.NifFaturacaoSnapshot
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Próximos Passos -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check"></i> Próximos Passos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li class="mb-2">
+                            <strong>Confirmação por Email:</strong> Receberá um email de confirmação com todos os detalhes da compra.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Contacto do Vendedor:</strong> O vendedor entrará em contacto consigo para combinar a entrega/levantamento do veículo.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Documentação:</strong> Certifique-se de que toda a documentação do veículo está em ordem antes de finalizar a transação.
+                        </li>
+                        @if (Model.Estado == AutoMarket.Models.Enums.EstadoTransacao.Pendente)
+                        {
+                            <li class="mb-0">
+                                <strong>Pagamento:</strong> Complete o pagamento seguindo as instruções enviadas por email.
+                            </li>
+                        }
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                <a asp-controller="Transacoes" asp-action="MinhasCompras" class="btn btn-primary btn-lg">
+                    <i class="bi bi-bag-check"></i> Ver Minhas Compras
+                </a>
+                <a asp-controller="Veiculos" asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-search"></i> Continuar a Explorar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .success-icon-wrapper {
+        animation: scaleIn 0.5s ease-in-out;
+    }
+
+    @@keyframes scaleIn {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .card {
+        border-radius: 15px;
+    }
+
+    .card-header {
+        border-top-left-radius: 15px !important;
+        border-top-right-radius: 15px !important;
+    }
+</style>

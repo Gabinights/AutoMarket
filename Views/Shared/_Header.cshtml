@@ -34,15 +34,38 @@
                 <ul class="navbar-nav ms-auto gap-2">
                     @if (SignInManager.IsSignedIn(User))
                     {
-                        <li class="nav-item">
-                            <span class="nav-link text-white-50">
-                                👤 @User.Identity?.Name?.Split("@")[0]
-                            </span>
-                        </li>
-                        <li class="nav-item">
-                            <form asp-area="" asp-controller="Conta" asp-action="Logout" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-link nav-link text-white text-decoration-none">Logout</button>
-                            </form>
+                        <!-- Dropdown do Utilizador -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle"></i> @User.Identity?.Name?.Split("@@")[0]
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-controller="Conta" asp-action="Perfil">
+                                        <i class="bi bi-person"></i> O Meu Perfil
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-controller="Transacoes" asp-action="MinhasCompras">
+                                        <i class="bi bi-bag-check"></i> Minhas Compras
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-controller="Transacoes" asp-action="MinhasVendas">
+                                        <i class="bi bi-cash-stack"></i> Minhas Vendas
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="" asp-controller="Conta" asp-action="Logout" method="post" class="px-2">
+                                        @@Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-box-arrow-right"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
                     }
                     else
@@ -75,6 +98,26 @@
 
     header .btn-warning:hover {
         background-color: #e6a800 !important;
+    }
+
+    /* Dropdown Menu Styling */
+    .dropdown-menu {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-top: 0.5rem;
+    }
+
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        transition: background-color 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .dropdown-item i {
+        margin-right: 0.5rem;
     }
 </style>
 

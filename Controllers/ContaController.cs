@@ -261,6 +261,153 @@ namespace AutoMarket.Controllers
             return View();
         }
 
+        // GET: Conta/AccessDenied
+        [HttpGet]
+        public IActionResult AccessDenied(string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            _logger.LogWarning("Acesso negado para utilizador {User} ao tentar aceder {Url}", 
+                User.Identity?.Name ?? "Anónimo", returnUrl ?? "URL desconhecido");
+            return View();
+        }
+
+        // GET: Conta/Perfil
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Perfil()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            // Buscar estatísticas do utilizador
+            ViewBag.IsVendedor = await _userManager.IsInRoleAsync(user, Roles.Vendedor);
+            ViewBag.IsComprador = await _userManager.IsInRoleAsync(user, Roles.Comprador);
+
+            if (ViewBag.IsComprador)
+            {
+                var comprador = await _context.Compradores
+                    .FirstOrDefaultAsync(c => c.UserId == user.Id);
+
+                if (comprador != null)
+                {
+                    ViewBag.TotalCompras = await _context.Transacoes
+                        .Where(t => t.CompradorId == comprador.Id)
+                        .CountAsync();
+                }
+            }
+
+            if (ViewBag.IsVendedor)
+            {
+                var vendedor = await _context.Vendedores
+                    .FirstOrDefaultAsync(v => v.UserId == user.Id);
+
+                if (vendedor != null)
+                {
+                    ViewBag.TotalVendas = await _context.Transacoes
+                        .Where(t => t.VendedorId == vendedor.Id)
+                        .CountAsync();
+
+                    ViewBag.TotalVeiculos = await _context.Veiculos
+                        .Where(v => v.VendedorId == vendedor.Id)
+                        .CountAsync();
+
+                    ViewBag.StatusVendedor = vendedor.Status.ToString();
+                }
+            }
+
+            var model = new EditarPerfilViewModel
+            {
+                Nome = user.Nome,
+                Email = user.Email ?? string.Empty,
+                Morada = user.Morada,
+                Contacto = user.PhoneNumber ?? string.Empty,
+                NIF = user.NIF,
+                DataRegisto = user.DataRegisto
+            };
+
+            return View(model);
+        }
+
+        // POST: Conta/Perfil
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Perfil(EditarPerfilViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Recarregar ViewBag para estatísticas
+                var userTemp = await _userManager.GetUserAsync(User);
+                ViewBag.IsVendedor = await _userManager.IsInRoleAsync(userTemp!, Roles.Vendedor);
+                ViewBag.IsComprador = await _userManager.IsInRoleAsync(userTemp!, Roles.Comprador);
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            // Atualizar dados
+            user.Nome = model.Nome;
+            user.Morada = model.Morada;
+            user.PhoneNumber = model.Contacto;
+            user.NIF = model.NIF;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                TempData["MensagemSucesso"] = "Perfil atualizado com sucesso!";
+                _logger.LogInformation("Utilizador {UserId} atualizou o perfil.", user.Id);
+                return RedirectToAction(nameof(Perfil));
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            ViewBag.IsVendedor = await _userManager.IsInRoleAsync(user, Roles.Vendedor);
+            ViewBag.IsComprador = await _userManager.IsInRoleAsync(user, Roles.Comprador);
+            return View(model);
+        }
+
+        // GET: Conta/AlterarPassword
+        [HttpGet]
+        [Authorize]
+        public IActionResult AlterarPassword()
+        {
+            return View();
+        }
+
+        // POST: Conta/AlterarPassword
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AlterarPassword(AlterarPasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var result = await _userManager.ChangePasswordAsync(user, model.PasswordAtual, model.NovaPassword);
+
+            if (result.Succeeded)
+            {
+                await _signInManager.RefreshSignInAsync(user); // Mantém o user logado
+                TempData["MensagemSucesso"] = "Password alterada com sucesso!";
+                _logger.LogInformation("Utilizador {UserId} alterou a password.", user.Id);
+                return RedirectToAction(nameof(Perfil));
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]

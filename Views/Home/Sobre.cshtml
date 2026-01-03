@@ -1,42 +1,380 @@
-@using Microsoft.AspNetCore.Identity;
-@inject SignInManager<AutoMarket.Models.Utilizador> SignInManager
 @{
     ViewData["Title"] = "Sobre o AutoMarket";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<header>
-    <div class="nav">
-        <nav>
-            <ul>
-                <li><a href="/Veiculos">Veículos</a></li>
-                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
-                <li><a href="/Home/Sobre">Sobre</a></li>
-            </ul>
-        </nav>
-        <div class="header-actions">
-            @if (SignInManager.IsSignedIn(User))
-            {
-                <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
-            }
-            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
+
+<!-- Hero Section -->
+<section class="bg-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="display-4 fw-bold mb-4">Sobre o AutoMarket</h1>
+                <p class="lead mb-4">
+                    A plataforma líder em Portugal para compra e venda de veículos usados com segurança e transparência.
+                </p>
+                <div class="d-flex gap-3">
+                    <a asp-controller="Veiculos" asp-action="Index" class="btn btn-light btn-lg">
+                        <i class="bi bi-search"></i> Explorar Veículos
+                    </a>
+                    <a asp-controller="Home" asp-action="Ajuda" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-question-circle"></i> Centro de Ajuda
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="bi bi-car-front-fill" style="font-size: 15rem; opacity: 0.3;"></i>
+            </div>
         </div>
     </div>
-</header>
-<main style="max-width:800px;margin:3rem auto;text-align:center;">
-    <h1>Sobre o AutoMarket</h1>
-    <p style="margin-top:2rem;font-size:1.15rem;">O AutoMarket é um marketplace inovador dedicado exclusivamente à compra e venda de veículos usados em Portugal.<br/><br/>Com uma interface moderna e intuitiva, funcionalidades avançadas de pesquisa e total transparência, é o melhor aliado para vendedores e compradores.<br/><br/>Diferencia-se pelo seu compromisso com qualidade, suporte próximo ao utilizador, segurança nas transações e seleção criteriosa dos veículos listados.</p>
-    <div style="margin-top:2.5rem;">
-        <img src="/images/logo_grande.png" alt="AutoMarket logo" style="width:190px;opacity:0.75;" />
+</section>
+
+<!-- Estatísticas -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-5">
+                        <i class="bi bi-car-front text-primary" style="font-size: 3rem;"></i>
+                        <h2 class="display-4 fw-bold text-primary mt-3 mb-2">500+</h2>
+                        <p class="text-muted mb-0">Veículos Disponíveis</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-5">
+                        <i class="bi bi-people text-success" style="font-size: 3rem;"></i>
+                        <h2 class="display-4 fw-bold text-success mt-3 mb-2">1,200+</h2>
+                        <p class="text-muted mb-0">Utilizadores Registados</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body py-5">
+                        <i class="bi bi-check-circle text-info" style="font-size: 3rem;"></i>
+                        <h2 class="display-4 fw-bold text-info mt-3 mb-2">350+</h2>
+                        <p class="text-muted mb-0">Transações Concluídas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</main>
-<footer>
-    &copy; 2025 AutoMarket<br /> Plataforma de compra e venda de veículos usados.
-</footer>
-@section Styles {
-    <link rel="stylesheet" href="/css/style.css" />
-}
-@section Scripts {
-    <script src="/js/script.js"></script>
-}
+</section>
+
+<!-- Missão e Visão -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">A Nossa Missão</h2>
+                <p class="lead text-muted">
+                    Revolucionar o mercado de veículos usados em Portugal, tornando-o mais acessível, 
+                    transparente e seguro para todos.
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="text-center h-100">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="bi bi-shield-check text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Segurança</h4>
+                    <p class="text-muted">
+                        Verificação rigorosa de vendedores e processos seguros de transação para proteger compradores e vendedores.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="text-center h-100">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="bi bi-search text-success" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Transparência</h4>
+                    <p class="text-muted">
+                        Informações completas e verificadas sobre cada veículo, sem surpresas ou custos ocultos.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="text-center h-100">
+                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="bi bi-speedometer2 text-info" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Rapidez</h4>
+                    <p class="text-muted">
+                        Encontre o veículo ideal em minutos com filtros avançados e pesquisa inteligente.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="text-center h-100">
+                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="bi bi-headset text-warning" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Suporte</h4>
+                    <p class="text-muted">
+                        Equipa dedicada pronta para ajudar em todas as etapas da sua compra ou venda.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Como Funciona -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">Como Funciona</h2>
+                <p class="lead text-muted">Simples, rápido e seguro</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Para Compradores -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-cart-check"></i> Para Compradores</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>1</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Pesquise</h5>
+                                <p class="text-muted mb-0">Use os filtros avançados para encontrar o veículo perfeito</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>2</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Contacte</h5>
+                                <p class="text-muted mb-0">Comunique diretamente com o vendedor verificado</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>3</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Visite</h5>
+                                <p class="text-muted mb-0">Agende uma visita e teste o veículo</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>4</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Compre</h5>
+                                <p class="text-muted mb-0">Finalize a compra de forma segura através da plataforma</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Para Vendedores -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="bi bi-shop"></i> Para Vendedores</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>1</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Registe-se</h5>
+                                <p class="text-muted mb-0">Crie uma conta de vendedor (particular ou empresa)</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>2</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Aguarde Aprovação</h5>
+                                <p class="text-muted mb-0">Nossa equipa verifica a sua conta em 24-48h</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>3</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Publique</h5>
+                                <p class="text-muted mb-0">Adicione fotos e detalhes do seu veículo</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <strong>4</strong>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="fw-bold">Venda</h5>
+                                <p class="text-muted mb-0">Receba propostas e negocie com segurança</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Diferenciais -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">Porque Escolher o AutoMarket?</h2>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-patch-check-fill text-success me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h5 class="fw-bold">Vendedores Verificados</h5>
+                                <p class="text-muted mb-0">
+                                    Todos os vendedores passam por um processo rigoroso de verificação antes de publicar anúncios.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-eye-fill text-primary me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h5 class="fw-bold">Total Transparência</h5>
+                                <p class="text-muted mb-0">
+                                    Informações completas sobre cada veículo, incluindo histórico e estado real.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-shield-fill-check text-info me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h5 class="fw-bold">Transações Seguras</h5>
+                                <p class="text-muted mb-0">
+                                    Sistema de pagamento seguro integrado para proteger ambas as partes.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-chat-dots-fill text-warning me-3" style="font-size: 2rem;"></i>
+                            <div>
+                                <h5 class="fw-bold">Suporte Dedicado</h5>
+                                <p class="text-muted mb-0">
+                                    Equipa de suporte disponível para ajudar em todas as etapas do processo.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="display-5 fw-bold mb-4">Pronto para Começar?</h2>
+        <p class="lead mb-4">
+            Junte-se a milhares de utilizadores satisfeitos no AutoMarket
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a asp-controller="Conta" asp-action="Register" class="btn btn-light btn-lg">
+                <i class="bi bi-person-plus"></i> Criar Conta
+            </a>
+            <a asp-controller="Veiculos" asp-action="Index" class="btn btn-outline-light btn-lg">
+                <i class="bi bi-search"></i> Ver Veículos
+            </a>
+        </div>
+    </div>
+</section>
+
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
 
 
 

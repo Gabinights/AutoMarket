@@ -111,6 +111,7 @@ namespace AutoMarket.Controllers
                         Estado = EstadoTransacao.Pendente,
                         CompradorId = comprador.Id,
                         VeiculoId = item.VeiculoId,
+                        VendedorId = veiculoDb.VendedorId,
                         NifFaturacaoSnapshot = model.QueroFaturaComNif
                                        ? model.NifFaturacao
                                        : null,
