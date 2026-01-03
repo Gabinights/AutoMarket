@@ -22,20 +22,20 @@ namespace AutoMarket.Models
         public Utilizador? Denunciante { get; set; }
 
         // Alvos (Opcionais na BD, Obrigatorios na Logica)
-        public int? TargetCarroId { get; set; }
-        public Carro? TargetCarro { get; set; }
+        public int? TargetVeiculoId { get; set; }
+        public Veiculo? TargetVeiculo { get; set; }
 
         public string? TargetUserId { get; set; }
         public Utilizador? TargetUser { get; set; }
 
-        [Required(ErrorMessage = "O motivo √© obrigat√≥rio.")]
+        [Required(ErrorMessage = "O motivo È obrigatÛrio.")]
         [StringLength(500)]
         public string Motivo { get; set; } = string.Empty;
 
         public EstadoDenuncia Estado { get; set; } = EstadoDenuncia.Aberta;
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
-        // Gest√£o Admin
+        // Gest„o Admin
         public string? DecisaoAdmin { get; set; }
 
         [StringLength(450)]
@@ -44,14 +44,14 @@ namespace AutoMarket.Models
         [ForeignKey("AnalisadoPorAdminId")]
         public Utilizador? AnalisadoPorAdmin { get; set; }
 
-        // Valida√ß√£o: Garante que escolheu pelo menos um alvo
+        // ValidaÁ„o: Garante que escolheu pelo menos um alvo
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (TargetCarroId == null && string.IsNullOrEmpty(TargetUserId))
+            if (TargetVeiculoId == null && string.IsNullOrEmpty(TargetUserId))
             {
                 yield return new ValidationResult(
-                    "Tem de denunciar um Ve√≠culo ou um Utilizador.",
-                    new[] { nameof(TargetCarroId), nameof(TargetUserId) }
+                    "Tem de denunciar um VeÌculo ou um Utilizador.",
+                    new[] { nameof(TargetVeiculoId), nameof(TargetUserId) }
                 );
             }
         }

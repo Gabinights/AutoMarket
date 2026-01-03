@@ -10,13 +10,13 @@ namespace AutoMarket.Models.Enums
         [Display(Name = "Ativo")]
         Ativo = 0,
 
+        [Display(Name = "Reservado")]
+        Reservado = 1,
+
         [Display(Name = "Vendido")]
-        Vendido = 1,
+        Vendido = 2,
 
-        [Display(Name = "Arquivado")]
-        Arquivado = 2,
-
-        [Display(Name = "Removido")]
-        Removido = 3
+        [Display(Name = "Pausado")]
+        Pausado = 3
     }
 }

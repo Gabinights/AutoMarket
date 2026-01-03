@@ -27,8 +27,10 @@ namespace AutoMarket.Models
         [ForeignKey("DestinatarioId")]
         public Utilizador Destinatario { get; set; }
 
-        // Contexto: Sobre que carro estï¿½o a falar?
-        public int? CarroId { get; set; }
-        public Carro? Carro { get; set; }
+        // Contexto: Sobre que veículo estão a falar?
+        public int? VeiculoId { get; set; }
+
+        [ForeignKey("VeiculoId")]
+        public Veiculo? Veiculo { get; set; }
     }
 }

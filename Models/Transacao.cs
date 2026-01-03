@@ -42,10 +42,10 @@ namespace AutoMarket.Models
 
         // Relações
         [Required]
-        public int CarroId { get; set; }
+        public int VeiculoId { get; set; }
 
-        [ForeignKey("CarroId")]
-        public Carro Carro { get; set; }
+        [ForeignKey("VeiculoId")]
+        public Veiculo Veiculo { get; set; }
 
         [Required]
         public int CompradorId { get; set; }
