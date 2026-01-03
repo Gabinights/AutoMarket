@@ -20,4 +20,9 @@
     <PackageReference Include="MailKit" Version="4.9.0" />
     <PackageReference Include="MimeKit" Version="4.9.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\Vendedores\Views\Carros\" />
+    <Folder Include="Models\ViewModels\Carros\" />
+  </ItemGroup>
 </Project>

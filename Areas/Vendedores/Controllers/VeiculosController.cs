@@ -1,7 +1,7 @@
 using AutoMarket.Data;
 using AutoMarket.Models;
 using AutoMarket.Models.Enums;
-using AutoMarket.Models.ViewModels.Carros;
+using AutoMarket.Models.ViewModels.Veiculos;
 using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,23 +10,23 @@ using Microsoft.EntityFrameworkCore;
 namespace AutoMarket.Areas.Vendedores.Controllers
 {
     /// <summary>
-    /// Controller para gerenciar carros da área de Vendedores.
+    /// Controller para gerenciar veículos da área de Vendedores.
     /// Requer autenticação e email confirmado.
     /// </summary>
     [Area("Vendedores")]
     [Authorize]
     [Authorize(Policy = "VendedorAprovado")]
-    [Route("Vendedores/{controller=Carros}/{action=Index}/{id?}")]
-    public class CarrosController : Controller
+    [Route("Vendedores/{controller=Veiculos}/{action=Index}/{id?}")]
+    public class VeiculosController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
-        private readonly ILogger<CarrosController> _logger;
+        private readonly ILogger<VeiculosController> _logger;
 
-        public CarrosController(
-            ApplicationDbContext context, 
+        public VeiculosController(
+            ApplicationDbContext context,
             IFileService fileService,
-            ILogger<CarrosController> logger)
+            ILogger<VeiculosController> logger)
         {
             _context = context;
             _fileService = fileService;
@@ -46,8 +46,8 @@ namespace AutoMarket.Areas.Vendedores.Controllers
         }
 
         /// <summary>
-        /// GET: Vendedores/Carros/Index
-        /// Lista todos os carros do vendedor logado (excluindo removidos).
+        /// GET: Vendedores/Veiculos/Index
+        /// Lista todos os veículos do vendedor logado (excluindo removidos).
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -59,23 +59,25 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 return Unauthorized();
             }
 
-            var carros = await _context.Carros
-                .Where(c => c.VendedorId == vendedor.Id && c.Estado != EstadoCarro.Pausado)
-                .OrderByDescending(c => c.DataCriacao)
+            var veiculos = await _context.Veiculos
+                .Where(v => v.VendedorId == vendedor.Id && v.Estado != EstadoVeiculo.Pausado)
+                .OrderByDescending(v => v.DataCriacao)
+                .Include(v => v.Imagens)
+                .Include(v => v.Categoria)
                 .ToListAsync();
 
-            var viewModel = carros.Select(c => ListCarroViewModel.FromCarro(c)).ToList();
+            var viewModel = veiculos.Select(v => ListVeiculoViewModel.FromVeiculo(v)).ToList();
             return View(viewModel);
         }
 
         /// <summary>
-        /// GET: Vendedores/Carros/Create
-        /// Exibe formulário para criar novo carro.
+        /// GET: Vendedores/Veiculos/Create
+        /// Exibe formulário para criar novo veículo.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var viewModel = new CreateCarroViewModel
+            var viewModel = new CreateVeiculoViewModel
             {
                 CategoriesDropdown = await _context.Categorias.ToListAsync()
             };
@@ -83,17 +85,17 @@ namespace AutoMarket.Areas.Vendedores.Controllers
         }
 
         /// <summary>
-        /// POST: Vendedores/Carros/Create
-        /// Cria um novo carro no sistema com upload de imagens.
+        /// POST: Vendedores/Veiculos/Create
+        /// Cria um novo veículo no sistema com upload de imagens.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateCarroViewModel viewModel)
+        public async Task<IActionResult> Create(CreateVeiculoViewModel viewModel)
         {
             var vendedor = await GetVendedorLogado();
             if (vendedor == null)
             {
-                _logger.LogWarning("Tentativa de criação de carro sem vendedor logado");
+                _logger.LogWarning("Tentativa de criação de veículo sem vendedor logado");
                 return Unauthorized();
             }
 
@@ -106,19 +108,19 @@ namespace AutoMarket.Areas.Vendedores.Controllers
             try
             {
                 // Fazer upload das imagens se fornecidas
-                List<CarroImagem> imagens = new();
-                
+                List<VeiculoImagem> imagens = new();
+
                 if (viewModel.Fotos?.Any() == true)
                 {
                     var uploadedFiles = await _fileService.UploadMultipleFilesAsync(
-                        viewModel.Fotos.ToList(), 
-                        "images/cars"
+                        viewModel.Fotos.ToList(),
+                        "images/veiculos"
                     );
 
                     bool isPrimeiraImagem = true;
                     foreach (var fileName in uploadedFiles)
                     {
-                        imagens.Add(new CarroImagem
+                        imagens.Add(new VeiculoImagem
                         {
                             CaminhoFicheiro = fileName,
                             IsCapa = isPrimeiraImagem,
@@ -131,39 +133,39 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 }
 
                 // Converter ViewModel para Model
-                var carro = viewModel.ToCarro(vendedor.Id);
-                carro.Imagens = imagens;
+                var veiculo = viewModel.ToVeiculo(vendedor.Id);
+                veiculo.Imagens = imagens;
 
                 // Guardar na base de dados
-                _context.Carros.Add(carro);
+                _context.Veiculos.Add(veiculo);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Carro criado com sucesso. ID: {CarroId}, Vendedor: {VendedorId}, Imagens: {ImagemCount}", 
-                    carro.Id, vendedor.Id, imagens.Count);
+                    "Veículo criado com sucesso. ID: {VeiculoId}, Vendedor: {VendedorId}, Imagens: {ImagemCount}",
+                    veiculo.Id, vendedor.Id, imagens.Count);
 
-                TempData["Sucesso"] = $"Carro '{carro.Marca} {carro.Modelo}' criado com sucesso com {imagens.Count} imagens!";
+                TempData["Sucesso"] = $"Veículo '{veiculo.Marca} {veiculo.Modelo}' criado com sucesso com {imagens.Count} imagens!";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError(ex, "Erro na validação de ficheiro durante criação de carro");
+                _logger.LogError(ex, "Erro na validação de ficheiro durante criação de veículo");
                 ModelState.AddModelError("Fotos", ex.Message);
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao criar carro para vendedor {VendedorId}", vendedor.Id);
-                ModelState.AddModelError(string.Empty, "Erro ao guardar o carro. Tente novamente.");
+                _logger.LogError(ex, "Erro ao criar veículo para vendedor {VendedorId}", vendedor.Id);
+                ModelState.AddModelError(string.Empty, "Erro ao guardar o veículo. Tente novamente.");
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
         }
 
         /// <summary>
-        /// GET: Vendedores/Carros/Edit/5
-        /// Exibe formulário para editar um carro existente.
+        /// GET: Vendedores/Veiculos/Edit/5
+        /// Exibe formulário para editar um veículo existente.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Edit(int? id)
@@ -178,38 +180,38 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 return Unauthorized();
             }
 
-            var carro = await _context.Carros
-                .Include(c => c.Imagens)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Imagens)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            if (carro == null)
+            if (veiculo == null)
             {
-                _logger.LogWarning("Carro não encontrado. ID: {CarroId}", id);
+                _logger.LogWarning("Veículo não encontrado. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
-            // Verificar se o carro pertence ao vendedor logado
-            if (carro.VendedorId != vendedor.Id)
+            // Verificar se o veículo pertence ao vendedor logado
+            if (veiculo.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de edição de carro de outro vendedor. CarroId: {CarroId}, VendedorId: {VendedorId}", 
+                    "Tentativa de edição de veículo de outro vendedor. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
 
-            var viewModel = EditCarroViewModel.FromCarro(carro);
+            var viewModel = EditVeiculoViewModel.FromVeiculo(veiculo);
             viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
 
             return View(viewModel);
         }
 
         /// <summary>
-        /// POST: Vendedores/Carros/Edit/5
-        /// Atualiza um carro existente com novo upload de imagens (opcional).
+        /// POST: Vendedores/Veiculos/Edit/5
+        /// Atualiza um veículo existente com novo upload de imagens (opcional).
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, EditCarroViewModel viewModel)
+        public async Task<IActionResult> Edit(int id, EditVeiculoViewModel viewModel)
         {
             if (id != viewModel.Id)
                 return NotFound();
@@ -227,20 +229,20 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 return View(viewModel);
             }
 
-            var carroExistente = await _context.Carros
-                .Include(c => c.Imagens)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var veiculoExistente = await _context.Veiculos
+                .Include(v => v.Imagens)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            if (carroExistente == null)
+            if (veiculoExistente == null)
             {
-                _logger.LogWarning("Carro não encontrado para edição. ID: {CarroId}", id);
+                _logger.LogWarning("Veículo não encontrado para edição. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
-            if (carroExistente.VendedorId != vendedor.Id)
+            if (veiculoExistente.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de edição não autorizada. CarroId: {CarroId}, VendedorId: {VendedorId}", 
+                    "Tentativa de edição não autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
@@ -251,64 +253,65 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 if (viewModel.Fotos?.Any() == true)
                 {
                     var uploadedFiles = await _fileService.UploadMultipleFilesAsync(
-                        viewModel.Fotos.ToList(), 
-                        "images/cars"
+                        viewModel.Fotos.ToList(),
+                        "images/veiculos"
                     );
 
                     foreach (var fileName in uploadedFiles)
                     {
-                        carroExistente.Imagens.Add(new CarroImagem
+                        veiculoExistente.Imagens.Add(new VeiculoImagem
                         {
                             CaminhoFicheiro = fileName,
-                            IsCapa = carroExistente.Imagens.Count == 0, // Primeira imagem é capa
+                            IsCapa = veiculoExistente.Imagens.Count == 0,
                             ContentType = MimeTypeHelper.GetMimeType(fileName),
-                            CarroId = carroExistente.Id
+                            VeiculoId = veiculoExistente.Id
                         });
                     }
                 }
 
-                // Atualizar campos do carro
-                carroExistente.Titulo = viewModel.Titulo;
-                carroExistente.Marca = viewModel.Marca;
-                carroExistente.Modelo = viewModel.Modelo;
-                carroExistente.Ano = viewModel.Ano;
-                carroExistente.CategoriaId = viewModel.CategoriaId;
-                carroExistente.Combustivel = viewModel.Combustivel;
-                carroExistente.Caixa = viewModel.Caixa;
-                carroExistente.Km = viewModel.Km;
-                carroExistente.Preco = viewModel.Preco;
-                carroExistente.Localizacao = viewModel.Localizacao;
-                carroExistente.Descricao = viewModel.Descricao;
+                // Atualizar campos do veículo
+                veiculoExistente.Titulo = viewModel.Titulo;
+                veiculoExistente.Marca = viewModel.Marca;
+                veiculoExistente.Modelo = viewModel.Modelo;
+                veiculoExistente.Ano = viewModel.Ano;
+                veiculoExistente.CategoriaId = viewModel.CategoriaId;
+                veiculoExistente.Combustivel = viewModel.Combustivel;
+                veiculoExistente.Caixa = viewModel.Caixa;
+                veiculoExistente.Km = viewModel.Km;
+                veiculoExistente.Preco = viewModel.Preco;
+                veiculoExistente.Condicao = viewModel.Condicao;
+                veiculoExistente.Localizacao = viewModel.Localizacao;
+                veiculoExistente.Descricao = viewModel.Descricao;
 
-                _context.Carros.Update(carroExistente);
+                _context.Veiculos.Update(veiculoExistente);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Carro atualizado com sucesso. ID: {CarroId}, Vendedor: {VendedorId}", 
+                    "Veículo atualizado com sucesso. ID: {VeiculoId}, Vendedor: {VendedorId}",
                     id, vendedor.Id);
 
-                TempData["Sucesso"] = "Carro atualizado com sucesso!";
+                TempData["Sucesso"] = "Veículo atualizado com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError(ex, "Erro na validação de ficheiro durante edição de carro");
+                _logger.LogError(ex, "Erro na validação de ficheiro durante edição de veículo");
                 ModelState.AddModelError("Fotos", ex.Message);
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao atualizar carro. ID: {CarroId}", id);
-                ModelState.AddModelError(string.Empty, "Erro ao guardar o carro. Tente novamente.");
+                _logger.LogError(ex, "Erro ao atualizar veículo. ID: {VeiculoId}", id);
+                ModelState.AddModelError(string.Empty, "Erro ao guardar o veículo. Tente novamente.");
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
         }
 
         /// <summary>
-        /// GET: Vendedores/Carros/Delete/5
-        /// Exibe confirmação antes de eliminar um carro (soft delete).
+        /// GET: Vendedores/Veiculos/Delete/5
+        /// Exibe confirmação antes de eliminar um veículo (soft delete).
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Delete(int? id)
@@ -323,30 +326,30 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 return Unauthorized();
             }
 
-            var carro = await _context.Carros
-                .Include(c => c.Imagens)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Imagens)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            if (carro == null)
+            if (veiculo == null)
             {
-                _logger.LogWarning("Carro não encontrado para eliminação. ID: {CarroId}", id);
+                _logger.LogWarning("Veículo não encontrado para eliminação. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
-            if (carro.VendedorId != vendedor.Id)
+            if (veiculo.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de eliminação não autorizada. CarroId: {CarroId}, VendedorId: {VendedorId}", 
+                    "Tentativa de eliminação não autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
 
-            var viewModel = ListCarroViewModel.FromCarro(carro);
+            var viewModel = ListVeiculoViewModel.FromVeiculo(veiculo);
             return View(viewModel);
         }
 
         /// <summary>
-        /// POST: Vendedores/Carros/Delete/5
+        /// POST: Vendedores/Veiculos/Delete/5
         /// Executa soft delete (muda estado para Pausado).
         /// </summary>
         [HttpPost]
@@ -361,18 +364,18 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 return Unauthorized();
             }
 
-            var carro = await _context.Carros.FirstOrDefaultAsync(c => c.Id == id);
+            var veiculo = await _context.Veiculos.FirstOrDefaultAsync(v => v.Id == id);
 
-            if (carro == null)
+            if (veiculo == null)
             {
-                _logger.LogWarning("Carro não encontrado para soft delete. ID: {CarroId}", id);
+                _logger.LogWarning("Veículo não encontrado para soft delete. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
-            if (carro.VendedorId != vendedor.Id)
+            if (veiculo.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de soft delete não autorizada. CarroId: {CarroId}, VendedorId: {VendedorId}", 
+                    "Tentativa de soft delete não autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
@@ -380,29 +383,29 @@ namespace AutoMarket.Areas.Vendedores.Controllers
             try
             {
                 // Soft Delete: Mudar estado para Pausado (mantém dados para recuperar)
-                carro.Estado = EstadoCarro.Pausado;
+                veiculo.Estado = EstadoVeiculo.Pausado;
 
-                _context.Carros.Update(carro);
+                _context.Veiculos.Update(veiculo);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Carro removido (soft delete). ID: {CarroId}, Vendedor: {VendedorId}", 
+                    "Veículo removido (soft delete). ID: {VeiculoId}, Vendedor: {VendedorId}",
                     id, vendedor.Id);
 
-                TempData["Sucesso"] = "Carro removido com sucesso!";
+                TempData["Sucesso"] = "Veículo removido com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao remover carro. ID: {CarroId}", id);
-                TempData["Erro"] = "Erro ao remover o carro. Tente novamente.";
+                _logger.LogError(ex, "Erro ao remover veículo. ID: {VeiculoId}", id);
+                TempData["Erro"] = "Erro ao remover o veículo. Tente novamente.";
                 return RedirectToAction(nameof(Index));
             }
         }
 
         /// <summary>
-        /// GET: Vendedores/Carros/Details/5
-        /// Exibe detalhes de um carro.
+        /// GET: Vendedores/Veiculos/Details/5
+        /// Exibe detalhes de um veículo.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Details(int? id)
@@ -417,18 +420,18 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 return Unauthorized();
             }
 
-            var carro = await _context.Carros
-                .Include(c => c.Imagens)
-                .Include(c => c.Categoria)
-                .FirstOrDefaultAsync(c => c.Id == id && c.VendedorId == vendedor.Id);
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Imagens)
+                .Include(v => v.Categoria)
+                .FirstOrDefaultAsync(v => v.Id == id && v.VendedorId == vendedor.Id);
 
-            if (carro == null)
+            if (veiculo == null)
             {
-                _logger.LogWarning("Carro não encontrado. ID: {CarroId}", id);
+                _logger.LogWarning("Veículo não encontrado. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
-            var viewModel = ListCarroViewModel.FromCarro(carro);
+            var viewModel = ListVeiculoViewModel.FromVeiculo(veiculo);
             return View(viewModel);
         }
     }

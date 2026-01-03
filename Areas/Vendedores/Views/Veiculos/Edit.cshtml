@@ -1,40 +1,42 @@
-@model AutoMarket.Models.ViewModels.Carros.CreateCarroViewModel
+@model AutoMarket.Models.ViewModels.Veiculos.EditVeiculoViewModel
 @{
-    ViewData["Title"] = "Criar Novo Carro";
+    ViewData["Title"] = "Editar Veículo";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <h1 class="h3 mb-4">Criar Novo Carro</h1>
+            <h1 class="h3 mb-4">Editar Veículo</h1>
 
-            <form asp-action="Create" asp-controller="Carros" asp-area="Vendedores" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            <form asp-action="Edit" asp-controller="Veiculos" asp-area="Vendedores" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                 @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
 
                 <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
                 <!-- Seção 1: Informações Básicas -->
                 <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-warning text-white">
                         <h5 class="mb-0">Informações Básicas</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
                             <label asp-for="Titulo" class="form-label">Título do Anúncio *</label>
-                            <input asp-for="Titulo" class="form-control" placeholder="Ex: BMW 320i 2018 em perfeito estado" required />
+                            <input asp-for="Titulo" class="form-control" required />
                             <span asp-validation-for="Titulo" class="text-danger"></span>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Marca" class="form-label">Marca *</label>
-                                <input asp-for="Marca" class="form-control" placeholder="Ex: BMW" required />
+                                <input asp-for="Marca" class="form-control" required />
                                 <span asp-validation-for="Marca" class="text-danger"></span>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Modelo" class="form-label">Modelo *</label>
-                                <input asp-for="Modelo" class="form-control" placeholder="Ex: 320i" required />
+                                <input asp-for="Modelo" class="form-control" required />
                                 <span asp-validation-for="Modelo" class="text-danger"></span>
                             </div>
                         </div>
@@ -42,7 +44,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Ano" class="form-label">Ano *</label>
-                                <input asp-for="Ano" type="number" class="form-control" placeholder="2023" required />
+                                <input asp-for="Ano" type="number" class="form-control" required />
                                 <span asp-validation-for="Ano" class="text-danger"></span>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -53,7 +55,7 @@
                                     {
                                         @foreach (var cat in Model.CategoriesDropdown)
                                         {
-                                            <option value="@cat.Id">@cat.Nome</option>
+                                            <option value="@cat.Id" selected="@(cat.Id == Model.CategoriaId)">@cat.Nome</option>
                                         }
                                     }
                                 </select>
@@ -65,7 +67,7 @@
 
                 <!-- Seção 2: Especificações Técnicas -->
                 <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-warning text-white">
                         <h5 class="mb-0">Especificações Técnicas</h5>
                     </div>
                     <div class="card-body">
@@ -74,11 +76,11 @@
                                 <label asp-for="Combustivel" class="form-label">Combustível *</label>
                                 <select asp-for="Combustivel" class="form-select" required>
                                     <option value="">-- Selecione --</option>
-                                    <option value="Gasolina">Gasolina</option>
-                                    <option value="Gasóleo">Gasóleo</option>
-                                    <option value="Híbrido">Híbrido</option>
-                                    <option value="Elétrico">Elétrico</option>
-                                    <option value="GLP">GLP</option>
+                                    <option value="Gasolina" selected="@(Model.Combustivel == "Gasolina")">Gasolina</option>
+                                    <option value="Gasóleo" selected="@(Model.Combustivel == "Gasóleo")">Gasóleo</option>
+                                    <option value="Híbrido" selected="@(Model.Combustivel == "Híbrido")">Híbrido</option>
+                                    <option value="Elétrico" selected="@(Model.Combustivel == "Elétrico")">Elétrico</option>
+                                    <option value="GLP" selected="@(Model.Combustivel == "GLP")">GLP</option>
                                 </select>
                                 <span asp-validation-for="Combustivel" class="text-danger"></span>
                             </div>
@@ -86,9 +88,9 @@
                                 <label asp-for="Caixa" class="form-label">Caixa *</label>
                                 <select asp-for="Caixa" class="form-select" required>
                                     <option value="">-- Selecione --</option>
-                                    <option value="Manual">Manual</option>
-                                    <option value="Automática">Automática</option>
-                                    <option value="CVT">CVT</option>
+                                    <option value="Manual" selected="@(Model.Caixa == "Manual")">Manual</option>
+                                    <option value="Automática" selected="@(Model.Caixa == "Automática")">Automática</option>
+                                    <option value="CVT" selected="@(Model.Caixa == "CVT")">CVT</option>
                                 </select>
                                 <span asp-validation-for="Caixa" class="text-danger"></span>
                             </div>
@@ -97,17 +99,17 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label asp-for="Km" class="form-label">Quilómetros</label>
-                                <input asp-for="Km" type="number" class="form-control" placeholder="45000" />
+                                <input asp-for="Km" type="number" class="form-control" />
                                 <span asp-validation-for="Km" class="text-danger"></span>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label asp-for="Condicao" class="form-label">Condição</label>
-                                <input asp-for="Condicao" class="form-control" placeholder="Ex: Usado, Novo" />
+                                <input asp-for="Condicao" class="form-control" />
                                 <span asp-validation-for="Condicao" class="text-danger"></span>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label asp-for="Preco" class="form-label">Preço (€) *</label>
-                                <input asp-for="Preco" type="number" step="0.01" class="form-control" placeholder="25000.00" required />
+                                <input asp-for="Preco" type="number" step="0.01" class="form-control" required />
                                 <span asp-validation-for="Preco" class="text-danger"></span>
                             </div>
                         </div>
@@ -116,19 +118,19 @@
 
                 <!-- Seção 3: Localização e Descrição -->
                 <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-warning text-white">
                         <h5 class="mb-0">Localização e Descrição</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
                             <label asp-for="Localizacao" class="form-label">Localização *</label>
-                            <input asp-for="Localizacao" class="form-control" placeholder="Ex: Lisboa, Portugal" required />
+                            <input asp-for="Localizacao" class="form-control" required />
                             <span asp-validation-for="Localizacao" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Descricao" class="form-label">Descrição Detalhada *</label>
-                            <textarea asp-for="Descricao" class="form-control" rows="5" placeholder="Descreva em detalhe o estado do veículo, histórico de manutenção, reparações, etc." required></textarea>
+                            <textarea asp-for="Descricao" class="form-control" rows="5" required></textarea>
                             <small class="form-text text-muted">Máximo 2000 caracteres</small>
                             <span asp-validation-for="Descricao" class="text-danger"></span>
                         </div>
@@ -137,13 +139,22 @@
 
                 <!-- Seção 4: Fotos -->
                 <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-warning text-white">
                         <h5 class="mb-0">Fotos (Máximo 10 imagens)</h5>
                     </div>
                     <div class="card-body">
+                        @if (!string.IsNullOrEmpty(Model.ImagemPrincipalAtual))
+                        {
+                            <div class="alert alert-info mb-3">
+                                <strong>Imagem Atual:</strong>
+                                <br />
+                                <img src="/images/veiculos/@Model.ImagemPrincipalAtual" alt="Imagem atual" style="max-width: 200px; height: auto; border-radius: 4px; margin-top: 10px;" />
+                            </div>
+                        }
+
                         <div class="mb-3">
-                            <label asp-for="Fotos" class="form-label">Selecione as Fotos *</label>
-                            <input asp-for="Fotos" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple required />
+                            <label asp-for="Fotos" class="form-label">Adicionar Novas Fotos (Opcional)</label>
+                            <input asp-for="Fotos" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple />
                             <small class="form-text text-muted">
                                 Formatos: JPG, JPEG, PNG, WebP | Máximo 10 imagens | Máximo 5 MB por imagem
                             </small>
@@ -156,10 +167,10 @@
 
                 <!-- Botões -->
                 <div class="d-flex gap-2 mb-5">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-check-circle"></i> Criar Carro
+                    <button type="submit" class="btn btn-warning btn-lg">
+                        <i class="bi bi-pencil"></i> Atualizar Veículo
                     </button>
-                    <a href="@Url.Action("Index", "Carros", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
+                    <a href="@Url.Action("Index", "Veiculos", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
                         <i class="bi bi-arrow-left"></i> Cancelar
                     </a>
                 </div>
@@ -170,29 +181,32 @@
 
 @section Scripts {
     <script>
-        document.querySelector('input[type="file"]').addEventListener('change', function(e) {
-            const preview = document.getElementById('preview');
-            preview.innerHTML = '';
-            
-            Array.from(this.files).slice(0, 10).forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-3 col-sm-4 col-6 mb-3';
-                    col.innerHTML = `
-                        <div class="position-relative">
-                            <img src="${event.target.result}" class="img-fluid rounded" style="width: 100%; height: 200px; object-fit: cover;">
-                            <small class="d-block mt-1 text-muted">${file.name}</small>
-                        </div>
-                    `;
-                    preview.appendChild(col);
-                };
-                reader.readAsDataURL(file);
-            });
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const preview = document.getElementById('preview');
+                preview.innerHTML = '';
+                
+                Array.from(this.files).slice(0, 10).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3 col-sm-4 col-6 mb-3';
+                        col.innerHTML = `
+                            <div class="position-relative">
+                                <img src="${event.target.result}" class="img-fluid rounded" style="width: 100%; height: 200px; object-fit: cover;">
+                                <small class="d-block mt-1 text-muted">${file.name}</small>
+                            </div>
+                        `;
+                        preview.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                });
 
-            if (this.files.length > 10) {
-                alert('Máximo de 10 imagens permitidas. Apenas as primeiras 10 serão usadas.');
-            }
-        });
+                if (this.files.length > 10) {
+                    alert('Máximo de 10 imagens permitidas. Apenas as primeiras 10 serão usadas.');
+                }
+            });
+        }
     </script>
 }

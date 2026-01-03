@@ -1,6 +1,6 @@
-@model AutoMarket.Models.ViewModels.Carros.ListCarroViewModel
+@model AutoMarket.Models.ViewModels.Veiculos.ListVeiculoViewModel
 @{
-    ViewData["Title"] = "Eliminar Carro";
+    ViewData["Title"] = "Eliminar Veículo";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -13,16 +13,16 @@
                 </div>
                 <div class="card-body">
                     <div class="alert alert-warning" role="alert">
-                        <strong>Atenção!</strong> Esta ação é irreversível. O carro será removido da sua lista de anúncios.
+                        <strong>Atenção!</strong> Esta ação é irreversível. O veículo será removido da sua lista de anúncios.
                     </div>
 
-                    <h6 class="mb-3">Tem certeza que deseja eliminar o seguinte carro?</h6>
+                    <h6 class="mb-3">Tem certeza que deseja eliminar o seguinte veículo?</h6>
 
                     <div class="card mb-4 bg-light">
                         <div class="card-body">
                             @if (!string.IsNullOrEmpty(Model.ImagemPrincipal))
                             {
-                                <img src="/images/cars/@Model.ImagemPrincipal" alt="@Model.Titulo" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 4px; margin-bottom: 15px;" />
+                                <img src="/images/veiculos/@Model.ImagemPrincipal" alt="@Model.Titulo" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 4px; margin-bottom: 15px;" />
                             }
                             else
                             {
@@ -66,14 +66,14 @@
                 </div>
 
                 <div class="card-footer bg-light">
-                    <form asp-action="Delete" asp-controller="Carros" asp-area="Vendedores" method="post" style="display: inline;">
+                    <form asp-action="Delete" asp-controller="Veiculos" asp-area="Vendedores" method="post" style="display: inline;">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@Model.Id" />
                         <button type="submit" class="btn btn-danger btn-lg">
-                            <i class="bi bi-trash"></i> Sim, Eliminar Carro
+                            <i class="bi bi-trash"></i> Sim, Eliminar Veículo
                         </button>
                     </form>
-                    <a href="@Url.Action("Index", "Carros", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
+                    <a href="@Url.Action("Index", "Veiculos", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
                         <i class="bi bi-arrow-left"></i> Não, Cancelar
                     </a>
                 </div>

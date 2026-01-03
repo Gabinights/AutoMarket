@@ -1,6 +1,6 @@
-@model AutoMarket.Models.ViewModels.Carros.ListCarroViewModel
+@model AutoMarket.Models.ViewModels.Veiculos.ListVeiculoViewModel
 @{
-    ViewData["Title"] = "Detalhes do Carro";
+    ViewData["Title"] = "Detalhes do Veículo";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -10,13 +10,13 @@
             <div class="card">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">@Model.Titulo</h5>
-                    @if (Model.Estado == "Ativo")
+                    @if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Ativo)
                     {
                         <span class="badge bg-success">Ativo</span>
                     }
-                    else if (Model.Estado == "Removido")
+                    else if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Vendido)
                     {
-                        <span class="badge bg-danger">Removido</span>
+                        <span class="badge bg-danger">Vendido</span>
                     }
                     else
                     {
@@ -29,7 +29,7 @@
                     <div class="mb-4">
                         @if (!string.IsNullOrEmpty(Model.ImagemPrincipal))
                         {
-                            <img src="/images/cars/@Model.ImagemPrincipal" alt="@Model.Titulo" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;" />
+                            <img src="/images/veiculos/@Model.ImagemPrincipal" alt="@Model.Titulo" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;" />
                         }
                         else
                         {
@@ -69,13 +69,20 @@
                         </div>
                     </div>
 
-                    @if (!string.IsNullOrEmpty(Model.Categoria))
-                    {
-                        <div class="mb-4">
-                            <h6 class="text-muted">Categoria</h6>
-                            <p class="fw-bold">@Model.Categoria</p>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Caixa</h6>
+                            <p class="fw-bold">@Model.Caixa</p>
                         </div>
-                    }
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Categoria</h6>
+                            <p class="fw-bold">@Model.CategoriaNome</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Condição</h6>
+                            <p class="fw-bold">@(string.IsNullOrEmpty(Model.Condicao) ? "N/A" : Model.Condicao)</p>
+                        </div>
+                    </div>
 
                     <hr />
 
@@ -88,11 +95,11 @@
                         <div class="col-md-6">
                             <h6 class="text-muted">Estado</h6>
                             <p class="fw-bold">
-                                @if (Model.Estado == "Ativo")
+                                @if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Ativo)
                                 {
                                     <span class="badge bg-success">@Model.Estado</span>
                                 }
-                                else if (Model.Estado == "Removido")
+                                else if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Vendido)
                                 {
                                     <span class="badge bg-danger">@Model.Estado</span>
                                 }
@@ -104,17 +111,23 @@
                         </div>
                     </div>
 
+                    <!-- Descrição -->
+                    <div class="mb-4">
+                        <h6 class="text-muted">Descrição</h6>
+                        <p>@Model.Descricao</p>
+                    </div>
+
                     <hr />
 
                     <!-- Botões de Ação -->
                     <div class="d-flex gap-2">
-                        <a href="@Url.Action("Edit", "Carros", new { area = "Vendedores", id = Model.Id })" class="btn btn-warning btn-lg">
+                        <a href="@Url.Action("Edit", "Veiculos", new { area = "Vendedores", id = Model.Id })" class="btn btn-warning btn-lg">
                             <i class="bi bi-pencil"></i> Editar
                         </a>
-                        <a href="@Url.Action("Delete", "Carros", new { area = "Vendedores", id = Model.Id })" class="btn btn-danger btn-lg">
+                        <a href="@Url.Action("Delete", "Veiculos", new { area = "Vendedores", id = Model.Id })" class="btn btn-danger btn-lg">
                             <i class="bi bi-trash"></i> Eliminar
                         </a>
-                        <a href="@Url.Action("Index", "Carros", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
+                        <a href="@Url.Action("Index", "Veiculos", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
                             <i class="bi bi-arrow-left"></i> Voltar
                         </a>
                     </div>
