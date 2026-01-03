@@ -1,37 +1,82 @@
-@using Microsoft.AspNetCore.Identity;
+﻿@using Microsoft.AspNetCore.Identity;
 @using AutoMarket.Models;
-@using AutoMarket.Constants;
 @inject SignInManager<Utilizador> SignInManager
 
-<header>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-        <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">AutoMarket</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
+<header class="bg-primary py-3 sticky-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold fs-5" asp-area="" asp-controller="Home" asp-action="Index">
+                🚗 AutoMarket
+            </a>
+
+            <!-- Toggler para Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
 
-                <ul class="navbar-nav flex-grow-1">
+            <!-- Menu Principal -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Links Centrais -->
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        <a class="nav-link" asp-area="" asp-controller="Veiculos" asp-action="Index">Veículos</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Sobre">Sobre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Ajuda">Ajuda</a>
+                    </li>
+                </ul>
 
-                    @if (User.IsInRole(Roles.Admin))
+                <!-- Links Direita (Autenticação) -->
+                <ul class="navbar-nav ms-auto gap-2">
+                    @if (SignInManager.IsSignedIn(User))
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-danger fw-bold" asp-controller="Admin" asp-action="Index">
-                                <i class="bi bi-shield-lock"></i> Backoffice
-                            </a>
+                            <span class="nav-link text-white-50">
+                                👤 @User.Identity?.Name?.Split("@")[0]
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-area="" asp-controller="Conta" asp-action="Logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-link nav-link text-white text-decoration-none">Logout</button>
+                            </form>
                         </li>
                     }
-                </ul>
-                @await Component.InvokeAsync("CarrinhoResumo")
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Conta" asp-action="Login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Conta" asp-action="Register">Registar</a>
+                        </li>
+                    }
 
-                <partial name="_LoginPartial" />
-                
+                    <!-- Botão CTA (Vender) -->
+                    <li class="nav-item">
+                        <a class="btn btn-warning fw-bold ms-2" asp-area="Vendedores" asp-controller="Carros" asp-action="Index">
+                            ➕ Vender Carro
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 </header>
+
+<style>
+    header .navbar-dark .nav-link:hover {
+        color: var(--cor-cta) !important;
+        transition: color 0.2s;
+    }
+
+    header .btn-warning:hover {
+        background-color: #e6a800 !important;
+    }
+</style>
+
+
+

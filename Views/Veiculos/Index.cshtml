@@ -1,104 +1,253 @@
-@using Microsoft.AspNetCore.Identity;
-@inject SignInManager<AutoMarket.Models.Utilizador> SignInManager
+@model IEnumerable<AutoMarket.Models.Veiculo>
 @{
-    ViewData["Title"] = "Ve√≠culos Dispon√≠veis";
+    ViewData["Title"] = "Pesquisa de VeÌculos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<header>
-    <div class="nav">
-        <!-- <a href="/" class="logo">AutoMarket</a>  removido link redundante -->
-        <nav>
-            <ul>
-                <!-- <li><a href="/">In√≠cio</a></li> removido link redundante -->
-                <li><a href="/Veiculos">Ve√≠culos</a></li>
-                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
-                <li><a href="/Home/Sobre">Sobre</a></li>
-            </ul>
-        </nav>
-        <div class="header-actions">
-            @if (SignInManager.IsSignedIn(User))
-            {
-                <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
-            }
-            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
-        </div>
+
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR FILTROS (Esquerda) -->
+        <aside class="col-lg-3 col-md-4 col-12">
+            <div class="card shadow-sm sticky-top" style="top: 80px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/Veiculos/BuscarAjax" id="filtrosForm">
+                        
+                        <!-- Marca -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Marca</label>
+                            <select name="marca" class="form-select form-select-sm filtro-select">
+                                <option value="">-- Todas as marcas --</option>
+                                @foreach (var m in (ViewData["Marcas"] as List<string>) ?? new List<string>())
+                                {
+                                    <option value="@m" selected="@(ViewData["MarcaSelecionada"]?.ToString() == m)">@m</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Modelo -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Modelo</label>
+                            <select name="modelo" class="form-select form-select-sm filtro-select">
+                                <option value="">-- Todos os modelos --</option>
+                                @foreach (var m in (ViewData["Modelos"] as List<string>) ?? new List<string>())
+                                {
+                                    <option value="@m" selected="@(ViewData["ModeloSelecionado"]?.ToString() == m)">@m</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- CombustÌvel -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">CombustÌvel</label>
+                            <select name="combustivel" class="form-select form-select-sm filtro-select">
+                                <option value="">-- Todos --</option>
+                                @foreach (var c in (ViewData["Combustiveis"] as List<string>) ?? new List<string>())
+                                {
+                                    <option value="@c" selected="@(ViewData["CombustivelSelecionado"]?.ToString() == c)">@c</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Ano -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Ano</label>
+                            <select name="ano" class="form-select form-select-sm filtro-select">
+                                <option value="">-- Todos os anos --</option>
+                                @foreach (var a in (ViewData["Anos"] as List<int>) ?? new List<int>())
+                                {
+                                    <option value="@a" selected="@(ViewData["AnoSelecionado"]?.ToString() == a.ToString())">@a</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Tipo/Segmento -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tipo (Segmento)</label>
+                            <select name="categoria" class="form-select form-select-sm filtro-select">
+                                <option value="">-- Todos os tipos --</option>
+                                @foreach (var cat in (ViewData["Categorias"] as List<string>) ?? new List<string>())
+                                {
+                                    <option value="@cat" selected="@(ViewData["CategoriaSelecionada"]?.ToString() == cat)">@cat</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- PreÁo Min-Max -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">PreÁo (Ä)</label>
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="number" name="precoMin" class="form-control filtro-input" placeholder="MÌn" value="@ViewData["PrecoMin"]" />
+                                <input type="number" name="precoMax" class="form-control filtro-input" placeholder="M·x" value="@ViewData["PrecoMax"]" />
+                            </div>
+                        </div>
+
+                        <!-- KM Min-Max -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">QuilÛmetros</label>
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="number" name="kmMin" class="form-control filtro-input" placeholder="MÌn" value="@ViewData["KmMin"]" />
+                                <input type="number" name="kmMax" class="form-control filtro-input" placeholder="M·x" value="@ViewData["KmMax"]" />
+                            </div>
+                        </div>
+
+                        <!-- Botıes -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm" id="btnPesquisar">
+                                <i class="bi bi-search"></i> Pesquisar
+                            </button>
+                            <a href="/Veiculos/Index" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-arrow-clockwise"></i> Limpar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- AN⁄NCIOS (Direita) -->
+        <section class="col-lg-9 col-md-8 col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">VeÌculos DisponÌveis</h5>
+                    <div>
+                        <label class="form-label mb-0 me-2">Ordenar:</label>
+                        <select id="ordenacao" class="form-select form-select-sm d-inline w-auto filtro-select">
+                            <option value="recente" selected="@(ViewData["Ordenacao"]?.ToString() == "recente")">Mais recente</option>
+                            <option value="preco_asc" selected="@(ViewData["Ordenacao"]?.ToString() == "preco_asc")">PreÁo ascendente</option>
+                            <option value="preco_desc" selected="@(ViewData["Ordenacao"]?.ToString() == "preco_desc")">PreÁo descendente</option>
+                            <option value="km_asc" selected="@(ViewData["Ordenacao"]?.ToString() == "km_asc")">KM ascendentes</option>
+                            <option value="km_desc" selected="@(ViewData["Ordenacao"]?.ToString() == "km_desc")">KM descendentes</option>
+                            <option value="ano_asc" selected="@(ViewData["Ordenacao"]?.ToString() == "ano_asc")">Ano ascendente</option>
+                            <option value="ano_desc" selected="@(ViewData["Ordenacao"]?.ToString() == "ano_desc")">Ano descendente</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOADING SPINNER -->
+            <div id="loadingSpinner" class="text-center" style="display: none; padding: 3rem;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="text-muted mt-3">Procurando veÌculos...</p>
+            </div>
+
+            <!-- CONTENTOR DE RESULTADOS (ser· preenchido via AJAX) -->
+            <div id="resultado">
+                @await Html.PartialAsync("_CarListPartial", Model)
+            </div>
+        </section>
     </div>
-</header>
-<main style="display:flex;gap:3rem;max-width:1200px;margin:2rem auto 3rem auto;">
-    <aside class="filter-sidebar">
-        <h2 style="margin-bottom:1rem;font-size:1.2rem">Filtros</h2>
-        <div class="filter-group">
-            <label>Marca</label>
-            <input type="text" name="marca" />
-        </div>
-        <div class="filter-group">
-            <label>Modelo</label>
-            <input type="text" name="modelo" />
-        </div>
-        <div class="filter-group">
-            <label>Pre√ßo at√©</label>
-            <input type="number" name="preco" />
-        </div>
-        <div class="filter-group">
-            <label>Ano</label>
-            <input type="number" name="ano" />
-        </div>
-        <div class="filter-group">
-            <label>Quilometragem</label>
-            <input type="number" name="km" />
-        </div>
-        <div class="filter-group">
-            <label>Condi√ß√£o</label>
-            <select name="condicao"><option value="">Qualquer</option><option>Novo</option><option>Usado</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Combust√≠vel</label>
-            <select name="combustivel"><option value="">Qualquer</option><option>Gasolina</option><option>Gas√≥leo</option><option>H√≠brido</option><option>El√©trico</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Caixa</label>
-            <select name="caixa"><option value="">Qualquer</option><option>Manual</option><option>Autom√°tica</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Localiza√ß√£o</label>
-            <input type="text" name="localizacao" />
-        </div>
-        <button class="btn-primario" style="width:100%;margin-top:1rem">Aplicar Filtros</button>
-    </aside>
-    <section style="flex:1;">
-        <h1 style="margin-bottom:1.4rem;">Ve√≠culos Dispon√≠veis</h1>
-        <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content:flex-start;">
-            <!-- TODO: Implementar fetch() para buscar ve√≠culos da API (RF1) -->
-            <div class="vehicle-card">
-                <img src="/images/carro_exemplo1.jpg" alt="Ve√≠culo 1" />
-                <h3>BMW S√©rie 1</h3>
-                <div class="price">‚Ç¨19.900</div>
-                <div class="meta">2019 ‚Ä¢ 45.000km ‚Ä¢ Lisboa</div>
-            </div>
-            <div class="vehicle-card">
-                <img src="/images/carro_exemplo2.jpg" alt="Ve√≠culo 2" />
-                <h3>Renault Clio</h3>
-                <div class="price">‚Ç¨13.400</div>
-                <div class="meta">2018 ‚Ä¢ 33.000km ‚Ä¢ Porto</div>
-            </div>
-            <div class="vehicle-card">
-                <img src="/images/carro_exemplo3.jpg" alt="Ve√≠culo 3" />
-                <h3>Volkswagen Golf</h3>
-                <div class="price">‚Ç¨22.500</div>
-                <div class="meta">2020 ‚Ä¢ 29.900km ‚Ä¢ Braga</div>
-            </div>
-        </div>
-    </section>
-</main>
-<footer>
-    &copy; 2025 AutoMarket<br/>
-    Plataforma de compra e venda de ve√≠culos usados.
-</footer>
-@section Styles {
-    <link rel="stylesheet" href="/css/style.css" />
-}
-@section Scripts {
-    <script src="/js/script.js"></script>
-}
+</div>
 
+<style>
+    .vehicle-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
 
+    .vehicle-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+    }
 
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+</style>
+
+<script>
+    // ============================================================
+    // AJAX LISTENER - Pesquisa din‚mica sem recarregar p·gina
+    // ============================================================
+
+    function executarBusca() {
+        // Mostrar loading spinner
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('resultado').style.opacity = '0.5';
+
+        // Obter dados do formul·rio
+        const formData = new FormData(document.getElementById('filtrosForm'));
+        const ordenacao = document.getElementById('ordenacao').value;
+        formData.append('ordenacao', ordenacao);
+
+        // Fazer requisiÁ„o AJAX
+        fetch('/Veiculos/BuscarAjax', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Substituir conte˙do do resultado
+            document.getElementById('resultado').innerHTML = html;
+            document.getElementById('resultado').style.opacity = '1';
+
+            // Adicionar listeners aos links de paginaÁ„o
+            adicionarListenersPaginacao();
+
+            // Scroll suave atÈ os resultados
+            document.getElementById('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        })
+        .catch(error => {
+            console.error('Erro ao pesquisar:', error);
+            document.getElementById('resultado').innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <h6>Erro ao carregar resultados</h6>
+                    <p>${error.message}</p>
+                </div>
+            `;
+            document.getElementById('resultado').style.opacity = '1';
+        })
+        .finally(() => {
+            // Esconder loading spinner
+            document.getElementById('loadingSpinner').style.display = 'none';
+        });
+    }
+
+    function adicionarListenersPaginacao() {
+        // Listeners para links de paginaÁ„o
+        document.querySelectorAll('.pagination-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                const formData = new FormData(document.getElementById('filtrosForm'));
+                formData.append('page', page);
+                formData.append('ordenacao', document.getElementById('ordenacao').value);
+
+                // Repetir busca com nova p·gina
+                executarBusca();
+            });
+        });
+    }
+
+    // ============================================================
+    // INICIALIZA«√O
+    // ============================================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Listeners nos filtros (select e input)
+        document.querySelectorAll('.filtro-select, .filtro-input').forEach(element => {
+            element.addEventListener('change', executarBusca);
+        });
+
+        // Listener na dropdown de ordenaÁ„o
+        document.getElementById('ordenacao').addEventListener('change', executarBusca);
+
+        // Listener no bot„o pesquisar (para Enter em inputs)
+        document.getElementById('filtrosForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            executarBusca();
+        });
+
+        // Listeners iniciais na paginaÁ„o
+        adicionarListenersPaginacao();
+    });
+</script>

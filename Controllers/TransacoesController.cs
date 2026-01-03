@@ -7,56 +7,46 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Controllers
 {
-    [Authorize] // Só utilizadores logados compram
+    [Authorize]
     public class TransacoesController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
         private readonly ILogger<TransacoesController> _logger;
 
-        public TransacoesController(ApplicationDbContext context, UserManager<Utilizador> userManager, ILogger<TransacoesController> logger)
+        public TransacoesController(ApplicationDbContext context, UserManager<Utilizador> userManager)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
         }
 
-        // GET: Transacoes/Checkout/5
+        /// <summary>
+        /// GET: Transacoes/Checkout/5
+        /// Exibe a página de checkout para compra de veículo.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Checkout(int id)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) { return Challenge(); }
 
-            var carro = await _context.Carros
-                .Include(c => c.Vendedor)
+            if (string.IsNullOrEmpty(user.NIF))
+            {
+                TempData["ReturnUrl"] = Url.Action(nameof(Checkout), new { id = id });
+                return RedirectToAction("PreencherDadosFiscais", "Conta");
+            }
+
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Vendedor)
                 .ThenInclude(v => v.User)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            if (carro == null)
-            {
-                _logger.LogWarning("Tentativa de checkout para carro inexistente: {Id}", id);
+            if (veiculo == null)
                 return NotFound();
             }
 
-            if (carro.Estado != AutoMarket.Models.Enums.EstadoCarro.Ativo)
-            {
-                 TempData["Erro"] = "Este veículo já não está disponível.";
-                 return RedirectToAction("Index", "Veiculos");
-            }
-
-            if (carro.Vendedor.UserId == null || carro.Vendedor == null)
-            {
-                _logger.LogError("Carro {CarroId} tem Vendedor ou UserId nulos.", id);
-                return NotFound();
-            }
-
-            if (carro.Vendedor.UserId == user.Id)
-            {
-                TempData["Erro"] = "Não pode comprar o seu próprio veículo.";
-                return RedirectToAction("Detalhes", "Veiculos", new { id = carro.Id });
-            }
-            return View(carro);
+            return View(veiculo);
         }
     }
 }

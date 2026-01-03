@@ -1,6 +1,7 @@
 ﻿using AutoMarket.Constants;
 using AutoMarket.Data;
 using AutoMarket.Models;
+using AutoMarket.Models.DTOs;
 using AutoMarket.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,271 +12,323 @@ using AutoMarket.Models.ViewModels;
 
 namespace AutoMarket.Controllers
 {
-    [Authorize(Roles = Roles.Vendedor)]
-    [Authorize(Policy = "VendedorAprovado")]
+    /// <summary>
+    /// Controller público para listar e pesquisar veículos do catálogo.
+    /// Implementa filtros avançados, paginação e otimização de queries.
+    /// </summary>
     public class VeiculosController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<Utilizador> _userManager;
-        private readonly IWebHostEnvironment _webHostEnvironment; // Para upload de imagens
+        private readonly ILogger<VeiculosController> _logger;
 
-        public VeiculosController(
-            ApplicationDbContext context,
-            UserManager<Utilizador> userManager,
-            IWebHostEnvironment webHostEnvironment)
+        public VeiculosController(ApplicationDbContext context, ILogger<VeiculosController> logger)
         {
             _context = context;
-            _userManager = userManager;
-            _webHostEnvironment = webHostEnvironment;
+            _logger = logger;
         }
 
-        // Método Auxiliar para obter o Vendedor Logado
-        private async Task<Vendedor?> GetVendedorLogadoAsync()
+        /// <summary>
+        /// GET: Veiculos/Index
+        /// Lista todos os veículos ativos com filtros, ordenação e paginação.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Index(
+            string? marca = null,
+            string? modelo = null,
+            string? combustivel = null,
+            int? ano = null,
+            string? categoria = null,
+            decimal? precoMin = null,
+            decimal? precoMax = null,
+            int? kmMin = null,
+            int? kmMax = null,
+            string? ordenacao = "recente",
+            int page = 1)
         {
-            var userId = _userManager.GetUserId(User);
-            // Inclui o User para podermos verificar outras coisas se necessário
-            return await _context.Vendedores
-                .FirstOrDefaultAsync(v => v.UserId == userId);
-        }
-
-        // GET: Veiculos
-        public async Task<IActionResult> Index()
-        {
-            var vendedor = await GetVendedorLogadoAsync();
-            if (vendedor == null) return View("Error"); // Ou redirecionar para configurar perfil
-
-            // Mostra APENAS os carros deste vendedor
-            var carros = await _context.Carros
-                .Include(c => c.Categoria)
-                .Include(c => c.Imagens) // Para mostrar a foto de capa na lista
-                .Where(c => c.VendedorId == vendedor.Id)
-                .ToListAsync();
-
-            return View(carros);
-        }
-
-        // GET: Veiculos/Create
-        public IActionResult Create()
-        {
-            // Verifica se o vendedor está aprovado antes de deixar criar
-            // (Lógica opcional baseada no teu StatusAprovacao)
-
-            ViewData["CategoriaId"] = new SelectList(_context.Categorias, "Id", "Nome");
-            return View(new CarroViewModel());
-        }
-
-        // POST: Veiculos/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CarroViewModel viewModel)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewData["CategoriaId"] = new SelectList(_context.Categorias, "Id", "Nome", viewModel.CategoriaId);
-                return View(viewModel);
-            }
-
-            var vendedor = await GetVendedorLogadoAsync();
-
-            if (vendedor == null) return RedirectToAction("Register", "Conta");
-
-
-            // -- Mapear (ViewModel -> Domain Model) --- 
-            var carro = new Carro
-            {
-                Titulo = viewModel.Titulo,
-                Marca = viewModel.Marca,
-                Modelo = viewModel.Modelo,
-                CategoriaId = viewModel.CategoriaId,
-                Ano = viewModel.Ano,
-                Preco = viewModel.Preco,
-                Km = viewModel.Km,
-                Combustivel = viewModel.Combustivel,
-                Caixa = viewModel.Caixa,
-                Localizacao = viewModel.Localizacao,
-                Descricao = viewModel.Descricao,
-
-                // Campos de sistema (automáticos)
-                VendedorId = vendedor.Id,
-                DataCriacao = DateTime.UtcNow,
-                Estado = EstadoCarro.Ativo
-            };
-
-            // Lógica de Imagens
-            if (viewModel.ImagensUpload != null)
-            {
-                foreach (var img in viewModel.ImagensUpload)
-                {
-                    if (img.Length > 0)
-                    {
-                        // Validação básica
-                        if (!img.ContentType.StartsWith("image/")) continue; 
-                        if (img.Length > 5 * 1024 * 1024) continue; // Max 5MB
-                        var uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(img.FileName);
-                        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images/carros");
-                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                        
-                        var path = Path.Combine(uploadsFolder, uniqueName);
-
-                        using (var stream = new FileStream(path, FileMode.Create))
-                        {
-                            await img.CopyToAsync(stream);
-                        }
-
-                        carro.Imagens.Add(new CarroImagem
-                        {
-                            CaminhoFicheiro = uniqueName,
-                            ContentType = img.ContentType,
-                            IsCapa = carro.Imagens.Count == 0
-                        });
-                    }
-                }
-            }
-
-            _context.Add(carro);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-        // GET: Veiculos/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var vendedor = await GetVendedorLogadoAsync();
-            if (vendedor == null) return Forbid();
-
-            // Verificar se o carro existe E SE PERTENCE AO VENDEDOR LOGADO
-            var carro = await _context.Carros
-                .Include(c => c.Imagens)
-                .FirstOrDefaultAsync(c => c.Id == id && c.VendedorId == vendedor.Id);
-            if (carro == null) { return NotFound(); }
-
-            // --- Mapeamento Inverso (Domain -> ViewModel) ---
-            // Preencher formulário com os dados da BD
-            var viewModel = new CarroViewModel
-            {
-                Id = carro.Id,
-                Titulo = carro.Titulo,
-                Marca = carro.Marca,
-                Modelo = carro.Modelo,
-                CategoriaId = carro.CategoriaId,
-                Ano = carro.Ano,
-                Preco = carro.Preco,
-                Km = carro.Km,
-                Combustivel = carro.Combustivel,
-                Caixa = carro.Caixa,
-                Localizacao = carro.Localizacao,
-                Descricao = carro.Descricao,
-                ImagensAtuais = carro.Imagens
-            };
-
-            ViewData["CategoriaId"] = new SelectList(_context.Categorias, "Id", "Nome", carro.CategoriaId);
-            return View(viewModel);
-        }
-
-        // POST: Veiculos/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, CarroViewModel viewModel)
-        {
-            if (id != viewModel.Id) return NotFound();
-
-            if (!ModelState.IsValid)
-            {
-                ViewData["CategoriaId"] = new SelectList(_context.Categorias, "Id", "Nome", viewModel.CategoriaId);
-                return View(viewModel);
-            }
-
-            var vendedor = await GetVendedorLogadoAsync();
-            if (vendedor == null) return Forbid();
-
-            var carroOriginal = await _context.Carros
-                .Include(c => c.Imagens)
-                .FirstOrDefaultAsync(c => c.Id == id && c.VendedorId == vendedor.Id);
-
-            if (carroOriginal == null) return NotFound();
-
-            // --- Mapeamento de atualização (ViewModel -> Domain) ---
-            // Apenas atualizamos os campos permitidos
-            carroOriginal.Titulo = viewModel.Titulo;
-            carroOriginal.Marca = viewModel.Marca;
-            carroOriginal.Modelo = viewModel.Modelo;
-            carroOriginal.CategoriaId = viewModel.CategoriaId;
-            carroOriginal.Ano = viewModel.Ano;
-            carroOriginal.Preco = viewModel.Preco;
-            carroOriginal.Km = viewModel.Km;
-            carroOriginal.Combustivel = viewModel.Combustivel;
-            carroOriginal.Caixa = viewModel.Caixa;
-            carroOriginal.Localizacao = viewModel.Localizacao;
-            carroOriginal.Descricao = viewModel.Descricao;
-
-            // Nota: não mexer em VendedorId, DataCriacao ou Estado aqui
-
-            // Lógica de adicionar novas imagens (se houver)
-            if (viewModel.ImagensUpload != null)
-            {
-                foreach (var img in viewModel.ImagensUpload)
-                {
-                    if (img.Length > 0)
-                    {
-                        // Validação básica
-                        if (!img.ContentType.StartsWith("image/")) continue; 
-                        if (img.Length > 5 * 1024 * 1024) continue; // Max 5MB
-
-                        var uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(img.FileName);
-                        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images/carros");
-                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                        var path = Path.Combine(uploadsFolder, uniqueName);
-
-                        using (var stream = new FileStream(path, FileMode.Create))
-                        {
-                            await img.CopyToAsync(stream);
-                        }
-
-                        carroOriginal.Imagens.Add(new CarroImagem
-                        {
-                            CaminhoFicheiro = uniqueName,
-                            ContentType = img.ContentType,
-                            IsCapa = carroOriginal.Imagens.Count == 0
-                        });
-                    }
-                }
-            }
-
             try
             {
-                _context.Update(carroOriginal);
-                await _context.SaveChangesAsync();
+                // Encapsular parâmetros no DTO
+                var filters = new VeiculoSearchFiltersDto
+                {
+                    Marca = marca,
+                    Modelo = modelo,
+                    Combustivel = combustivel,
+                    Ano = ano,
+                    Categoria = categoria,
+                    PrecoMin = precoMin,
+                    PrecoMax = precoMax,
+                    KmMin = kmMin,
+                    KmMax = kmMax,
+                    Ordenacao = ordenacao,
+                    Page = Math.Max(page, 1) // Garantir que page >= 1
+                };
+
+                // Construir query filtrada e ordenada
+                var query = BuildVeiculosQuery(filters);
+
+                // Contar total ANTES de paginar
+                var totalVeiculos = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling((double)totalVeiculos / filters.PageSize);
+
+                // Aplicar paginação
+                var veiculos = await query
+                    .Skip((filters.Page - 1) * filters.PageSize)
+                    .Take(filters.PageSize)
+                    .ToListAsync();
+
+                // Carregar opções dos filtros em UMA ÚNICA QUERY
+                var filterOptions = await LoadFilterOptionsAsync();
+
+                // Passar dados para a view
+                ViewData["Marcas"] = filterOptions.Marcas;
+                ViewData["Modelos"] = filterOptions.Modelos;
+                ViewData["Combustiveis"] = filterOptions.Combustiveis;
+                ViewData["Anos"] = filterOptions.Anos;
+                ViewData["Categorias"] = filterOptions.Categorias;
+
+                // Manter filtros selecionados
+                ViewData["MarcaSelecionada"] = marca;
+                ViewData["ModeloSelecionado"] = modelo;
+                ViewData["CombustivelSelecionado"] = combustivel;
+                ViewData["AnoSelecionado"] = ano;
+                ViewData["CategoriaSelecionada"] = categoria;
+                ViewData["PrecoMin"] = precoMin;
+                ViewData["PrecoMax"] = precoMax;
+                ViewData["KmMin"] = kmMin;
+                ViewData["KmMax"] = kmMax;
+                ViewData["Ordenacao"] = ordenacao;
+
+                // Informações de paginação
+                ViewData["CurrentPage"] = filters.Page;
+                ViewData["TotalPages"] = totalPages;
+                ViewData["TotalItems"] = totalVeiculos;
+                ViewData["PageSize"] = filters.PageSize;
+
+                _logger.LogInformation(
+                    "Pesquisa de ve�culos: {TotalVeiculos} encontrados, P�gina {Page} de {TotalPages}",
+                    totalVeiculos, filters.Page, totalPages);
+
+                return View(veiculos);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.Carros.Any(e => e.Id == id)) return NotFound();
-                else throw;
+                _logger.LogError(ex, "Erro ao pesquisar veículos");
+                return View(new List<Veiculo>());
             }
-            return RedirectToAction(nameof(Index));
         }
 
-        // POST: Veiculos/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        /// <summary>
+        /// POST: Veiculos/BuscarAjax
+        /// Retorna PartialView com resultados de busca para AJAX.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> BuscarAjax(
+            string? marca = null,
+            string? modelo = null,
+            string? combustivel = null,
+            int? ano = null,
+            string? categoria = null,
+            decimal? precoMin = null,
+            decimal? precoMax = null,
+            int? kmMin = null,
+            int? kmMax = null,
+            string? ordenacao = "recente",
+            int page = 1)
         {
-            var vendedor = await GetVendedorLogadoAsync();
-            if (vendedor == null) return Forbid();
-
-            // SEGURANÇA: Filtrar também pelo VendedorId no Delete
-            var carro = await _context.Carros
-                .FirstOrDefaultAsync(c => c.Id == id && c.VendedorId == vendedor.Id);
-
-            if (carro != null)
+            try
             {
-                // Opcional: Apagar as imagens físicas do disco antes de apagar o registo
-                _context.Carros.Remove(carro);
-                await _context.SaveChangesAsync();
-            }
+                // Encapsular parâmetros no DTO
+                var filters = new VeiculoSearchFiltersDto
+                {
+                    Marca = marca,
+                    Modelo = modelo,
+                    Combustivel = combustivel,
+                    Ano = ano,
+                    Categoria = categoria,
+                    PrecoMin = precoMin,
+                    PrecoMax = precoMax,
+                    KmMin = kmMin,
+                    KmMax = kmMax,
+                    Ordenacao = ordenacao,
+                    Page = Math.Max(page, 1)
+                };
 
-            return RedirectToAction(nameof(Index));
+                // Construir query filtrada e ordenada
+                var query = BuildVeiculosQuery(filters);
+
+                // Contar total ANTES de paginar
+                var totalVeiculos = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling((double)totalVeiculos / filters.PageSize);
+
+                // Aplicar paginação
+                var veiculos = await query
+                    .Skip((filters.Page - 1) * filters.PageSize)
+                    .Take(filters.PageSize)
+                    .ToListAsync();
+
+                // Passar dados para a PartialView
+                ViewData["CurrentPage"] = filters.Page;
+                ViewData["TotalPages"] = totalPages;
+                ViewData["TotalItems"] = totalVeiculos;
+                ViewData["PageSize"] = filters.PageSize;
+
+                _logger.LogInformation(
+                    "Busca AJAX: {TotalVeiculos} veículos, Página {Page} de {TotalPages}",
+                    totalVeiculos, filters.Page, totalPages);
+
+                // Retornar PartialView (sem layout)
+                return PartialView("_CarListPartial", veiculos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar ve�culos via AJAX");
+                return PartialView("_CarListPartial", new List<Veiculo>());
+            }
         }
+
+        /// <summary>
+        /// GET: Veiculos/Detalhe/5
+        /// Exibe detalhes completos de um veículo.
+        /// </summary>
+        [HttpGet]
+        [Route("Veiculos/Detalhe/{id}")]
+        public async Task<IActionResult> Detalhe(int? id)
+        {
+            if (!id.HasValue)
+                return NotFound();
+
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Imagens)
+                .Include(v => v.Categoria)
+                .Include(v => v.Vendedor)
+                .ThenInclude(v => v.User)
+                .FirstOrDefaultAsync(v => v.Id == id && v.Estado == EstadoVeiculo.Ativo);
+
+            if (veiculo == null)
+                return NotFound();
+
+            return View(veiculo);
+        }
+
+        // ============================================================
+        // MÉTODOS PRIVADOS (DRY - Reutilizáveis)
+        // ============================================================
+
+        /// <summary>
+        /// Constrói a query de veículos com filtros e ordenação aplicados.
+        /// Reutilizável entre diferentes métodos.
+        /// </summary>
+        private IQueryable<Veiculo> BuildVeiculosQuery(VeiculoSearchFiltersDto filters)
+        {
+            var query = _context.Veiculos
+                .Where(v => v.Estado == EstadoVeiculo.Ativo)
+                .Include(v => v.Imagens)
+                .Include(v => v.Categoria)
+                .AsQueryable();
+
+            // Aplicar filtros condicionalmente
+            if (!string.IsNullOrEmpty(filters.Marca))
+                query = query.Where(v => v.Marca == filters.Marca);
+
+            if (!string.IsNullOrEmpty(filters.Modelo))
+                query = query.Where(v => v.Modelo == filters.Modelo);
+
+            if (!string.IsNullOrEmpty(filters.Combustivel))
+                query = query.Where(v => v.Combustivel == filters.Combustivel);
+
+            if (filters.Ano.HasValue)
+                query = query.Where(v => v.Ano == filters.Ano);
+
+            if (!string.IsNullOrEmpty(filters.Categoria))
+                query = query.Where(v => v.Categoria.Nome == filters.Categoria);
+
+            if (filters.PrecoMin.HasValue)
+                query = query.Where(v => v.Preco >= filters.PrecoMin);
+
+            if (filters.PrecoMax.HasValue)
+                query = query.Where(v => v.Preco <= filters.PrecoMax);
+
+            if (filters.KmMin.HasValue)
+                query = query.Where(v => v.Km >= filters.KmMin);
+
+            if (filters.KmMax.HasValue)
+                query = query.Where(v => v.Km <= filters.KmMax);
+
+            // Aplicar ordenação
+            query = filters.Ordenacao switch
+            {
+                "preco_asc" => query.OrderBy(v => v.Preco),
+                "preco_desc" => query.OrderByDescending(v => v.Preco),
+                "km_asc" => query.OrderBy(v => v.Km),
+                "km_desc" => query.OrderByDescending(v => v.Km),
+                "ano_asc" => query.OrderBy(v => v.Ano),
+                "ano_desc" => query.OrderByDescending(v => v.Ano),
+                _ => query.OrderByDescending(v => v.DataCriacao)
+            };
+
+            return query;
+        }
+
+        /// <summary>
+        /// Carrega todas as opções de filtro em UMA ÚNICA QUERY otimizada.
+        /// Evita N+1 queries problem.
+        /// </summary>
+        private async Task<VeiculoFilterOptionsDto> LoadFilterOptionsAsync()
+        {
+            // Carregar todos os dados numa única query
+            var veiculosAtivos = await _context.Veiculos
+                .Where(v => v.Estado == EstadoVeiculo.Ativo)
+                .Include(v => v.Categoria)
+                .ToListAsync();
+
+            var options = new VeiculoFilterOptionsDto
+            {
+                Marcas = veiculosAtivos
+                    .Select(v => v.Marca)
+                    .Distinct()
+                    .OrderBy(m => m)
+                    .ToList(),
+
+                Modelos = veiculosAtivos
+                    .Select(v => v.Modelo)
+                    .Distinct()
+                    .OrderBy(m => m)
+                    .ToList(),
+
+                Combustiveis = veiculosAtivos
+                    .Where(v => !string.IsNullOrEmpty(v.Combustivel))
+                    .Select(v => v.Combustivel)
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToList(),
+
+                Anos = veiculosAtivos
+                    .Select(v => v.Ano)
+                    .Distinct()
+                    .OrderByDescending(a => a)
+                    .ToList(),
+
+                Categorias = veiculosAtivos
+                    .Where(v => v.Categoria != null)
+                    .Select(v => v.Categoria.Nome)
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToList()
+            };
+
+            return options;
+        }
+    }
+
+    /// <summary>
+    /// DTO para retornar opções de filtro.
+    /// </summary>
+    internal class VeiculoFilterOptionsDto
+    {
+        public List<string> Marcas { get; set; } = new();
+        public List<string> Modelos { get; set; } = new();
+        public List<string> Combustiveis { get; set; } = new();
+        public List<int> Anos { get; set; } = new();
+        public List<string> Categorias { get; set; } = new();
     }
 }

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using AutoMarket.Models.Enums;
-using AutoMarket.Utils;
+using AutoMarket.Attributes;
 
 namespace AutoMarket.Models.ViewModels
 {
@@ -18,7 +18,6 @@ namespace AutoMarket.Models.ViewModels
         [Display(Name = "Password")]
         public string Password { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "A confirmação da password é obrigatória.")]
         [DataType(DataType.Password)]
         [Display(Name = "Confirmar password")]
         [Compare("Password", ErrorMessage = "As passwords não coincidem.")]
@@ -42,52 +41,26 @@ namespace AutoMarket.Models.ViewModels
         [Display(Name = "Tipo de Conta")]
         public TipoConta TipoConta { get; set; } = TipoConta.Comprador;
 
-        [Display(Name = "NIF")]
-        [StringLength(9, MinimumLength = 9, ErrorMessage = "O NIF deve ter 9 dígitos")]
+        // --- Campos específicos para Vendedor --- (Nullable para não dar erro de validação ao comprador)
+        [Display(Name ="NIF")]
+        [NifPortugues]
         public string? NIF { get; set; }
 
         // -- Lógica de validação personalizada do NIF --
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            // Regra 1: Validação para empresas
             if (TipoConta == TipoConta.Empresa)
             {
                 if (string.IsNullOrWhiteSpace(NIF))
                 {
-                    yield return new ValidationResult(
-                        "O NIF é obrigatório para contas empresariais.", new[] { nameof(NIF) });
+                    yield return new ValidationResult("O NIF é obrigatório para contas de Empresa.", new[] { nameof(NIF) });
                 }
-                else if (!NifValidator.IsValid(NIF))
+                else if (!NIF.Trim().StartsWith("5"))
                 {
-                    yield return new ValidationResult(
-                        "NIF inválido.", new[] { nameof(NIF) });
-                }
-                else if (!NifValidator.IsEmpresa(NIF))
-                {
-                    yield return new ValidationResult(
-                    "Selecionou 'Empresa', mas introduziu um NIF de Pessoa Singular. (NIFs de empresa começam por 5, 6 ou 9)",
-                    new[] { nameof(NIF) });
+                    yield return new ValidationResult("NIF de empresa deve começar por 5.", new[] { nameof(NIF) });
                 }
             }
-            else if (TipoConta == TipoConta.Vendedor)
-            {
-                if (!string.IsNullOrWhiteSpace(NIF))
-                {
-                    if (!NifValidator.IsValid(NIF))
-                    {
-                        yield return new ValidationResult(
-                            "NIF inválido.", new[] { nameof(NIF) });
-                    }
-                    else if (!NifValidator.IsParticular(NIF))
-                    {
-                        // Nota: Podes ser mais permissivo aqui se quiseres permitir que uma empresa se registe como "user normal", 
-                        // mas se a distinção for rígida, usa este bloco.
-                        yield return new ValidationResult(
-                            "Para contas particulares, o NIF deve começar por 1, 2 ou 3.",
-                            new[] { nameof(NIF) });
-                    }
-                }
-            }
-            // Se houver mais tipos, adicionar mais 'else if'
         }
     }
 }

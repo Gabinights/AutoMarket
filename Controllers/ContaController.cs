@@ -43,23 +43,13 @@ namespace AutoMarket.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            if (!ModelState.IsValid) return View(model);
 
-            if (ModelState.IsValid)
+            // 1. Iniciar Transação
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                // 0. Verificar unicidade do NIF antes de começar
-                if (!string.IsNullOrEmpty(model.NIF))
-                {
-                    bool nifExists = await _context.Users.AnyAsync(u => u.NIF == model.NIF);
-                    if (nifExists)
-                    {
-                         ModelState.AddModelError("NIF", "Este NIF já está associado a outra conta.");
-                         return View(model);
-                    }
-                }
-
-                // 1. Iniciar Transação
-                using var transaction = await _context.Database.BeginTransactionAsync();
-
                 var user = new Utilizador
                 {
                     UserName = model.Email,
@@ -107,7 +97,7 @@ namespace AutoMarket.Controllers
                     var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
                     var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
-                    new { userId = user.Id, token }, Request.Scheme);
+                        new { userId = user.Id, token }, Request.Scheme);
 
                     if (string.IsNullOrEmpty(confirmationLink))
                     {
@@ -123,22 +113,19 @@ namespace AutoMarket.Controllers
                 // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
                 foreach (var error in result.Errors)
                 {
-                    // Verificamos os códigos internos do Identity
-                    if (error.Code == "DuplicateUserName" || error.Code == "DuplicateEmail")
-                    {
-                        // MENSAGEM GENÉRICA: O atacante não sabe se o email existe ou se falhou outra coisa
-                        ModelState.AddModelError(string.Empty, "Ocorreu um erro ao processar o registo. Por favor, verifique os dados ou tente novamente.");
-                    }
-                    else
-                    {
-                        // Outros erros (ex: Password fraca, precisa de letra maiúscula) 
-                        // continuam a ser úteis para o utilizador legítimo corrigir.
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
+                    ModelState.AddModelError(string.Empty, error.Description);
                 }
+            }
+            catch (Exception ex)
+            {
+                // Se ocorrer um erro, reverter a transação
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Erro ao registar utilizador {Email}", model.Email);
+                ModelState.AddModelError(string.Empty, "Ocorreu um erro interno. Tente novamente.");
             }
             return View(model);
         }
+
         [HttpGet]
         public IActionResult Login()
         {
@@ -152,7 +139,7 @@ namespace AutoMarket.Controllers
             if (!ModelState.IsValid) return View(model);
 
             // 1. Tentar Login
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: true);
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
@@ -189,11 +176,7 @@ namespace AutoMarket.Controllers
 
                 return RedirectToAction("Index", "Home");
             }
-            if (result.IsLockedOut)
-            {
-                _logger.LogWarning("Conta bloqueada temporariamente devido a tentativas falhadas: {Email}", model.Email);
-                return View("Lockout"); 
-            }
+
             ModelState.AddModelError(string.Empty, "Login inválido.");
             return View(model);
         }
@@ -210,7 +193,7 @@ namespace AutoMarket.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmarEmail(string userId, string token)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new ErrorViewModel { Message = "Link de confirmação inválido ou incompleto." });
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new ErrorViewModel { Message = "Link de confirmação inválido ou incompleto." }); 
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return View("Error", new ErrorViewModel { Message = "Utilizador não encontrado no sistema." });
@@ -221,13 +204,52 @@ namespace AutoMarket.Controllers
 
             var erros = string.Join(", ", result.Errors.Select(e => e.Description));
 
-            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}", userId, erros);
+            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}",userId, erros);
             return View("Error", new ErrorViewModel
             {
                 Message = "Não foi possível confirmar o email. O link pode ter expirado ou já foi utilizado."
                 // OPCIONAL: Request Id para debug técnico
                 // RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
             });
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult PreencherDadosFiscais()
+        {
+            return View(); // Uma view simples com um input "NIF"
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PreencherDadosFiscais(DadosFiscaisViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) { return Unauthorized(); }
+            user.NIF = model.NIF; // Grava no perfil para sempre
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+
+            // Se tínhamos uma transação pendente, voltamos para lá
+            if (TempData["ReturnUrl"] is string returnUrl)
+            {
+                TempData.Keep("ReturnUrl");
+                return Redirect(returnUrl); // Volta para o checkout
+            }
+            // Senão, volta para a home
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
@@ -247,63 +269,32 @@ namespace AutoMarket.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            // LÓGICA DE SOFT DELETE
+            // 1. Ofuscar dados pessoais (Opcional, mas recomendado por RGPD)
+            // user.Email = $"deleted_{Guid.NewGuid()}@automarket.com";
+            // user.UserName = user.Email;
+            // user.Nome = "Utilizador Eliminado";
+            // user.NIF = null; 
 
-            try
+            // 2. Marcar como eliminado
+            user.IsDeleted = true;
+
+            // 3. Atualizar na BD
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded)
             {
-                // --- SOFT DELETE DO USER ---
-                user.IsDeleted = true;
-                
-                var deleteToken = Guid.NewGuid().ToString();
-                // Limpar dados sensíveis para cumprir RGPD
-                user.UserName = $"deleted_{deleteToken}";
-                user.Email = $"deleted_{deleteToken}@automarket.com";
-                user.NormalizedUserName = user.UserName.ToUpper();
-                user.NormalizedEmail = user.Email.ToUpper();
-                user.NIF = null; // Liberta o NIF para uso futuro
-
-                var resultUser = await _userManager.UpdateAsync(user);
-                if (!resultUser.Succeeded)
-                {
-                    return View("Error", new ErrorViewModel
-                    {
-                        Message = "Erro ao eliminar conta. Por favor, tente novamente."
-                    });
-                }
-
-                // --- DESATIVAR VENDEDOR ---
-                var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.UserId == user.Id);
-
-                if (vendedor != null)
-                {
-                    // Mudar status para Rejeitado para impedir novas vendas
-                    // garante que os carros não aparecem na listagem
-                    // se as queries filtrarem por v.Status == Aprovado
-                    vendedor.Status = StatusAprovacao.Rejeitado;
-                    vendedor.MotivoRejeicao = "Conta eliminada pelo utilizador.";
-
-                    _context.Vendedores.Update(vendedor);
-                    await _context.SaveChangesAsync();
-                }
-
-                await transaction.CommitAsync();
-
-                // Logout e Redirect
+                // 4. Fazer Logout forçado
                 await _signInManager.SignOutAsync();
-                _logger.LogInformation("Utilizador {Id} apagou a conta / Perfil de vendedor desativado.", user.Id);
+                _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete).", user.Id);
 
                 return RedirectToAction("Index", "Home");
             }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Erro ao apagar conta do utilizador {Id}", user.Id);
-                return View("Error", new ErrorViewModel 
-                { 
-                    Message = "Ocorreu um erro ao apagar a conta. Tente novamente mais tarde." 
-                });
-            }
+
+            // Tratar erro...
+            return View("Perfil");
         }
     }
 }
+
 

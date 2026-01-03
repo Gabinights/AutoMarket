@@ -1,0 +1,127 @@
+@model List<AutoMarket.Models.ViewModels.Veiculos.ListVeiculoViewModel>
+@{
+    ViewData["Title"] = "Os Meus Veículos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h3">Os Meus Veículos</h1>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="@Url.Action("Create", "Veiculos", new { area = "Vendedores" })" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Criar Novo Veículo
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Sucesso"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Erro"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Erro"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>Imagem</th>
+                        <th>Título</th>
+                        <th>Marca/Modelo</th>
+                        <th>Preço</th>
+                        <th>KM</th>
+                        <th>Ano</th>
+                        <th>Estado</th>
+                        <th>Publicado</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var veiculo in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(veiculo.ImagemPrincipal))
+                                {
+                                    <img src="/images/veiculos/@veiculo.ImagemPrincipal" alt="@veiculo.Titulo" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" />
+                                }
+                                else
+                                {
+                                    <div style="width: 60px; height: 60px; background: #e0e0e0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #999;">
+                                        Sem imagem
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <strong>@veiculo.Titulo</strong>
+                            </td>
+                            <td>
+                                @veiculo.Marca @veiculo.Modelo
+                            </td>
+                            <td>
+                                <span class="text-primary fw-bold">€@veiculo.Preco.ToString("F2")</span>
+                            </td>
+                            <td>
+                                @veiculo.Km.ToString("N0") km
+                            </td>
+                            <td>
+                                @veiculo.Ano
+                            </td>
+                            <td>
+                                @if (veiculo.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Ativo)
+                                {
+                                    <span class="badge bg-success">Ativo</span>
+                                }
+                                else if (veiculo.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Vendido)
+                                {
+                                    <span class="badge bg-danger">Vendido</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">@veiculo.Estado</span>
+                                }
+                            </td>
+                            <td>
+                                <small class="text-muted">@veiculo.DataCriacao.ToString("dd/MM/yyyy")</small>
+                            </td>
+                            <td class="text-center">
+                                <a href="@Url.Action("Details", "Veiculos", new { area = "Vendedores", id = veiculo.Id })" class="btn btn-sm btn-info" title="Ver Detalhes">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="@Url.Action("Edit", "Veiculos", new { area = "Vendedores", id = veiculo.Id })" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="@Url.Action("Delete", "Veiculos", new { area = "Vendedores", id = veiculo.Id })" class="btn btn-sm btn-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <h5>Nenhum veículo encontrado</h5>
+            <p class="mb-3">Ainda não tem veículos publicados. Comece criando o seu primeiro anúncio!</p>
+            <a href="@Url.Action("Create", "Veiculos", new { area = "Vendedores" })" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Criar Primeiro Veículo
+            </a>
+        </div>
+    }
+</div>

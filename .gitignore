@@ -114,3 +114,9 @@ secrets.json
 ehthumbs.db
 Thumbs.db
 
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/

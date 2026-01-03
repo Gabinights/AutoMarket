@@ -1,0 +1,27 @@
+/* Estilos para a página de pesquisa de veículos */
+
+.vehicle-card:hover {
+    box-shadow: 0 4px 12px #00214720;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 1024px) {
+    .pesquisa-container {
+        flex-direction: column;
+    }
+
+    .filtros-sidebar {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .pesquisa-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .filtros-sidebar {
+        min-width: auto;
+    }
+}

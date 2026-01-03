@@ -33,7 +33,7 @@ namespace AutoMarket.Models
         public string? MotivoRejeicao { get; set; } //Motivo da rejeição, se aplicável
 
         //Lista de carros que este vendedor tem à venda
-        public ICollection<Carro> CarrosAVenda { get; set; } = [];
+        public ICollection<Veiculo> VeiculosAVenda { get; set; } = [];
 
         // -- Métodos de Domínio (Lógica de negócio) --
 

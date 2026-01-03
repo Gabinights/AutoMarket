@@ -1,0 +1,138 @@
+@model AutoMarket.Models.ViewModels.Veiculos.ListVeiculoViewModel
+@{
+    ViewData["Title"] = "Detalhes do Veículo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">@Model.Titulo</h5>
+                    @if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Ativo)
+                    {
+                        <span class="badge bg-success">Ativo</span>
+                    }
+                    else if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Vendido)
+                    {
+                        <span class="badge bg-danger">Vendido</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning">@Model.Estado</span>
+                    }
+                </div>
+
+                <div class="card-body">
+                    <!-- Imagem Principal -->
+                    <div class="mb-4">
+                        @if (!string.IsNullOrEmpty(Model.ImagemPrincipal))
+                        {
+                            <img src="/images/veiculos/@Model.ImagemPrincipal" alt="@Model.Titulo" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;" />
+                        }
+                        else
+                        {
+                            <div style="width: 100%; height: 400px; background: #e0e0e0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <span style="color: #999; font-size: 1.2rem;">Sem imagem</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Informações Principais -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Marca/Modelo</h6>
+                            <h5>@Model.Marca @Model.Modelo</h5>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Preço</h6>
+                            <h5 class="text-primary fw-bold">€@Model.Preco.ToString("F2")</h5>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Especificações -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Ano</h6>
+                            <p class="fw-bold">@Model.Ano</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Quilómetros</h6>
+                            <p class="fw-bold">@Model.Km.ToString("N0") km</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Combustível</h6>
+                            <p class="fw-bold">@Model.Combustivel</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Caixa</h6>
+                            <p class="fw-bold">@Model.Caixa</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Categoria</h6>
+                            <p class="fw-bold">@Model.CategoriaNome</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Condição</h6>
+                            <p class="fw-bold">@(string.IsNullOrEmpty(Model.Condicao) ? "N/A" : Model.Condicao)</p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Informações de Publicação -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Data de Publicação</h6>
+                            <p class="fw-bold">@Model.DataCriacao.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Estado</h6>
+                            <p class="fw-bold">
+                                @if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Ativo)
+                                {
+                                    <span class="badge bg-success">@Model.Estado</span>
+                                }
+                                else if (Model.Estado == AutoMarket.Models.Enums.EstadoVeiculo.Vendido)
+                                {
+                                    <span class="badge bg-danger">@Model.Estado</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">@Model.Estado</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Descrição -->
+                    <div class="mb-4">
+                        <h6 class="text-muted">Descrição</h6>
+                        <p>@Model.Descricao</p>
+                    </div>
+
+                    <hr />
+
+                    <!-- Botões de Ação -->
+                    <div class="d-flex gap-2">
+                        <a href="@Url.Action("Edit", "Veiculos", new { area = "Vendedores", id = Model.Id })" class="btn btn-warning btn-lg">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a href="@Url.Action("Delete", "Veiculos", new { area = "Vendedores", id = Model.Id })" class="btn btn-danger btn-lg">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </a>
+                        <a href="@Url.Action("Index", "Veiculos", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
