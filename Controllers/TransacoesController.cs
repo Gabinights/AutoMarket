@@ -14,7 +14,7 @@ namespace AutoMarket.Controllers
         private readonly UserManager<Utilizador> _userManager;
         private readonly ILogger<TransacoesController> _logger;
 
-        public TransacoesController(ApplicationDbContext context, UserManager<Utilizador> userManager)
+        public TransacoesController(ApplicationDbContext context, UserManager<Utilizador> userManager, ILogger<TransacoesController> logger)
         {
             _context = context;
             _userManager = userManager;
@@ -44,7 +44,6 @@ namespace AutoMarket.Controllers
 
             if (veiculo == null)
                 return NotFound();
-            }
 
             return View(veiculo);
         }

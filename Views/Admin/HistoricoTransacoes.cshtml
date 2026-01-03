@@ -20,7 +20,7 @@
         {
             <tr>
                 <td>@item.DataTransacao.ToString("dd/MM/yyyy HH:mm")</td>
-                <td>@item.Carro?.Titulo</td>
+                <td>@item.Veiculo?.Titulo</td>
                 <td>
                     @if (item.Comprador?.User != null)
                     {
@@ -35,7 +35,7 @@
                         <span>Dados Pessoais Apagados</span>
                     }
                 </td>
-                <td>@item.ValorTotal.ToString("C")</td>
+                <td>@item.ValorPago.ToString("C")</td>
                 <td>@item.Estado</td>
             </tr>
         }

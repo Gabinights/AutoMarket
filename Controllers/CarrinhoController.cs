@@ -25,22 +25,22 @@ namespace AutoMarket.Controllers
 
         public async Task<IActionResult> Adicionar(int id)
         {
-            var carro = await _context.Carros
-                .Include(c => c.Imagens)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var veiculo = await _context.Veiculos
+                .Include(v => v.Imagens)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
-            if (carro == null) return NotFound();
+            if (veiculo == null) return NotFound();
 
-            if (carro.Estado != AutoMarket.Models.Enums.EstadoCarro.Ativo)
+            if (veiculo.Estado != AutoMarket.Models.Enums.EstadoVeiculo.Ativo)
             {
                 TempData["Erro"] = "Este veículo não está disponível para compra.";
                 return RedirectToAction("Index", "Veiculos"); // Ou volta para onde estava
             }
 
-            _carrinhoService.AdicionarItem(carro);
+            _carrinhoService.AdicionarItem(veiculo);
 
-            TempData["Sucesso"] = "Carro adicionado ao carrinho!";
-            return RedirectToAction("Index"); // Ou volta para a lista de carros
+            TempData["Sucesso"] = "Veículo adicionado ao carrinho!";
+            return RedirectToAction("Index"); // Ou volta para a lista de veículos
         }
 
         public IActionResult Remover(int id)

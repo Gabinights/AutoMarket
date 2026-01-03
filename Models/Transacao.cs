@@ -1,24 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AutoMarket.Models.Enums;
 
 namespace AutoMarket.Models
 {
-    public enum MetodoPagamento
-    {
-        CartaoCredito,
-        MBWay,
-        Transferencia,
-        Numerario
-    }
-
-    public enum EstadoTransacao
-    {
-        Pendente,
-        Pago,
-        Enviado,
-        Cancelado
-    }
-
     public class Transacao
     {
         [Key]

@@ -83,7 +83,7 @@ namespace AutoMarket.Controllers
 
             var query = _context.Transacoes
                 .IgnoreQueryFilters()
-                .Include(t => t.Carro)
+                .Include(t => t.Veiculo)
                     .ThenInclude(c => c.Vendedor)
                         .ThenInclude(v => v.User)
                 .Include(t => t.Comprador)

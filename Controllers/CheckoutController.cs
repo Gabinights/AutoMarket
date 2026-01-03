@@ -97,8 +97,8 @@ namespace AutoMarket.Controllers
                 // 4. Processar cada item do carrinho
                 foreach (var item in itensCarrinho)
                 {
-                    var carroDb = await _context.Carros.FindAsync(item.CarroId);
-                    if (carroDb == null || carroDb.Estado != EstadoCarro.Ativo)
+                    var veiculoDb = await _context.Veiculos.FindAsync(item.VeiculoId);
+                    if (veiculoDb == null || veiculoDb.Estado != EstadoVeiculo.Ativo)
                     {
                         throw new InvalidOperationException($"O veículo {item.Marca} {item.Modelo} já não está disponível.");
                     }
@@ -106,22 +106,18 @@ namespace AutoMarket.Controllers
                     var transacao = new Transacao
                     {
                         DataTransacao = DateTime.UtcNow,
-                        ValorTotal = item.Preco,
-                        MetodoPagamento = model.MetodoPagamento,
+                        ValorPago = item.Preco,
+                        Metodo = model.MetodoPagamento,
                         Estado = EstadoTransacao.Pendente,
                         CompradorId = comprador.Id,
-                        CarroId = item.CarroId,
-                        NomeFaturacao = model.QueroFaturaComNif && !string.IsNullOrEmpty(model.NomeFaturacao)
-                                        ? model.NomeFaturacao
-                                        : model.NomeCompleto,
-                        NifFaturacao = model.QueroFaturaComNif
+                        VeiculoId = item.VeiculoId,
+                        NifFaturacaoSnapshot = model.QueroFaturaComNif
                                        ? model.NifFaturacao
                                        : null,
-                        MoradaSnapshot = $"{model.Morada}, {model.CodigoPostal}",
-                        Observacoes = "Compra online"
+                        MoradaEnvioSnapshot = $"{model.Morada}, {model.CodigoPostal}"
                     };
                     _context.Transacoes.Add(transacao);
-                    carroDb.Estado = EstadoCarro.Reservado;
+                    veiculoDb.Estado = EstadoVeiculo.Reservado;
                     await _context.SaveChangesAsync();
                     transacoesIds.Add(transacao.Id);
                 }

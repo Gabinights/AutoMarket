@@ -5,14 +5,14 @@ namespace AutoMarket.Services
     public interface ICarrinhoService
     {
         /// <summary>
-        /// Adiciona um carro ao carrinho.
+        /// Adiciona um veículo ao carrinho.
         /// </summary>
-        void AdicionarItem(Carro carro);
+        void AdicionarItem(Veiculo veiculo);
 
         /// <summary>
-        /// Remove um item do carrinho pelo ID do carro.
+        /// Remove um item do carrinho pelo ID do veículo.
         /// </summary>
-        void RemoverItem(int carroId);
+        void RemoverItem(int veiculoId);
 
         /// <summary>
         /// Obtém a lista atual de itens no carrinho.

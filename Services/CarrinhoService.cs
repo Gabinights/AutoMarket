@@ -36,34 +36,34 @@ namespace AutoMarket.Services
             return Session.GetObjectFromJson<List<CarrinhoItem>>(SessionKey) ?? new List<CarrinhoItem>();
         }
 
-        public void AdicionarItem(Carro carro)
+        public void AdicionarItem(Veiculo veiculo)
         {
-            if (carro == null) { throw new ArgumentNullException(nameof(carro)); }
+            if (veiculo == null) { throw new ArgumentNullException(nameof(veiculo)); }
 
             var itens = GetItens();
 
-            // Como é um carro único, verificamos se já lá está
-            if (!itens.Any(i => i.CarroId == carro.Id))
+            // Como é um veículo único, verificamos se já lá está
+            if (!itens.Any(i => i.VeiculoId == veiculo.Id))
             {
                 itens.Add(new CarrinhoItem
                 {
-                    CarroId = carro.Id,
-                    Titulo = carro.Titulo,
-                    Marca = carro.Marca,
-                    Modelo = carro.Modelo,
-                    Preco = carro.Preco,
+                    VeiculoId = veiculo.Id,
+                    Titulo = veiculo.Titulo,
+                    Marca = veiculo.Marca,
+                    Modelo = veiculo.Modelo,
+                    Preco = veiculo.Preco,
                     // Pega a primeira imagem ou uma placeholder
-                    ImagemCapa = carro.Imagens?.FirstOrDefault()?.CaminhoFicheiro ?? DefaultImagePlaceholder
+                    ImagemCapa = veiculo.Imagens?.FirstOrDefault()?.CaminhoFicheiro ?? DefaultImagePlaceholder
                 });
 
                 Session.SetObjectAsJson(SessionKey, itens);
             }
         }
 
-        public void RemoverItem(int carroId)
+        public void RemoverItem(int veiculoId)
         {
             var itens = GetItens();
-            var item = itens.FirstOrDefault(i => i.CarroId == carroId);
+            var item = itens.FirstOrDefault(i => i.VeiculoId == veiculoId);
 
             if (item != null)
             {
