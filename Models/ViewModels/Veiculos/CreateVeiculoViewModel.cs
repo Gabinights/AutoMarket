@@ -1,15 +1,14 @@
 using System.ComponentModel.DataAnnotations;
+using AutoMarket.Models.Enums;
 
-namespace AutoMarket.Models.ViewModels.Carros
+namespace AutoMarket.Models.ViewModels.Veiculos
 {
     /// <summary>
-    /// ViewModel para editar um carro existente (POST).
+    /// ViewModel para criar um novo veículo (POST).
+    /// Mapeia para Veiculo durante a criação.
     /// </summary>
-    public class EditCarroViewModel
+    public class CreateVeiculoViewModel
     {
-        [Display(Name = "ID")]
-        public int Id { get; set; }
-
         [Required(ErrorMessage = "O título é obrigatório")]
         [StringLength(100, ErrorMessage = "O título não pode ter mais de 100 caracteres")]
         [Display(Name = "Título do Anúncio")]
@@ -65,33 +64,38 @@ namespace AutoMarket.Models.ViewModels.Carros
         [Display(Name = "Descrição Detalhada")]
         public string Descricao { get; set; } = string.Empty;
 
+        [StringLength(50, ErrorMessage = "A condição não pode ter mais de 50 caracteres")]
+        [Display(Name = "Condição")]
+        public string? Condicao { get; set; }
+
         [Display(Name = "Fotos")]
         public List<IFormFile> Fotos { get; set; } = new();
 
         // Propriedades auxiliares para a View
         public List<Categoria> CategoriesDropdown { get; set; } = new();
-        public string? ImagemPrincipalAtual { get; set; }
 
         /// <summary>
-        /// Cria um ViewModel a partir de um Carro existente.
+        /// Converte este ViewModel para uma Model Veiculo.
         /// </summary>
-        public static EditCarroViewModel FromCarro(Carro carro)
+        public Veiculo ToVeiculo(int vendedorId)
         {
-            return new EditCarroViewModel
+            return new Veiculo
             {
-                Id = carro.Id,
-                Titulo = carro.Titulo,
-                Marca = carro.Marca,
-                Modelo = carro.Modelo,
-                Ano = carro.Ano,
-                CategoriaId = carro.CategoriaId,
-                Combustivel = carro.Combustivel,
-                Caixa = carro.Caixa,
-                Km = carro.Km,
-                Preco = carro.Preco,
-                Localizacao = carro.Localizacao,
-                Descricao = carro.Descricao,
-                ImagemPrincipalAtual = carro.Imagens?.FirstOrDefault(i => i.IsCapa)?.CaminhoFicheiro
+                Titulo = Titulo,
+                Marca = Marca,
+                Modelo = Modelo,
+                Ano = Ano,
+                CategoriaId = CategoriaId,
+                Combustivel = Combustivel,
+                Caixa = Caixa,
+                Km = Km,
+                Preco = Preco,
+                Condicao = Condicao,
+                Localizacao = Localizacao,
+                Descricao = Descricao,
+                VendedorId = vendedorId,
+                DataCriacao = DateTime.UtcNow,
+                Estado = EstadoVeiculo.Ativo
             };
         }
     }
