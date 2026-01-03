@@ -13,12 +13,12 @@
                     <h5 class="mb-0">Filtros</h5>
                 </div>
                 <div class="card-body">
-                    <form method="get" action="/Veiculos/Index" id="filtrosForm">
+                    <form method="post" action="/Veiculos/BuscarAjax" id="filtrosForm">
                         
                         <!-- Marca -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Marca</label>
-                            <select name="marca" class="form-select form-select-sm">
+                            <select name="marca" class="form-select form-select-sm filtro-select">
                                 <option value="">-- Todas as marcas --</option>
                                 @foreach (var m in (ViewData["Marcas"] as List<string>) ?? new List<string>())
                                 {
@@ -30,7 +30,7 @@
                         <!-- Modelo -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Modelo</label>
-                            <select name="modelo" class="form-select form-select-sm">
+                            <select name="modelo" class="form-select form-select-sm filtro-select">
                                 <option value="">-- Todos os modelos --</option>
                                 @foreach (var m in (ViewData["Modelos"] as List<string>) ?? new List<string>())
                                 {
@@ -39,22 +39,10 @@
                             </select>
                         </div>
 
-                        <!-- Cor -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Cor</label>
-                            <select name="cor" class="form-select form-select-sm">
-                                <option value="">-- Todas as cores --</option>
-                                @foreach (var c in (ViewData["Cores"] as List<string>) ?? new List<string>())
-                                {
-                                    <option value="@c" selected="@(ViewData["CorSelecionada"]?.ToString() == c)">@c</option>
-                                }
-                            </select>
-                        </div>
-
                         <!-- Combustível -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Combustível</label>
-                            <select name="combustivel" class="form-select form-select-sm">
+                            <select name="combustivel" class="form-select form-select-sm filtro-select">
                                 <option value="">-- Todos --</option>
                                 @foreach (var c in (ViewData["Combustiveis"] as List<string>) ?? new List<string>())
                                 {
@@ -66,9 +54,9 @@
                         <!-- Ano -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Ano</label>
-                            <select name="ano" class="form-select form-select-sm">
+                            <select name="ano" class="form-select form-select-sm filtro-select">
                                 <option value="">-- Todos os anos --</option>
-                                @foreach (var a in (ViewData["Anos"] as List<int?>) ?? new List<int?>())
+                                @foreach (var a in (ViewData["Anos"] as List<int>) ?? new List<int>())
                                 {
                                     <option value="@a" selected="@(ViewData["AnoSelecionado"]?.ToString() == a.ToString())">@a</option>
                                 }
@@ -78,7 +66,7 @@
                         <!-- Tipo/Segmento -->
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Tipo (Segmento)</label>
-                            <select name="categoria" class="form-select form-select-sm">
+                            <select name="categoria" class="form-select form-select-sm filtro-select">
                                 <option value="">-- Todos os tipos --</option>
                                 @foreach (var cat in (ViewData["Categorias"] as List<string>) ?? new List<string>())
                                 {
@@ -91,8 +79,8 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Preço (€)</label>
                             <div class="input-group input-group-sm mb-2">
-                                <input type="number" name="precoMin" class="form-control" placeholder="Mín" value="@ViewData["PrecoMin"]" />
-                                <input type="number" name="precoMax" class="form-control" placeholder="Máx" value="@ViewData["PrecoMax"]" />
+                                <input type="number" name="precoMin" class="form-control filtro-input" placeholder="Mín" value="@ViewData["PrecoMin"]" />
+                                <input type="number" name="precoMax" class="form-control filtro-input" placeholder="Máx" value="@ViewData["PrecoMax"]" />
                             </div>
                         </div>
 
@@ -100,14 +88,14 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Quilómetros</label>
                             <div class="input-group input-group-sm mb-2">
-                                <input type="number" name="kmMin" class="form-control" placeholder="Mín" value="@ViewData["KmMin"]" />
-                                <input type="number" name="kmMax" class="form-control" placeholder="Máx" value="@ViewData["KmMax"]" />
+                                <input type="number" name="kmMin" class="form-control filtro-input" placeholder="Mín" value="@ViewData["KmMin"]" />
+                                <input type="number" name="kmMax" class="form-control filtro-input" placeholder="Máx" value="@ViewData["KmMax"]" />
                             </div>
                         </div>
 
                         <!-- Botões -->
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-sm">
+                            <button type="submit" class="btn btn-primary btn-sm" id="btnPesquisar">
                                 <i class="bi bi-search"></i> Pesquisar
                             </button>
                             <a href="/Veiculos/Index" class="btn btn-outline-secondary btn-sm">
@@ -126,7 +114,7 @@
                     <h5 class="mb-0">Veículos Disponíveis</h5>
                     <div>
                         <label class="form-label mb-0 me-2">Ordenar:</label>
-                        <select id="ordenacao" class="form-select form-select-sm d-inline w-auto">
+                        <select id="ordenacao" class="form-select form-select-sm d-inline w-auto filtro-select">
                             <option value="recente" selected="@(ViewData["Ordenacao"]?.ToString() == "recente")">Mais recente</option>
                             <option value="preco_asc" selected="@(ViewData["Ordenacao"]?.ToString() == "preco_asc")">Preço ascendente</option>
                             <option value="preco_desc" selected="@(ViewData["Ordenacao"]?.ToString() == "preco_desc")">Preço descendente</option>
@@ -139,61 +127,18 @@
                 </div>
             </div>
 
-            <!-- Grid de Anúncios -->
-            @if (Model.Any())
-            {
-                <div class="row g-4">
-                    @foreach (var veiculo in Model)
-                    {
-                        <div class="col-lg-4 col-md-6 col-12">
-                            <div class="card h-100 shadow-sm vehicle-card transition">
-                                @if (!string.IsNullOrEmpty(veiculo.ImagemPrincipal))
-                                {
-                                    <img src="/images/@veiculo.ImagemPrincipal" class="card-img-top" alt="@veiculo.Marca @veiculo.Modelo" style="height: 200px; object-fit: cover;" />
-                                }
-                                else
-                                {
-                                    <div style="height: 200px; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #999;">
-                                        <small>Sem imagem</small>
-                                    </div>
-                                }
-                                <div class="card-body">
-                                    <h6 class="card-title text-primary">@veiculo.Marca @veiculo.Modelo</h6>
-                                    <p class="card-text text-danger fw-bold fs-6">€@veiculo.Preco.ToString("F2")</p>
-                                    <small class="text-muted d-block">
-                                        ?? @veiculo.Ano
-                                    </small>
-                                    <small class="text-muted d-block">
-                                        ??? @veiculo.Quilometros?.ToString("N0") km
-                                    </small>
-                                    <small class="text-muted d-block mb-2">
-                                        ? @veiculo.Combustivel
-                                    </small>
-                                    @if (!string.IsNullOrEmpty(veiculo.Categoria))
-                                    {
-                                        <span class="badge bg-info text-dark">@veiculo.Categoria</span>
-                                    }
-                                </div>
-                                <div class="card-footer bg-transparent">
-                                    <a href="/Veiculos/Detalhe/@veiculo.Id" class="btn btn-primary btn-sm w-100">
-                                        <i class="bi bi-eye"></i> Ver Detalhes
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    }
+            <!-- LOADING SPINNER -->
+            <div id="loadingSpinner" class="text-center" style="display: none; padding: 3rem;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
                 </div>
-            }
-            else
-            {
-                <div class="alert alert-info text-center" role="alert">
-                    <h6 class="alert-heading">Nenhum veículo encontrado</h6>
-                    <p class="mb-3">Nenhum veículo encontrado com os filtros selecionados.</p>
-                    <a href="/Veiculos/Index" class="btn btn-primary btn-sm">
-                        <i class="bi bi-arrow-clockwise"></i> Limpar Filtros
-                    </a>
-                </div>
-            }
+                <p class="text-muted mt-3">Procurando veículos...</p>
+            </div>
+
+            <!-- CONTENTOR DE RESULTADOS (será preenchido via AJAX) -->
+            <div id="resultado">
+                @await Html.PartialAsync("_CarListPartial", Model)
+            </div>
         </section>
     </div>
 </div>
@@ -207,23 +152,102 @@
         transform: translateY(-4px);
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
     }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
 </style>
 
 <script>
-    // Atualizar o campo de ordenação
-    document.getElementById('ordenacao').addEventListener('change', function() {
-        var ordenacao = this.value;
-        var form = document.getElementById('filtrosForm');
-        
-        var ordenacaoInput = form.querySelector('input[name="ordenacao"]');
-        if (!ordenacaoInput) {
-            ordenacaoInput = document.createElement('input');
-            ordenacaoInput.type = 'hidden';
-            ordenacaoInput.name = 'ordenacao';
-            form.appendChild(ordenacaoInput);
-        }
-        
-        ordenacaoInput.value = ordenacao;
-        form.submit();
+    // ============================================================
+    // AJAX LISTENER - Pesquisa dinâmica sem recarregar página
+    // ============================================================
+
+    function executarBusca() {
+        // Mostrar loading spinner
+        document.getElementById('loadingSpinner').style.display = 'block';
+        document.getElementById('resultado').style.opacity = '0.5';
+
+        // Obter dados do formulário
+        const formData = new FormData(document.getElementById('filtrosForm'));
+        const ordenacao = document.getElementById('ordenacao').value;
+        formData.append('ordenacao', ordenacao);
+
+        // Fazer requisição AJAX
+        fetch('/Veiculos/BuscarAjax', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Substituir conteúdo do resultado
+            document.getElementById('resultado').innerHTML = html;
+            document.getElementById('resultado').style.opacity = '1';
+
+            // Adicionar listeners aos links de paginação
+            adicionarListenersPaginacao();
+
+            // Scroll suave até os resultados
+            document.getElementById('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        })
+        .catch(error => {
+            console.error('Erro ao pesquisar:', error);
+            document.getElementById('resultado').innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <h6>Erro ao carregar resultados</h6>
+                    <p>${error.message}</p>
+                </div>
+            `;
+            document.getElementById('resultado').style.opacity = '1';
+        })
+        .finally(() => {
+            // Esconder loading spinner
+            document.getElementById('loadingSpinner').style.display = 'none';
+        });
+    }
+
+    function adicionarListenersPaginacao() {
+        // Listeners para links de paginação
+        document.querySelectorAll('.pagination-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                const formData = new FormData(document.getElementById('filtrosForm'));
+                formData.append('page', page);
+                formData.append('ordenacao', document.getElementById('ordenacao').value);
+
+                // Repetir busca com nova página
+                executarBusca();
+            });
+        });
+    }
+
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Listeners nos filtros (select e input)
+        document.querySelectorAll('.filtro-select, .filtro-input').forEach(element => {
+            element.addEventListener('change', executarBusca);
+        });
+
+        // Listener na dropdown de ordenação
+        document.getElementById('ordenacao').addEventListener('change', executarBusca);
+
+        // Listener no botão pesquisar (para Enter em inputs)
+        document.getElementById('filtrosForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            executarBusca();
+        });
+
+        // Listeners iniciais na paginação
+        adicionarListenersPaginacao();
     });
 </script>
