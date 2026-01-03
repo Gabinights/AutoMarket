@@ -1,41 +1,39 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
-using AutoMarket.Models.Enums;
 
 namespace AutoMarket.Models
-{
-    public class Utilizador : IdentityUser
+{// Utilizador é a classe base para todos os tipos de utilizadores no sistema
+    public class Utilizador : IdentityUser // Identity User já inclui os campos básicos como Id, UserName, Email, PasswordHash, etc.
     {
         [Required(ErrorMessage = "O nome é obrigatório.")]
         [MaxLength(100, ErrorMessage = "O nome não pode exceder 100 caracteres.")]
+        [Display(Name = "Nome Completo")]
+        [PersonalData]
         public string Nome { get; set; } = string.Empty;
 
         [MaxLength(200, ErrorMessage = "A morada não pode exceder 200 caracteres.")]
-        public string Morada { get; set; } = string.Empty;
+        [PersonalData]
+        public string? Morada { get; set; }
+            
+        [DataType(DataType.Date)]
+        [Display(Name = "Data de Registo")]
+        public DateTime DataRegisto { get; set; } = DateTime.UtcNow;
 
         [MaxLength(50, ErrorMessage = "Os contactos não podem exceder 50 caracteres.")]
-        public string Contactos { get; set; } = string.Empty;
+        [PersonalData]
+        public string Contacto { get; set; } = string.Empty;
 
-        public StatusAprovacao StatusAprovacao { get; set; } = StatusAprovacao.Pendente;
+        [StringLength(9)]
+        [PersonalData]
+        public string? NIF { get; set; }
+        // POde ser null se o utilizador ainda não tiver preenchido os dados fiscais
 
-        public void AprovarUtilizador()
-        {
-            if (this.StatusAprovacao != StatusAprovacao.Pendente)
-            {
-                throw new InvalidOperationException($"Não é possível aprovar um utilizador com status {this.StatusAprovacao.ToString()}");
-            }
-            // TODO: Adicionar Audit Logging
-            this.StatusAprovacao = StatusAprovacao.Aprovado;
-        }
+        //Campos para o bloqueio administrativo 
+        public bool IsBlocked { get; set; } = false;
+        public string? BlockReason { get; set; }    
 
-        public void RejeitarUtilizador()
-        {
-            if (this.StatusAprovacao != StatusAprovacao.Pendente)
-            {
-                throw new InvalidOperationException($"Não é possível rejeitar um utilizador com status {this.StatusAprovacao.ToString()}");
-            }
-            // TODO: Adicionar Audit Logging aqui
-            this.StatusAprovacao = StatusAprovacao.Rejeitado;
-        }
+        // soft Delete
+        public bool IsDeleted { get; set; } = false;
     }
 }
+

@@ -1,4 +1,5 @@
-﻿@model ErrorViewModel
+@using AutoMarket.Models.ViewModels
+@model ErrorViewModel
 @{
     ViewData["Title"] = "Error";
 }
@@ -6,6 +7,12 @@
 <h1 class="text-danger">Error.</h1>
 <h2 class="text-danger">An error occurred while processing your request.</h2>
 
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-danger mt-4">
+        <i class="bi bi-exclamation-triangle-fill"></i> @Model.Message
+    </div>
+}
 @if (Model.ShowRequestId)
 {
     <p>

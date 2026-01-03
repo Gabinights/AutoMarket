@@ -1,0 +1,66 @@
+﻿@model AutoMarket.Models.ViewModels.CheckoutViewModel
+
+<form asp-action="ProcessarCompra" method="post">
+    @Html.AntiForgeryToken()
+    
+    <h4>Dados de Envio</h4>
+    <div class="form-group mb-3">
+        <label asp-for="NomeCompleto"></label>
+        <input asp-for="NomeCompleto" class="form-control" />
+        <span asp-validation-for="NomeCompleto" class="text-danger"></span>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label asp-for="Morada"></label>
+                <input asp-for="Morada" class="form-control" />
+                <span asp-validation-for="Morada" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="CodigoPostal"></label>
+                <input asp-for="CodigoPostal" class="form-control" placeholder="xxxx-xxx" />
+                <span asp-validation-for="CodigoPostal" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <h4>Dados de Faturação</h4>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" asp-for="QueroFaturaComNif" id="chkNif">
+        <label class="form-check-label" for="chkNif">
+            Desejo fatura com número de contribuinte
+        </label>
+    </div>
+
+    <div id="areaNif" style="display:none;">
+        <div class="form-group">
+            <label asp-for="NifFaturacao"></label>
+            <input asp-for="NifFaturacao" class="form-control" placeholder="999999990" />
+            <span asp-validation-for="NifFaturacao" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="NomeFaturacao"></label>
+            <input asp-for="NomeFaturacao" class="form-control" />
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Finalizar Pagamento</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Lógica simples para mostrar/ocultar
+        document.getElementById('chkNif').addEventListener('change', function() {
+            document.getElementById('areaNif').style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Corrigir estado ao carregar página (caso volte com erro de validação)
+        if(document.getElementById('chkNif').checked) {
+            document.getElementById('areaNif').style.display = 'block';
+        }
+    </script>
+}

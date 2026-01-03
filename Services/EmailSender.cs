@@ -3,6 +3,7 @@ using MailKit.Security;
 using MimeKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using AutoMarket.Services.Interfaces;
 
 namespace AutoMarket.Services
 {

@@ -1,4 +1,4 @@
-namespace AutoMarket.Models.Enums
+﻿namespace AutoMarket.Models.Enums
 {
     public enum StatusAprovacao
     {
@@ -7,4 +7,3 @@ namespace AutoMarket.Models.Enums
         Rejeitado = 2
     }
 }
-

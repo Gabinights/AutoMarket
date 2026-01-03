@@ -1,0 +1,12 @@
+﻿namespace AutoMarket.Models
+{
+    public class CarrinhoItem
+    {
+        public int CarroId { get; set; }
+        public string Titulo { get; set; }
+        public string Marca { get; set; }
+        public string Modelo { get; set; }
+        public decimal Preco { get; set; }
+        public string? ImagemCapa { get; set; } // Para mostrar miniatura
+    }
+}

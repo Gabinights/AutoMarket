@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Conta em Análise";
+}
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="card shadow-lg text-center p-4" style="max-width: 500px; width: 100%;">
+        <div class="card-body">
+            <div class="mb-4">
+                <i class="bi bi-hourglass-split text-warning" style="font-size: 4rem;"></i>
+            </div>
+
+            <h2 class="card-title fw-bold mb-3">A sua conta está em análise</h2>
+
+            <p class="card-text text-muted mb-4">
+                Obrigado pelo seu registo! A nossa equipa está a verificar os seus dados e o seu NIF.
+                <br /><br />
+                Receberá um email assim que a sua conta de vendedor for aprovada.
+            </p>
+
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i> Enquanto aguarda, pode navegar no site como comprador, mas não poderá anunciar viaturas.
+            </div>
+
+            <div class="d-grid gap-2">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                    Continuar a navegar (Modo Leitura)
+                </a>
+
+                <hr />
+
+                <form asp-controller="Conta" asp-action="Logout" method="post" class="d-grid">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-box-arrow-right"></i> Terminar Sessão
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
