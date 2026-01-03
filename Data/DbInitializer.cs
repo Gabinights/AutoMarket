@@ -43,6 +43,9 @@ namespace AutoMarket.Data
 
             var adminUser = await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
 
+            // 3. Categorias
+            await EnsureCategoriesAsync(context);
+
             if (environment.IsDevelopment())
             {
                 // 3. Comprador Teste
@@ -126,6 +129,21 @@ namespace AutoMarket.Data
                 }
             }
             return user;
+        }
+
+        private static async Task EnsureCategoriesAsync(ApplicationDbContext context)
+        {
+            string[] categorias = { "Sedan", "SUV", "Hatchback", "Desportivo", "Familiar", "Carrinha", "Monovolume", "Coupé" };
+
+            foreach (var nome in categorias)
+            {
+                if (!await context.Categorias.AnyAsync(c => c.Nome == nome))
+                {
+                    context.Categorias.Add(new Categoria { Nome = nome });
+                }
+            }
+
+            await context.SaveChangesAsync();
         }
     }
 }

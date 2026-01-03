@@ -140,4 +140,13 @@ app.MapAreaControllerRoute(
     areaName: "Vendedores",
     pattern: "Vendedores/{controller=Carros}/{action=Index}/{id?}");
 
+// ============================================================
+// INICIALIZAR BASE DE DADOS (Roles, Admin, Categorias, Dados Teste)
+// ============================================================
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await DbInitializer.InitializeAsync(services);
+}
+
 app.Run();
