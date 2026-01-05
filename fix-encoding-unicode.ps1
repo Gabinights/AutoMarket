@@ -31,7 +31,7 @@ function Fix-PortugueseChars {
     # Palavras comuns
     $text = $text -replace 'n.o([^a-z])', ('n' + [char]0xE3 + 'o$1')  # nao
     $text = $text -replace 'aprova..o', ('aprova' + [char]0xE7 + [char]0xE3 + 'o')  # aprovacao
-    $text = $text -replace 'obrigat.ri[oa]', ('obrigat' + [char]0xF3 + 'ri$1')  # obrigatorio/a
+    $text = $text -replace 'obrigat.ri([oa])', ('obrigat' + [char]0xF3 + 'ri$1')  # obrigatorio/a - FIX: added capture group
     $text = $text -replace 'confirma..o', ('confirma' + [char]0xE7 + [char]0xE3 + 'o')  # confirmacao
     $text = $text -replace 'M.nimo', ([char]0x4D + [char]0xED + 'nimo')  # Minimo
     $text = $text -replace 'mai.scula', ('mai' + [char]0xFA + 'scula')  # maiuscula
@@ -63,8 +63,10 @@ foreach ($file in $files) {
         Write-Host "Processando: $file" -ForegroundColor Yellow
         
         try {
-            # Ler ficheiro
-            $content = [System.IO.File]::ReadAllText($file, [System.Text.Encoding]::Default)
+            # Ler ficheiro com encoding Windows-1252 (CP1252) explicitamente
+            # Evita problemas de encoding system-dependent
+            $encoding1252 = [System.Text.Encoding]::GetEncoding(1252)
+            $content = [System.IO.File]::ReadAllText($file, $encoding1252)
             
             # Aplicar correcoes
             $fixedContent = Fix-PortugueseChars -text $content
