@@ -1,4 +1,4 @@
-﻿using AutoMarket.Attributes;
+﻿using AutoMarket.Models.Attributes;
 using AutoMarket.Models; // Para aceder ao atributo [NifPortugues]
 using System.ComponentModel.DataAnnotations;
 

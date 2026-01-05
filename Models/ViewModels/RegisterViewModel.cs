@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using AutoMarket.Models.Enums;
-using AutoMarket.Attributes;
+using AutoMarket.Models.Attributes;
 
 namespace AutoMarket.Models.ViewModels
 {

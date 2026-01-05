@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Areas\Vendedores\Views\Carros\**" />
+    <Content Remove="Areas\Vendedores\Views\Carros\**" />
+    <EmbeddedResource Remove="Areas\Vendedores\Views\Carros\**" />
+    <None Remove="Areas\Vendedores\Views\Carros\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.22" />
     
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.22" />
@@ -22,7 +29,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Vendedores\Views\Carros\" />
+    <Folder Include="Areas\Admin\Pages\" />
+    <Folder Include="Areas\Admin\NewFolder\" />
+    <Folder Include="Areas\Public\Pages\" />
+    <Folder Include="Areas\Vendedores\Pages\" />
+    <Folder Include="docs\" />
+    <Folder Include="Infrastructure\Migrations\" />
     <Folder Include="Models\ViewModels\Carros\" />
   </ItemGroup>
 </Project>
