@@ -4,6 +4,7 @@ using AutoMarket.Models;
 using AutoMarket.Models.Enums;
 using AutoMarket.Models.ViewModels;
 using AutoMarket.Services.Interfaces;
+using AutoMarket.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +46,17 @@ namespace AutoMarket.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            // Validação rigorosa de NIF antes de criar o utilizador (segurança: evita NIF em plain text sem validação)
+            // IMPORTANTE: Validar antes de atribuir para evitar exposição em logs/exceções
+            if (!string.IsNullOrEmpty(model.NIF))
+            {
+                if (!NifValidator.IsValid(model.NIF))
+                {
+                    ModelState.AddModelError("NIF", "NIF inválido. Por favor, verifique o número introduzido.");
+                    return View(model);
+                }
+            }
+
             // 1. Iniciar Transação
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -57,7 +69,7 @@ namespace AutoMarket.Controllers
                     Nome = model.Nome,
                     Morada = model.Morada,
                     PhoneNumber = model.Contacto,
-                    NIF = model.NIF,
+                    NIF = model.NIF, // O EF Core ValueConverter fará a encriptação ao salvar
                     DataRegisto = DateTime.UtcNow
                 };
 
@@ -227,9 +239,25 @@ namespace AutoMarket.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            // Validação rigorosa de NIF antes de atribuir (segurança: evita NIF em plain text sem validação)
+            // IMPORTANTE: Validar antes de atribuir para evitar exposição em logs/exceções
+            if (string.IsNullOrEmpty(model.NIF))
+            {
+                ModelState.AddModelError("NIF", "O NIF é obrigatório.");
+                return View(model);
+            }
+
+            if (!NifValidator.IsValid(model.NIF))
+            {
+                ModelState.AddModelError("NIF", "NIF inválido. Por favor, verifique o número introduzido.");
+                return View(model);
+            }
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null) { return Unauthorized(); }
-            user.NIF = model.NIF; // Grava no perfil para sempre
+            
+            // O EF Core ValueConverter fará a encriptação ao salvar
+            user.NIF = model.NIF;
 
             var result = await _userManager.UpdateAsync(user);
 

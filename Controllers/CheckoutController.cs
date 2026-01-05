@@ -86,9 +86,20 @@ namespace AutoMarket.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // 3. Atualizar NIF
+                // 3. Atualizar NIF com validação rigorosa de segurança
+                // IMPORTANTE: Validar antes de atribuir para evitar exposição em logs/exceções
                 if (model.QueroFaturaComNif && string.IsNullOrEmpty(user.NIF) && !string.IsNullOrEmpty(model.NifFaturacao))
                 {
+                    // Validação rigorosa antes de atribuir (segurança: evita NIF em plain text em memória sem validação)
+                    if (!NifValidator.IsValid(model.NifFaturacao))
+                    {
+                        ModelState.AddModelError("NifFaturacao", "NIF inválido. Por favor, verifique o número introduzido.");
+                        model.ValorTotal = _carrinhoService.GetTotal();
+                        return View("Index", model);
+                    }
+                    
+                    // O EF Core ValueConverter fará a encriptação ao salvar,
+                    // mas a validação garante que não processamos dados inválidos inadvertidamente.
                     user.NIF = model.NifFaturacao;
                     await _userManager.UpdateAsync(user);
                 }
