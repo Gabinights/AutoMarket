@@ -1,3 +1,8 @@
+:root {
+  --cor-primaria: #0d6efd;
+  --cor-cta: #f0ad4e;
+}
+
 html {
   font-size: 14px;
 }
@@ -31,3 +36,109 @@ body {
   max-width: 520px;
   margin: 2rem auto;
 }
+
+/* --- Wizard de Criação de Veículo --- */
+.wizard-progress {
+    position: relative;
+    margin-bottom: 3rem;
+    counter-reset: step;
+}
+
+.progress-track {
+    position: absolute;
+    top: 15px;
+    width: 100%;
+    height: 4px;
+    background-color: #e9ecef;
+    z-index: 1;
+}
+
+.progress-fill {
+    position: absolute;
+    top: 15px;
+    height: 4px;
+    background-color: var(--cor-cta);
+    width: 0%;
+    transition: width 0.3s ease;
+    z-index: 2;
+}
+
+.step-indicators {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 3;
+}
+
+.step-indicator {
+    text-align: center;
+    background: white;
+    padding: 0 10px;
+}
+
+.step-circle {
+    width: 35px;
+    height: 35px;
+    background-color: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    color: #6c757d;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.step-indicator.active .step-circle {
+    background-color: var(--cor-primaria);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(0, 33, 71, 0.2);
+}
+
+.step-indicator.completed .step-circle {
+    background-color: var(--cor-cta);
+    color: white;
+}
+
+.step-indicator.active .step-label {
+    color: var(--cor-primaria);
+    font-weight: bold;
+}
+
+.step-content {
+    display: none;
+    animation: fadeIn 0.4s;
+}
+
+    .step-content.active {
+        display: block;
+    }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Área de Upload Melhorada */
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    transition: border-color 0.3s;
+    cursor: pointer;
+}
+
+    .upload-area:hover {
+        border-color: var(--cor-primaria);
+        background: #e9ecef;
+    }
