@@ -38,6 +38,50 @@ namespace AutoMarket.Areas.Public.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Renders the "Sobre" (About) page.
+        /// </summary>
+        /// <returns>A view with information about AutoMarket.</returns>
+        public IActionResult Sobre()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Renders the "Ajuda" (Help) page.
+        /// </summary>
+        /// <returns>A view with help and FAQ information.</returns>
+        public IActionResult Ajuda()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Renders the "Termos e Condições" page.
+        /// </summary>
+        /// <returns>A view with terms and conditions.</returns>
+        public IActionResult Termos()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Renders the "Política de Privacidade" page.
+        /// </summary>
+        /// <returns>A view with privacy policy.</returns>
+        public IActionResult Politicas()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Renders the "Contacte-nos" (Contact Us) page.
+        /// </summary>
+        /// <returns>A view with contact information.</returns>
+        public IActionResult Contactos()
+        {
+            return View();
+        }
 
         /// <summary>
         /// Renders the error page including the current request identifier.

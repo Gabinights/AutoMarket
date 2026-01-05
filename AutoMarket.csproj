@@ -32,7 +32,7 @@
     <Folder Include="Areas\Admin\Pages\" />
     <Folder Include="Areas\Admin\NewFolder\" />
     <Folder Include="Areas\Public\Pages\" />
-    <Folder Include="Areas\Public\Views\Reservas\" />
+    <Folder Include="Areas\Public\Views\Transacao\" />
     <Folder Include="Areas\Public\Views\Visitas\" />
     <Folder Include="Areas\Vendedores\Pages\" />
     <Folder Include="docs\" />

@@ -31,16 +31,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Adiciona o ASP.NET Core Identity com UserStore customizado (soft delete)
 builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequiredLength = 16;
+    options.Password.RequireDigit = false; // Simplificado para testes
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6; // Simplificado para testes
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
     options.User.RequireUniqueEmail = true;
-    options.SignIn.RequireConfirmedEmail = true;
+    options.SignIn.RequireConfirmedEmail = false; // ❌ Desativado - sem confirmação de email
 })
 .AddEntityFrameworkStores<ApplicationDbContext>() 
 .AddUserStore<CustomUserStore>()                
@@ -56,7 +56,6 @@ builder.Services.AddScoped<EmailTemplateService>();
 builder.Services.AddScoped<IEmailAuthService, EmailAuthService>();
 
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<ViewRenderService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
@@ -66,6 +65,15 @@ builder.Services.AddScoped<ICarrinhoService, CarrinhoService>();
 // Adicionar serviços de Reservas e Visitas
 builder.Services.AddScoped<IReservaService, ReservaService>();
 builder.Services.AddScoped<IVisitaService, VisitaService>();
+
+// Adicionar serviços de Denúncias, Auditoria e Notificações
+builder.Services.AddScoped<IDenunciaService, DenunciaService>();
+builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
+builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
+builder.Services.AddScoped<IEstatisticasService, EstatisticasService>();
+builder.Services.AddScoped<IGestaoUtilizadoresService, GestaoUtilizadoresService>();
+builder.Services.AddScoped<IFavoritoService, FavoritoService>();
+builder.Services.AddScoped<IMensagensService, MensagensService>();
 
 // Adicionar Background Service para limpeza de reservas expiradas
 builder.Services.AddHostedService<LimparReservasHostedService>();
@@ -84,6 +92,7 @@ builder.Services.ConfigureApplicationCookie(options =>
         : CookieSecurePolicy.Always;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
     options.LoginPath = "/Public/Conta/Login";
+    options.AccessDeniedPath = "/Public/Home/Index"; // Redireciona para Home em vez de AguardandoAprovacao
     options.SlidingExpiration = true;
 });
 
@@ -106,15 +115,11 @@ var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.O
 app.UseRequestLocalization(localizationOptions);
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseStatusCodePages(context =>
 {
-    var response = context.HttpContext.Response;
-    var user = context.HttpContext.User;
-
-    if (response.StatusCode == 403 && user.IsInRole(Roles.Vendedor))
-    {
-        response.Redirect("/Conta/AguardandoAprovacao");
-    }
+    // Deixar o sistema padrão tratar erros 403
+    // Não fazemos redirecionamentos aqui
     return Task.CompletedTask;
 });
 app.MapControllerRoute(
@@ -131,5 +136,11 @@ app.MapAreaControllerRoute(
     name: "vendedores",
     areaName: "Vendedores",
     pattern: "Vendedores/{controller=Carros}/{action=Index}/{id?}");
+
+// Inicializar base de dados (criar roles, utilizadores de teste)
+using (var scope = app.Services.CreateScope())
+{
+    await DbInitializer.InitializeAsync(scope.ServiceProvider);
+}
 
 app.Run();

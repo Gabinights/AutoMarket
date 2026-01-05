@@ -1,0 +1,149 @@
+@{
+    ViewData["Title"] = "Contacte-nos";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">?? Contacte-nos</h1>
+
+            <div class="row mb-4">
+                <!-- Email -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body text-center">
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">??</div>
+                            <h5 class="card-title">Email</h5>
+                            <p class="card-text text-muted mb-3">
+                                Para questões gerais, sugestões ou reclamações
+                            </p>
+                            <a href="mailto:suporte@automarket.com" class="btn btn-primary">
+                                suporte@automarket.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telefone -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body text-center">
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">??</div>
+                            <h5 class="card-title">Telefone</h5>
+                            <p class="card-text text-muted mb-3">
+                                Suporte ao cliente 24/7
+                            </p>
+                            <a href="tel:+351800123456" class="btn btn-success">
+                                +351 800 123 456
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <!-- Horário -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div style="font-size: 2rem; margin-bottom: 1rem; text-align: center;">??</div>
+                            <h5 class="card-title text-center">Horário de Funcionamento</h5>
+                            <ul class="list-unstyled text-center text-muted">
+                                <li class="mb-2">
+                                    <strong>Segunda - Sexta:</strong><br>
+                                    09:00 - 18:00
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Sábado:</strong><br>
+                                    10:00 - 16:00
+                                </li>
+                                <li>
+                                    <strong>Domingo:</strong><br>
+                                    Fechado
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Morada -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <div style="font-size: 2rem; margin-bottom: 1rem; text-align: center;">??</div>
+                            <h5 class="card-title text-center">Morada</h5>
+                            <p class="text-center text-muted mb-0">
+                                <strong>AutoMarket Portugal</strong><br>
+                                Rua da Tecnologia, 123<br>
+                                4000-000 Porto<br>
+                                Portugal<br><br>
+                                <a href="https://maps.google.com" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    Ver Mapa
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REDES SOCIAIS -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">Siga-nos nas Redes Sociais</h5>
+                    <div class="btn-group" role="group">
+                        <a href="https://facebook.com" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-facebook"></i> Facebook
+                        </a>
+                        <a href="https://instagram.com" target="_blank" class="btn btn-outline-danger">
+                            <i class="bi bi-instagram"></i> Instagram
+                        </a>
+                        <a href="https://twitter.com" target="_blank" class="btn btn-outline-info">
+                            <i class="bi bi-twitter"></i> Twitter
+                        </a>
+                        <a href="https://youtube.com" target="_blank" class="btn btn-outline-danger">
+                            <i class="bi bi-youtube"></i> YouTube
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO DE CONTACTO -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">?? Envie uma Mensagem</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="EnviarMensagem">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label fw-bold">Nome Completo</label>
+                            <input type="text" class="form-control" id="nome" name="nome" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="assunto" class="form-label fw-bold">Assunto</label>
+                            <input type="text" class="form-control" id="assunto" name="assunto" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mensagem" class="form-label fw-bold">Mensagem</label>
+                            <textarea class="form-control" id="mensagem" name="mensagem" rows="5" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            Enviar Mensagem
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="/" class="btn btn-secondary">? Voltar ao Início</a>
+            </div>
+        </div>
+    </div>
+</div>

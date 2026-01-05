@@ -1,0 +1,198 @@
+@model Transacao
+@using AutoMarket.Models.Entities
+@{
+    ViewData["Title"] = "Compra Confirmada";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- HEADER SUCCESS -->
+            <div class="text-center mb-5">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">?</div>
+                <h1 class="text-success fw-bold mb-2">Compra Confirmada!</h1>
+                <p class="text-muted fs-5">O seu pagamento foi processado com sucesso</p>
+            </div>
+
+            <!-- CARD PRINCIPAL -->
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-success text-white py-4">
+                    <h4 class="mb-1">Detalhes da Transação</h4>
+                    <small>Referência: #@Model.Id</small>
+                </div>
+                <div class="card-body">
+                    <!-- INFO PAGAMENTO -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Número da Encomenda</h6>
+                            <h4 class="text-success">#@Model.Id</h4>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Data de Compra</h6>
+                            <h4>@Model.DataTransacao.ToString("dd/MM/yyyy HH:mm")</h4>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- VEÍCULO COMPRADO -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">?? Veículo Comprado</h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                @if (Model.Veiculo?.Imagens?.Any() == true)
+                                {
+                                    var img = Model.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa) ?? Model.Veiculo.Imagens.First();
+                                    <img src="/images/veiculos/@img.CaminhoFicheiro" class="img-fluid rounded" alt="@Model.Veiculo.Marca @Model.Veiculo.Modelo">
+                                }
+                            </div>
+                            <div class="col-md-8">
+                                <h5>@Model.Veiculo?.Marca @Model.Veiculo?.Modelo (@Model.Veiculo?.Ano)</h5>
+                                <p class="text-muted mb-2">@Model.Veiculo?.Titulo</p>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Quilometragem</small>
+                                        <p class="fw-bold">@Model.Veiculo?.Km.ToString("N0") km</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Localização</small>
+                                        <p class="fw-bold">@Model.Veiculo?.Localizacao</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- RESUMO FINANCEIRO -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">?? Resumo Financeiro</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td>Preço do Veículo:</td>
+                                <td class="text-end">€@(Model.ValorPago * 0.8127m).ToString("F2")</td>
+                            </tr>
+                            <tr>
+                                <td>Comissão de Serviço:</td>
+                                <td class="text-end">€@(Model.ValorPago * 0.0406m).ToString("F2")</td>
+                            </tr>
+                            <tr>
+                                <td>IVA (23%):</td>
+                                <td class="text-end">€@(Model.ValorPago * 0.1467m).ToString("F2")</td>
+                            </tr>
+                            <tr class="border-top pt-3">
+                                <td class="fw-bold fs-5">Total Pago:</td>
+                                <td class="text-end text-success fw-bold fs-5">€@Model.ValorPago.ToString("F2")</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <hr>
+
+                    <!-- ESTADO PAGAMENTO -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">?? Estado da Entrega</h5>
+                        <div class="alert alert-success" role="alert">
+                            <h6 class="mb-2">? @Model.Estado</h6>
+                            <small>O seu veículo está sendo preparado para entrega. Receberá um email com os detalhes de contacto do vendedor em breve.</small>
+                        </div>
+
+                        <!-- PROGRESSO -->
+                        <div class="progress mb-3" style="height: 30px;">
+                            <div class="progress-bar bg-success" style="width: 25%;">
+                                <small class="fw-bold">Pagamento Confirmado</small>
+                            </div>
+                            <div class="progress-bar bg-light" style="width: 25%;"></div>
+                            <div class="progress-bar bg-light" style="width: 25%;"></div>
+                            <div class="progress-bar bg-light" style="width: 25%;"></div>
+                        </div>
+                        <div class="row text-center small text-muted">
+                            <div class="col-3">Pagamento</div>
+                            <div class="col-3">Preparação</div>
+                            <div class="col-3">Envio</div>
+                            <div class="col-3">Entregue</div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- DADOS SNAPSHOT -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">?? Dados da Compra</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Morada de Envio</h6>
+                                <p class="fw-bold">@Model.MoradaEnvioSnapshot</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">NIF para Fatura</h6>
+                                <p class="fw-bold">@Model.NifFaturacaoSnapshot</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- MÉTODO PAGAMENTO -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">?? Método de Pagamento</h5>
+                        <div class="badge bg-info text-dark p-2">
+                            @Model.Metodo switch
+                            {
+                                "cartao" => "?? Cartão de Crédito",
+                                "transferencia" => "?? Transferência Bancária",
+                                "mbway" => "?? MB Way",
+                                "paypal" => "??? PayPal",
+                                _ => "?? Outro"
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INFO IMPORTANTE -->
+            <div class="alert alert-info" role="alert">
+                <h5 class="mb-2">?? Próximos Passos</h5>
+                <ul class="mb-0">
+                    <li>Receberá um email de confirmação em breve</li>
+                    <li>O vendedor entrará em contacto com você para coordenar a entrega</li>
+                    <li>Pode acompanhar o estado da sua compra em <strong>Minha Conta ? Compras</strong></li>
+                    <li>Tem direito a devolução em até 14 dias</li>
+                </ul>
+            </div>
+
+            <!-- SUPORTE -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <h6 class="mb-3">Precisa de Ajuda?</h6>
+                    <p class="text-muted mb-3">Entre em contacto com o nosso suporte</p>
+                    <a href="/Public/Home/Contactos" class="btn btn-outline-primary me-2">
+                        ?? Contacte-nos
+                    </a>
+                    <a href="/Public/Home/Ajuda" class="btn btn-outline-secondary">
+                        ? Perguntas Frequentes
+                    </a>
+                </div>
+            </div>
+
+            <!-- BOTÕES AÇÃO -->
+            <div class="d-grid gap-2">
+                <a href="/Public/Veiculos" class="btn btn-primary btn-lg fw-bold">
+                    ??? Continuar a Comprar
+                </a>
+                <a href="/Public/Conta/Index" class="btn btn-outline-secondary btn-lg">
+                    ?? Ir para Minha Conta
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .progress-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>

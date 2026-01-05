@@ -1,0 +1,246 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Dashboard Admin";
+}
+
+<div class="container-fluid py-4">
+    <!-- HEADER -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="fw-bold mb-1">?? Dashboard Admin</h1>
+            <p class="text-muted">Bem-vindo ao painel de administração do AutoMarket</p>
+        </div>
+    </div>
+
+    <!-- KPIs PRINCIPAIS -->
+    <div class="row mb-4 g-3">
+        <!-- Total Compradores -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-1">Total de Compradores</h6>
+                            <h3 class="fw-bold text-primary mb-0">@(Model?.TotalCompradores ?? 0)</h3>
+                        </div>
+                        <span style="font-size: 2rem;">??</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Vendedores -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-1">Total de Vendedores</h6>
+                            <h3 class="fw-bold text-success mb-0">@(Model?.TotalVendedores ?? 0)</h3>
+                        </div>
+                        <span style="font-size: 2rem;">??</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anúncios Ativos -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-1">Anúncios Ativos</h6>
+                            <h3 class="fw-bold text-warning mb-0">@(Model?.TotalAnunciosAtivos ?? 0)</h3>
+                        </div>
+                        <span style="font-size: 2rem;">??</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Vendas -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-1">Total de Vendas</h6>
+                            <h3 class="fw-bold text-danger mb-0">€@(Model?.TotalVendas?.ToString("F0") ?? "0")</h3>
+                        </div>
+                        <span style="font-size: 2rem;">??</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <div class="row mb-4 g-3">
+        <!-- Gráfico: Vendas por Período -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0">?? Vendas por Período (últimos 6 meses)</h5>
+                </div>
+                <div class="card-body" style="height: 350px;">
+                    <canvas id="vendasChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico: Distribuição Compradores/Vendedores -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0">?? Distribuição de Utilizadores</h5>
+                </div>
+                <div class="card-body" style="height: 350px;">
+                    <canvas id="distribuicaoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Gráfico: Top 10 Marcas -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0">?? Top 10 Marcas Mais Vendidas</h5>
+                </div>
+                <div class="card-body" style="height: 300px;">
+                    <canvas id="marcasChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico: Top 10 Modelos -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0">?? Top 10 Modelos Mais Vendidos</h5>
+                </div>
+                <div class="card-body" style="height: 300px;">
+                    <canvas id="modelosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AÇÕES RÁPIDAS -->
+    <div class="row mt-4 g-3">
+        <div class="col-lg-3">
+            <a href="/Admin/Utilizadores" class="btn btn-outline-primary btn-lg w-100 py-3">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">??</div>
+                Gerir Utilizadores
+            </a>
+        </div>
+        <div class="col-lg-3">
+            <a href="/Admin/Anuncios" class="btn btn-outline-success btn-lg w-100 py-3">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">??</div>
+                Moderar Anúncios
+            </a>
+        </div>
+        <div class="col-lg-3">
+            <a href="/Admin/Denuncias" class="btn btn-outline-warning btn-lg w-100 py-3">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">??</div>
+                Gerir Denúncias
+            </a>
+        </div>
+        <div class="col-lg-3">
+            <a href="/Admin/Dashboard" class="btn btn-outline-info btn-lg w-100 py-3">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">??</div>
+                Atualizar Dados
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Cores
+        const colors = {
+            primary: '#0d6efd',
+            success: '#198754',
+            warning: '#ffc107',
+            danger: '#dc3545',
+            info: '#0dcaf0'
+        };
+
+        // 1. VENDAS POR PERÍODO
+        const ctx1 = document.getElementById('vendasChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                datasets: [{
+                    label: 'Vendas (€)',
+                    data: [15000, 22000, 18500, 29000, 31500, 38000],
+                    borderColor: colors.primary,
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // 2. DISTRIBUIÇÃO UTILIZADORES
+        const ctx2 = document.getElementById('distribuicaoChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Compradores', 'Vendedores'],
+                datasets: [{
+                    data: [@(Model?.TotalCompradores ?? 0), @(Model?.TotalVendedores ?? 0)],
+                    backgroundColor: [colors.primary, colors.success]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // 3. TOP MARCAS
+        const ctx3 = document.getElementById('marcasChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: ['BMW', 'Audi', 'Mercedes', 'VW', 'Fiat', 'Opel', 'Ford', 'Toyota', 'Renault', 'Citroën'],
+                datasets: [{ label: 'Vendas', data: [45, 38, 35, 32, 28, 25, 22, 20, 18, 15], backgroundColor: colors.warning }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // 4. TOP MODELOS
+        const ctx4 = document.getElementById('modelosChart').getContext('2d');
+        new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: ['3 Series', 'A4', 'C-Class', 'Golf', 'Panda', 'Astra', 'Focus', 'Corolla', 'Clio', 'C1'],
+                datasets: [{ label: 'Vendas', data: [32, 28, 25, 22, 18, 16, 14, 12, 10, 8], backgroundColor: colors.success }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+}

@@ -28,6 +28,9 @@ namespace AutoMarket.Infrastructure.Data
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Reserva> Reservas { get; set; } = null!;
         public DbSet<Visita> Visitas { get; set; } = null!;
+        public DbSet<AuditoriaLog> AuditoriaLogs { get; set; } = null!;
+        public DbSet<Favorito> Favoritos { get; set; } = null!;
+        public DbSet<Notificacao> Notificacoes { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -213,6 +216,42 @@ namespace AutoMarket.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(v => v.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // --- AuditoriaLog (Imutável) ---
+            builder.Entity<AuditoriaLog>()
+                .HasOne(a => a.Admin)
+                .WithMany()
+                .HasForeignKey(a => a.AdminId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Favoritos (Bookmarks) ---
+            builder.Entity<Favorito>()
+                .HasOne(f => f.Comprador)
+                .WithMany()
+                .HasForeignKey(f => f.CompradorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Favorito>()
+                .HasOne(f => f.Veiculo)
+                .WithMany()
+                .HasForeignKey(f => f.VeiculoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Índice único para evitar favoritos duplicados
+            builder.Entity<Favorito>()
+                .HasIndex(f => new { f.CompradorId, f.VeiculoId })
+                .IsUnique();
+
+            // --- Notificações ---
+            builder.Entity<Notificacao>()
+                .HasOne(n => n.Destinatario)
+                .WithMany()
+                .HasForeignKey(n => n.DestinatarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Índice para consultas de notificações não lidas
+            builder.Entity<Notificacao>()
+                .HasIndex(n => new { n.DestinatarioId, n.Lida, n.DataCriacao });
 
             // #endregion
         }

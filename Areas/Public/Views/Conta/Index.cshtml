@@ -1,0 +1,131 @@
+@using AutoMarket.Models.Entities
+@model Utilizador
+@{
+    ViewData["Title"] = "Meu Perfil";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Cabeçalho do Perfil -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">??</div>
+                    <h2>@Model.Nome</h2>
+                    <p class="text-muted">@Model.Email</p>
+                    <hr />
+                    <p class="small text-muted">Membro desde: @Model.DataRegisto.ToString("dd/MM/yyyy")</p>
+                </div>
+            </div>
+
+            <!-- Informações Pessoais -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">?? Informações Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Nome:</strong><br />
+                            @Model.Nome
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Email:</strong><br />
+                            @Model.Email
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Contacto:</strong><br />
+                            @Model.Contacto
+                        </div>
+                        <div class="col-md-6">
+                            <strong>NIF:</strong><br />
+                            @(Model.NIF ?? "Não preenchido")
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <strong>Morada:</strong><br />
+                            @Model.Morada
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu de Ações -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">?? Ações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <a href="/Public/Conta/Favoritos" class="btn btn-outline-primary w-100">
+                                <span style="font-size: 1.3em;">??</span> Meus Favoritos
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="/Public/Conta/Notificacoes" class="btn btn-outline-primary w-100">
+                                <span style="font-size: 1.3em;">??</span> Notificações
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segurança -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">?? Segurança</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="Logout" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-info btn-sm me-2">
+                            ?? Terminar Sessão (Logout)
+                        </button>
+                    </form>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        ??? Apagar Conta
+                    </button>
+                    <small class="text-muted d-block mt-2">
+                        ?? Esta ação é permanente. A sua conta e todos os dados associados serão removidos.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Botão Voltar -->
+            <div class="mt-4 text-center">
+                <a href="/" class="btn btn-secondary">? Voltar ao Início</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Eliminação -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">?? Apagar Conta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger fw-bold">Tem a certeza que deseja apagar sua conta?</p>
+                <p>Esta ação é <strong>permanente</strong> e não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" asp-action="ApagarConta" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Apagar Conta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+}

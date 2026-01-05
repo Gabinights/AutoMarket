@@ -1,6 +1,9 @@
 using System.Security.Claims;
+using AutoMarket.Infrastructure.Data;
 using AutoMarket.Models.Constants;
 using AutoMarket.Models.ViewModels;
+using AutoMarket.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers
 {
@@ -9,13 +12,36 @@ namespace AutoMarket.Areas.Public.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ILogger<ContaController> _logger;
+        private readonly ApplicationDbContext _context;
+        private readonly IFavoritoService _favoritoService;
 
         public ContaController(
             IAuthService authService,
-            ILogger<ContaController> logger)
+            ILogger<ContaController> logger,
+            ApplicationDbContext context,
+            IFavoritoService favoritoService)
         {
             _authService = authService;
             _logger = logger;
+            _context = context;
+            _favoritoService = favoritoService;
+        }
+
+        /// <summary>
+        /// GET: Conta/Index
+        /// Dashboard do perfil do utilizador.
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Index()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            return View(user);
         }
 
         [HttpGet]
@@ -86,7 +112,7 @@ namespace AutoMarket.Areas.Public.Controllers
         public async Task<IActionResult> Logout()
         {
             await _authService.LogoutAsync();
-            return RedirectToAction("Index", "Home");
+            return Redirect("/"); // Redireciona diretamente para a raiz (Home)
         }
 
         [HttpGet]
@@ -164,6 +190,61 @@ namespace AutoMarket.Areas.Public.Controllers
             }
 
             return RedirectToAction("Index", "Home");
+        }
+
+        /// <summary>
+        /// GET: Conta/Favoritos
+        /// Listar veículos favoritos do comprador.
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Favoritos(int page = 1)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var comprador = await _context.Compradores
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (comprador == null)
+                return RedirectToAction("Index", "Home");
+
+            var favoritos = await _favoritoService.ListarFavoritosAsync(comprador.Id, page, 20);
+            var total = await _favoritoService.ContarFavoritosAsync(comprador.Id);
+
+            ViewData["TotalFavoritos"] = total;
+            ViewData["CurrentPage"] = page;
+            ViewData["TotalPages"] = (int)Math.Ceiling(total / 20.0);
+
+            return View(favoritos);
+        }
+
+        /// <summary>
+        /// GET: Conta/Notificacoes
+        /// Listar notificações do utilizador.
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Notificacoes(int page = 1)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var notificacoes = await _context.Notificacoes
+                .Where(n => n.DestinatarioId == userId)
+                .OrderByDescending(n => n.DataCriacao)
+                .Skip((page - 1) * 20)
+                .Take(20)
+                .ToListAsync();
+
+            var total = await _context.Notificacoes
+                .CountAsync(n => n.DestinatarioId == userId);
+
+            ViewData["TotalNotificacoes"] = total;
+            ViewData["CurrentPage"] = page;
+            ViewData["TotalPages"] = (int)Math.Ceiling(total / 20.0);
+
+            return View(notificacoes);
         }
     }
 }
