@@ -6,30 +6,30 @@
 <div class="container d-flex justify-content-center align-items-center" style="min-height: 70vh;">
     <div class="card shadow-lg text-center p-5" style="max-width: 600px; width: 100%;">
         <div class="card-body">
-            <!-- Õcone de Alerta -->
+            <!-- √çcone de Alerta -->
             <div class="mb-4">
                 <i class="bi bi-shield-exclamation text-danger" style="font-size: 6rem;"></i>
             </div>
 
-            <!-- TÌtulo -->
+            <!-- T√≠tulo -->
             <h1 class="card-title fw-bold text-danger mb-3">
                 Acesso Negado
             </h1>
 
             <!-- Mensagem -->
             <p class="card-text text-muted mb-4 fs-5">
-                N„o tem permissıes para aceder a esta p·gina.
+                N√£o tem permiss√µes para aceder a esta p√°gina.
             </p>
 
-            <!-- InformaÁ„o Adicional -->
+            <!-- Informa√ß√£o Adicional -->
             <div class="alert alert-warning text-start" role="alert">
                 <h6 class="alert-heading">
-                    <i class="bi bi-info-circle-fill"></i> PossÌveis Razıes:
+                    <i class="bi bi-info-circle-fill"></i> Poss√≠veis Raz√µes:
                 </h6>
                 <ul class="mb-0">
-                    <li><strong>N„o È vendedor:</strong> Esta p·gina È exclusiva para utilizadores com conta de vendedor aprovada.</li>
-                    <li><strong>Conta pendente:</strong> Se È vendedor, a sua conta pode estar a aguardar aprovaÁ„o.</li>
-                    <li><strong>Sess„o expirada:</strong> Por favor, faÁa login novamente.</li>
+                    <li><strong>N√£o √© vendedor:</strong> Esta p√°gina √© exclusiva para utilizadores com conta de vendedor aprovada.</li>
+                    <li><strong>Conta pendente:</strong> Se √© vendedor, a sua conta pode estar a aguardar aprova√ß√£o.</li>
+                    <li><strong>Sess√£o expirada:</strong> Por favor, fa√ßa login novamente.</li>
                 </ul>
             </div>
 
@@ -41,7 +41,7 @@
                 </div>
             }
 
-            <!-- AÁıes -->
+            <!-- A√ß√µes -->
             <div class="d-grid gap-2 mt-4">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
@@ -59,13 +59,13 @@
                     else
                     {
                         <a asp-controller="Conta" asp-action="AguardandoAprovacao" class="btn btn-warning btn-lg">
-                            <i class="bi bi-hourglass-split"></i> Estado da AprovaÁ„o
+                            <i class="bi bi-hourglass-split"></i> Estado da Aprova√ß√£o
                         </a>
                     }
                 }
                 else
                 {
-                    <!-- Utilizador N„o Logado -->
+                    <!-- Utilizador N√£o Logado -->
                     <a asp-controller="Conta" asp-action="Login" asp-route-returnUrl="@returnUrl" class="btn btn-primary btn-lg">
                         <i class="bi bi-box-arrow-in-right"></i> Fazer Login
                     </a>
@@ -78,7 +78,7 @@
                 <hr />
 
                 <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg">
-                    <i class="bi bi-house"></i> Voltar ‡ P·gina Inicial
+                    <i class="bi bi-house"></i> Voltar √† P√°gina Inicial
                 </a>
 
                 <a asp-controller="Home" asp-action="Ajuda" class="btn btn-outline-info btn-lg">

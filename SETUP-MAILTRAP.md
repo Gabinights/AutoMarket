@@ -1,13 +1,13 @@
-# ?? Configuração MailTrap - AutoMarket
+ï»¿# ?? Configuraï¿½ï¿½o MailTrap - AutoMarket
 
-## O que é MailTrap?
-MailTrap é um **serviço de email fake** para desenvolvimento. Os emails não são realmente enviados - ficam numa caixa de entrada virtual que só você vê.
+## O que ï¿½ MailTrap?
+MailTrap ï¿½ um **serviï¿½o de email fake** para desenvolvimento. Os emails nï¿½o sï¿½o realmente enviados - ficam numa caixa de entrada virtual que sï¿½ vocï¿½ vï¿½.
 
 ## ? Vantagens
 - ? Sem passwords pessoais
 - ? Interface web para ver emails
 - ? Testa todo o fluxo de email
-- ? 100% GRÁTIS (até 500 emails/mês)
+- ? 100% GRï¿½TIS (atï¿½ 500 emails/mï¿½s)
 - ? Sem risco de spam/vazamentos
 
 ---
@@ -25,7 +25,7 @@ MailTrap é um **serviço de email fake** para desenvolvimento. Os emails não são 
 
 ## ?? Passo 2: Obter Credenciais SMTP
 
-1. Após login, vá a: **Email Testing** ? **Inboxes**
+1. Apï¿½s login, vï¿½ a: **Email Testing** ? **Inboxes**
 2. Clique em **"My Inbox"** (ou crie uma nova inbox)
 3. No separador **"SMTP Settings"**, escolha:
    - **Integration**: .NET
@@ -39,14 +39,14 @@ MailTrap é um **serviço de email fake** para desenvolvimento. Os emails não são 
 
 ## ?? Passo 3: Configurar AutoMarket
 
-### Opção A: Usando o Script PowerShell
+### Opï¿½ï¿½o A: Usando o Script PowerShell
 
 ```powershell
-# Execute no diretório do projeto
+# Execute no diretï¿½rio do projeto
 .\setup-email-secrets.ps1
 
 # Quando pedir:
-# - Escolha opção "2. Outro (SMTP customizado)"
+# - Escolha opï¿½ï¿½o "2. Outro (SMTP customizado)"
 # - SMTP Server: sandbox.smtp.mailtrap.io
 # - SMTP Port: 587
 # - SMTP Username: [Cole o username do MailTrap]
@@ -56,11 +56,13 @@ MailTrap é um **serviço de email fake** para desenvolvimento. Os emails não são 
 # - From Name: AutoMarket
 ```
 
-### Opção B: Manual (Comandos PowerShell)
+### Opï¿½ï¿½o B: Manual (Comandos PowerShell)
 
 ```powershell
 # Navegue para o projeto
-cd "C:\Users\nunos\Source\Repos\AutoMarket2"
+cd "<path-to-your-project>"
+
+**Nota:** Navegue atÃ© ao diretÃ³rio onde clonou o projeto AutoMarket.
 
 # Configure User Secrets
 dotnet user-secrets init
@@ -78,12 +80,12 @@ dotnet user-secrets set "EmailSettings:SecureSocketOptions" "StartTls"
 ## ?? Passo 4: Testar
 
 ```powershell
-# Execute a aplicação
+# Execute a aplicaï¿½ï¿½o
 dotnet run
 
 # Registe um novo utilizador
-# - Vá a: https://localhost:XXXX/Conta/Register
-# - Preencha o formulário
+# - Vï¿½ a: https://localhost:XXXX/Conta/Register
+# - Preencha o formulï¿½rio
 # - Clique em "Registar"
 ```
 
@@ -93,9 +95,9 @@ dotnet run
 
 1. Volte ao MailTrap: **https://mailtrap.io/inboxes**
 2. Clique na sua **Inbox**
-3. Deve ver o email de confirmação!
-4. Clique no email para ver o conteúdo
-5. Copie o link de confirmação
+3. Deve ver o email de confirmaï¿½ï¿½o!
+4. Clique no email para ver o conteï¿½do
+5. Copie o link de confirmaï¿½ï¿½o
 6. Cole no browser para confirmar
 
 ---
@@ -106,10 +108,10 @@ dotnet run
 ? Conta MailTrap criada
 ? Credenciais SMTP copiadas
 ? User Secrets configurados
-? Aplicação executada
+? Aplicaï¿½ï¿½o executada
 ? Utilizador registado
 ? Email apareceu no MailTrap
-? Link de confirmação funcionou
+? Link de confirmaï¿½ï¿½o funcionou
 ```
 
 ---
@@ -126,20 +128,20 @@ dotnet user-secrets list
 # EmailSettings:SmtpUsername = xxxxx
 ```
 
-### Email não aparece no MailTrap
-- Verificar logs da aplicação para "Email sent successfully"
-- Verificar se inbox correta está selecionada
+### Email nï¿½o aparece no MailTrap
+- Verificar logs da aplicaï¿½ï¿½o para "Email sent successfully"
+- Verificar se inbox correta estï¿½ selecionada
 - Aguardar 1-2 minutos (pode haver delay)
 
-### Erro de conexão SMTP
+### Erro de conexï¿½o SMTP
 - Tentar porta 2525 em vez de 587
-- Verificar firewall/antivírus
+- Verificar firewall/antivï¿½rus
 
 ---
 
 ## ?? Limites (Free Tier)
 
-- ? 500 emails/mês
+- ? 500 emails/mï¿½s
 - ? 1 inbox
 - ? Emails armazenados por 48h
 - ? 50 requests/segundo
@@ -148,20 +150,20 @@ dotnet user-secrets list
 
 ---
 
-## ?? Segurança
+## ?? Seguranï¿½a
 
-- ? Emails nunca são realmente enviados
-- ? Apenas você vê os emails
+- ? Emails nunca sï¿½o realmente enviados
+- ? Apenas vocï¿½ vï¿½ os emails
 - ? Sem risco de spam
 - ? Sem passwords pessoais expostas
 - ? Pode revogar credenciais a qualquer momento
 
 ---
 
-## ?? Próximos Passos
+## ?? Prï¿½ximos Passos
 
-Quando for para **produção**, migrar para:
-- **SendGrid** (100 emails/dia grátis)
-- **Mailgun** (5,000 emails/mês grátis)
+Quando for para **produï¿½ï¿½o**, migrar para:
+- **SendGrid** (100 emails/dia grï¿½tis)
+- **Mailgun** (5,000 emails/mï¿½s grï¿½tis)
 - **Azure Communication Services** (pay-as-you-go)
 

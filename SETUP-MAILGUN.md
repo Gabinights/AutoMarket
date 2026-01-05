@@ -1,20 +1,20 @@
-# ?? Configuração Mailgun - AutoMarket
+ï»¿# ?? Configuraï¿½ï¿½o Mailgun - AutoMarket
 
-## O que é Mailgun?
-Mailgun é um **serviço de email profissional** usado por empresas como GitHub, Lyft e Slack. Oferece 5,000 emails/mês GRÁTIS nos primeiros 3 meses.
+## O que ï¿½ Mailgun?
+Mailgun ï¿½ um **serviï¿½o de email profissional** usado por empresas como GitHub, Lyft e Slack. Oferece 5,000 emails/mï¿½s GRï¿½TIS nos primeiros 3 meses.
 
 ## ? Vantagens
-- ? **5,000 emails/mês grátis** (primeiros 3 meses)
+- ? **5,000 emails/mï¿½s grï¿½tis** (primeiros 3 meses)
 - ? **Emails reais** enviados
 - ? **APIs poderosas** (SMTP + REST API)
-- ? **Email validation** incluída
+- ? **Email validation** incluï¿½da
 - ? **Logs detalhados**
 - ? **Webhooks** para tracking
 - ? **Muito usado em startups**
 
-## ?? Limitações
-- ? Requer cartão de crédito (mesmo no free tier)
-- ? Após 3 meses: $35/mês OU pay-as-you-go ($0.80/1000 emails)
+## ?? Limitaï¿½ï¿½es
+- ? Requer cartï¿½o de crï¿½dito (mesmo no free tier)
+- ? Apï¿½s 3 meses: $35/mï¿½s OU pay-as-you-go ($0.80/1000 emails)
 - ? Setup mais complexo que SendGrid
 
 ---
@@ -27,36 +27,36 @@ Mailgun é um **serviço de email profissional** usado por empresas como GitHub, L
    - Password forte
    - Nome completo
 3. **Verificar email**
-4. **Adicionar cartão de crédito** (não será cobrado no free tier)
+4. **Adicionar cartï¿½o de crï¿½dito** (nï¿½o serï¿½ cobrado no free tier)
 5. Complete o perfil
 
 ---
 
 ## ?? Passo 2: Obter Credenciais SMTP
 
-### Opção A: Sandbox Domain (Testes)
+### Opï¿½ï¿½o A: Sandbox Domain (Testes)
 
-1. Após login, vá a: **Sending** ? **Domains**
+1. Apï¿½s login, vï¿½ a: **Sending** ? **Domains**
 2. Clique no **sandbox domain** (algo como `sandboxXXXXX.mailgun.org`)
-3. Vá ao separador **SMTP credentials**
+3. Vï¿½ ao separador **SMTP credentials**
 4. Use as credenciais:
    - **SMTP Hostname**: `smtp.mailgun.org`
    - **Port**: 587
    - **Username**: `postmaster@sandboxXXXXX.mailgun.org`
-   - **Password**: (clique em "Reset password" se necessário)
+   - **Password**: (clique em "Reset password" se necessï¿½rio)
 
-?? **Nota:** Sandbox só envia para emails autorizados!
+?? **Nota:** Sandbox sï¿½ envia para emails autorizados!
 
-### Opção B: Custom Domain (Produção)
+### Opï¿½ï¿½o B: Custom Domain (Produï¿½ï¿½o)
 
-Se tiver domínio próprio:
+Se tiver domï¿½nio prï¿½prio:
 1. **Sending** ? **Domains** ? **Add New Domain**
 2. Adicionar registos DNS no seu provider
-3. Aguardar verificação (pode demorar 24-48h)
+3. Aguardar verificaï¿½ï¿½o (pode demorar 24-48h)
 
 ---
 
-## ?? Passo 3: Autorizar Email Destinatário (Sandbox)
+## ?? Passo 3: Autorizar Email Destinatï¿½rio (Sandbox)
 
 Se usar sandbox domain:
 
@@ -64,20 +64,20 @@ Se usar sandbox domain:
 2. Separador **Authorized Recipients**
 3. Adicione seu email pessoal
 4. Clique em **"Add Recipient"**
-5. **Verifique email** de confirmação
+5. **Verifique email** de confirmaï¿½ï¿½o
 
 ---
 
 ## ?? Passo 4: Configurar AutoMarket
 
-### Opção A: Usando o Script PowerShell
+### Opï¿½ï¿½o A: Usando o Script PowerShell
 
 ```powershell
-# Execute no diretório do projeto
+# Execute no diretï¿½rio do projeto
 .\setup-email-secrets.ps1
 
 # Quando pedir:
-# - Escolha opção "2. Outro (SMTP customizado)"
+# - Escolha opï¿½ï¿½o "2. Outro (SMTP customizado)"
 # - SMTP Server: smtp.mailgun.org
 # - SMTP Port: 587
 # - SMTP Username: postmaster@sandboxXXXXX.mailgun.org
@@ -87,11 +87,13 @@ Se usar sandbox domain:
 # - From Name: AutoMarket
 ```
 
-### Opção B: Manual (Comandos PowerShell)
+### Opï¿½ï¿½o B: Manual (Comandos PowerShell)
 
 ```powershell
 # Navegue para o projeto
-cd "C:\Users\nunos\Source\Repos\AutoMarket2"
+cd "<path-to-your-project>"
+
+**Nota:** Navegue atÃ© ao diretÃ³rio onde clonou o projeto AutoMarket.
 
 # Configure User Secrets
 dotnet user-secrets init
@@ -109,12 +111,12 @@ dotnet user-secrets set "EmailSettings:SecureSocketOptions" "StartTls"
 ## ?? Passo 5: Testar
 
 ```powershell
-# Execute a aplicação
+# Execute a aplicaï¿½ï¿½o
 dotnet run
 
 # Registe utilizador com EMAIL AUTORIZADO
 # (O email que adicionou em "Authorized Recipients")
-# - Vá a: https://localhost:XXXX/Conta/Register
+# - Vï¿½ a: https://localhost:XXXX/Conta/Register
 # - Use email autorizado
 # - Clique em "Registar"
 
@@ -172,14 +174,14 @@ public async Task SendEmailViaMailgunAPI(string to, string subject, string messa
 
 ```
 ? Conta Mailgun criada
-? Cartão adicionado (sem cobranças no free tier)
+? Cartï¿½o adicionado (sem cobranï¿½as no free tier)
 ? Sandbox domain configurado
-? Email destinatário autorizado
+? Email destinatï¿½rio autorizado
 ? Credenciais SMTP copiadas
 ? User Secrets configurados
-? Aplicação executada
+? Aplicaï¿½ï¿½o executada
 ? Email recebido
-? Link de confirmação funcionou
+? Link de confirmaï¿½ï¿½o funcionou
 ```
 
 ---
@@ -187,63 +189,63 @@ public async Task SendEmailViaMailgunAPI(string to, string subject, string messa
 ## ?? Troubleshooting
 
 ### Erro: "Free accounts are for test purposes only"
-- Sandbox só envia para **Authorized Recipients**
+- Sandbox sï¿½ envia para **Authorized Recipients**
 - Adicione seu email em: **Authorized Recipients**
 
 ### Erro: "Invalid SMTP credentials"
 - Reset password em: **Domains** ? [Sandbox] ? **SMTP credentials**
 - Verificar username: `postmaster@sandboxXXXXX.mailgun.org`
 
-### Email não chega
+### Email nï¿½o chega
 - Verificar logs: **Sending** ? **Logs**
 - Status deve ser "delivered"
 - Se "failed", ver motivo no log
 
-### Sandbox domain não funciona para produção
-- **Solução:** Adicionar custom domain
+### Sandbox domain nï¿½o funciona para produï¿½ï¿½o
+- **Soluï¿½ï¿½o:** Adicionar custom domain
 - **Sending** ? **Domains** ? **Add New Domain**
-- Seguir instruções de DNS
+- Seguir instruï¿½ï¿½es de DNS
 
 ---
 
-## ?? Preços
+## ?? Preï¿½os
 
 ### Free Trial (3 meses):
-- ? 5,000 emails/mês
+- ? 5,000 emails/mï¿½s
 - ? Todas as features
 - ? API completa
-- ?? Requer cartão de crédito
+- ?? Requer cartï¿½o de crï¿½dito
 
 ### Depois dos 3 meses:
 
-**Foundation Plan**: $35/mês
-- 50,000 emails incluídos
+**Foundation Plan**: $35/mï¿½s
+- 50,000 emails incluï¿½dos
 - $0.80/1,000 emails adicionais
-- Email validation: 1,000 grátis/mês
+- Email validation: 1,000 grï¿½tis/mï¿½s
 
-**Pay-as-you-go**: $0/mês
+**Pay-as-you-go**: $0/mï¿½s
 - $0.80/1,000 emails enviados
-- Sem mínimo mensal
-- Email validation: $0.001/validação
+- Sem mï¿½nimo mensal
+- Email validation: $0.001/validaï¿½ï¿½o
 
 ---
 
-## ?? Segurança
+## ?? Seguranï¿½a
 
 - ? API Keys com scopes
 - ? Webhooks para tracking
-- ? DKIM/SPF automático
-- ? TLS/SSL obrigatório
+- ? DKIM/SPF automï¿½tico
+- ? TLS/SSL obrigatï¿½rio
 - ? Logs completos
 
 **Revogar API Key:**
 1. **Settings** ? **API Security**
 2. Clique em "Delete" ao lado da key
-3. Crie nova se necessário
+3. Crie nova se necessï¿½rio
 
 ---
 
-## ?? Features Avançadas
+## ?? Features Avanï¿½adas
 
 ### Email Validation API:
 ```csharp
@@ -261,7 +263,7 @@ GET https://api.mailgun.net/v4/address/validate
 ```
 
 ### Webhooks:
-Receber notificações quando:
+Receber notificaï¿½ï¿½es quando:
 - Email entregue
 - Email aberto
 - Link clicado
@@ -272,31 +274,31 @@ Configurar em: **Sending** ? **Webhooks**
 
 ---
 
-## ?? Comparação: Mailgun vs SendGrid
+## ?? Comparaï¿½ï¿½o: Mailgun vs SendGrid
 
 | Feature | Mailgun | SendGrid |
 |---------|---------|----------|
-| **Free Tier** | 5k/mês (3 meses) | 100/dia (sempre) |
-| **Requer Cartão** | ? Sim | ? Não |
-| **Email Validation** | ? Incluída | ? Paga |
+| **Free Tier** | 5k/mï¿½s (3 meses) | 100/dia (sempre) |
+| **Requer Cartï¿½o** | ? Sim | ? Nï¿½o |
+| **Email Validation** | ? Incluï¿½da | ? Paga |
 | **REST API** | ? Muito boa | ? Muito boa |
 | **Webhooks** | ? Completos | ? Completos |
-| **Preço após free** | $35/mês ou PAYG | $19.95/mês |
-| **Setup** | Médio | Fácil |
+| **Preï¿½o apï¿½s free** | $35/mï¿½s ou PAYG | $19.95/mï¿½s |
+| **Setup** | Mï¿½dio | Fï¿½cil |
 
 ---
 
-## ?? Recomendação
+## ?? Recomendaï¿½ï¿½o
 
 **Use Mailgun se:**
 - ? Precisa de email validation
-- ? Quer pagar só pelo que usa (PAYG)
+- ? Quer pagar sï¿½ pelo que usa (PAYG)
 - ? Startup em crescimento
 - ? Precisa de logs muito detalhados
 
 **Use SendGrid se:**
-- ? Quer começar sem cartão
-- ? 100 emails/dia é suficiente
-- ? Setup mais rápido
-- ? Orçamento limitado inicial
+- ? Quer comeï¿½ar sem cartï¿½o
+- ? 100 emails/dia ï¿½ suficiente
+- ? Setup mais rï¿½pido
+- ? Orï¿½amento limitado inicial
 

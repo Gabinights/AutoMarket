@@ -91,7 +91,7 @@ namespace AutoMarket.Controllers
                     VeiculoTitulo = t.Veiculo.Titulo,
                     VeiculoMarca = t.Veiculo.Marca,
                     VeiculoModelo = t.Veiculo.Modelo,
-                    VeiculoImagemCapa = t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa).CaminhoFicheiro,
+                    VeiculoImagemCapa = t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa) != null ? t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa)!.CaminhoFicheiro : null,
                     VendedorNome = t.Vendedor.User.Nome,
                     MoradaEnvioSnapshot = t.MoradaEnvioSnapshot,
                     NifFaturacaoSnapshot = t.NifFaturacaoSnapshot
@@ -144,7 +144,7 @@ namespace AutoMarket.Controllers
                     VeiculoTitulo = t.Veiculo.Titulo,
                     VeiculoMarca = t.Veiculo.Marca,
                     VeiculoModelo = t.Veiculo.Modelo,
-                    VeiculoImagemCapa = t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa).CaminhoFicheiro,
+                    VeiculoImagemCapa = t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa) != null ? t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa)!.CaminhoFicheiro : null,
                     CompradorNome = t.Comprador.User.Nome,
                     MoradaEnvioSnapshot = t.MoradaEnvioSnapshot,
                     NifFaturacaoSnapshot = t.NifFaturacaoSnapshot

@@ -13,7 +13,7 @@
                     <i class="bi bi-person-circle"></i> O Meu Perfil
                 </h1>
                 <p class="mb-0 opacity-75">
-                    Gerir a sua conta e preferências
+                    Gerir a sua conta e preferÃªncias
                 </p>
             </div>
             <div class="col-md-4 text-md-end">
@@ -43,10 +43,10 @@
     </div>
 }
 
-<!-- Conteúdo Principal -->
+<!-- ConteÃºdo Principal -->
 <div class="container my-5">
     <div class="row">
-        <!-- Sidebar com Estatísticas -->
+        <!-- Sidebar com EstatÃ­sticas -->
         <div class="col-lg-3 mb-4">
             <div class="card shadow-sm border-0">
                 <div class="card-body text-center">
@@ -64,11 +64,11 @@
                 </div>
             </div>
 
-            <!-- Estatísticas -->
+            <!-- EstatÃ­sticas -->
             <div class="card shadow-sm border-0 mt-3">
                 <div class="card-header bg-light">
                     <h6 class="mb-0 fw-bold">
-                        <i class="bi bi-graph-up"></i> Estatísticas
+                        <i class="bi bi-graph-up"></i> EstatÃ­sticas
                     </h6>
                 </div>
                 <div class="card-body">
@@ -86,7 +86,7 @@
                             <strong class="text-success">@(ViewBag.TotalVendas ?? 0)</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Veículos:</span>
+                            <span class="text-muted">VeÃ­culos:</span>
                             <strong class="text-info">@(ViewBag.TotalVeiculos ?? 0)</strong>
                         </div>
                         <hr />
@@ -99,11 +99,11 @@
                 </div>
             </div>
 
-            <!-- Links Rápidos -->
+            <!-- Links RÃ¡pidos -->
             <div class="card shadow-sm border-0 mt-3">
                 <div class="card-header bg-light">
                     <h6 class="mb-0 fw-bold">
-                        <i class="bi bi-link-45deg"></i> Links Rápidos
+                        <i class="bi bi-link-45deg"></i> Links RÃ¡pidos
                     </h6>
                 </div>
                 <div class="list-group list-group-flush">
@@ -119,7 +119,7 @@
                             <i class="bi bi-cash-stack"></i> Minhas Vendas
                         </a>
                         <a asp-area="Vendedores" asp-controller="Carros" asp-action="Index" class="list-group-item list-group-item-action">
-                            <i class="bi bi-car-front"></i> Meus Veículos
+                            <i class="bi bi-car-front"></i> Meus VeÃ­culos
                         </a>
                     }
                     <a asp-controller="Home" asp-action="Ajuda" class="list-group-item list-group-item-action">
@@ -129,7 +129,7 @@
             </div>
         </div>
 
-        <!-- Conteúdo Principal com Tabs -->
+        <!-- ConteÃºdo Principal com Tabs -->
         <div class="col-lg-9">
             <div class="card shadow-sm border-0">
                 <!-- Tabs Navigation -->
@@ -147,7 +147,7 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="seguranca-tab" data-bs-toggle="tab" data-bs-target="#seguranca" type="button" role="tab">
-                                <i class="bi bi-shield-check"></i> Segurança
+                                <i class="bi bi-shield-check"></i> SeguranÃ§a
                             </button>
                         </li>
                     </ul>
@@ -176,7 +176,7 @@
                                     <div class="col-md-6">
                                         <label asp-for="Email" class="form-label fw-bold"></label>
                                         <input asp-for="Email" class="form-control" readonly disabled />
-                                        <small class="text-muted">O email não pode ser alterado</small>
+                                        <small class="text-muted">O email nÃ£o pode ser alterado</small>
                                     </div>
 
                                     <div class="col-md-6">
@@ -193,13 +193,13 @@
 
                                     <div class="col-12">
                                         <label asp-for="Morada" class="form-label fw-bold"></label>
-                                        <textarea asp-for="Morada" class="form-control" rows="3" placeholder="Rua, Número, Código Postal, Localidade"></textarea>
+                                        <textarea asp-for="Morada" class="form-control" rows="3" placeholder="Rua, NÃºmero, CÃ³digo Postal, Localidade"></textarea>
                                         <span asp-validation-for="Morada" class="text-danger"></span>
                                     </div>
 
                                     <div class="col-12">
                                         <button type="submit" class="btn btn-primary btn-lg">
-                                            <i class="bi bi-save"></i> Guardar Alterações
+                                            <i class="bi bi-save"></i> Guardar AlteraÃ§Ãµes
                                         </button>
                                         <a asp-action="Perfil" class="btn btn-outline-secondary btn-lg ms-2">
                                             <i class="bi bi-x-circle"></i> Cancelar
@@ -217,22 +217,22 @@
 
                             <div class="alert alert-info">
                                 <i class="bi bi-info-circle-fill"></i> 
-                                <strong>Requisitos de Segurança:</strong>
+                                <strong>Requisitos de SeguranÃ§a:</strong>
                                 <ul class="mb-0 mt-2">
-                                    <li>Mínimo de 16 caracteres</li>
-                                    <li>Pelo menos uma letra maiúscula</li>
-                                    <li>Pelo menos uma letra minúscula</li>
-                                    <li>Pelo menos um número</li>
-                                    <li>Pelo menos um carácter especial (@@, #, $, etc.)</li>
+                                    <li>MÃ­nimo de 16 caracteres</li>
+                                    <li>Pelo menos uma letra maiÃºscula</li>
+                                    <li>Pelo menos uma letra minÃºscula</li>
+                                    <li>Pelo menos um nÃºmero</li>
+                                    <li>Pelo menos um carÃ¡cter especial (@@, #, $, etc.)</li>
                                 </ul>
                             </div>
 
                             <a asp-action="AlterarPassword" class="btn btn-warning btn-lg">
-                                <i class="bi bi-key"></i> Ir para Alteração de Password
+                                <i class="bi bi-key"></i> Ir para AlteraÃ§Ã£o de Password
                             </a>
                         </div>
 
-                        <!-- Tab: Segurança -->
+                        <!-- Tab: SeguranÃ§a -->
                         <div class="tab-pane fade" id="seguranca" role="tabpanel">
                             <h5 class="card-title mb-4 text-danger">
                                 <i class="bi bi-exclamation-triangle-fill"></i> Zona de Perigo
@@ -246,14 +246,14 @@
                                     Ao apagar a sua conta:
                                 </p>
                                 <ul>
-                                    <li>A conta será <strong>desativada permanentemente</strong></li>
-                                    <li>Não poderá fazer login novamente</li>
-                                    <li>Os seus anúncios ficam ocultos</li>
-                                    <li>O histórico de transações é mantido (obrigação legal)</li>
+                                    <li>A conta serÃ¡ <strong>desativada permanentemente</strong></li>
+                                    <li>NÃ£o poderÃ¡ fazer login novamente</li>
+                                    <li>Os seus anÃºncios ficam ocultos</li>
+                                    <li>O histÃ³rico de transaÃ§Ãµes Ã© mantido (obrigaÃ§Ã£o legal)</li>
                                 </ul>
                                 <hr />
                                 <p class="mb-0">
-                                    <strong>Esta ação não pode ser revertida!</strong>
+                                    <strong>Esta aÃ§Ã£o nÃ£o pode ser revertida!</strong>
                                 </p>
                             </div>
 
@@ -275,21 +275,21 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="confirmarApagarLabel">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Confirmar Eliminação
+                    <i class="bi bi-exclamation-triangle-fill"></i> Confirmar EliminaÃ§Ã£o
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p class="fw-bold">Tem a certeza absoluta que deseja apagar a sua conta?</p>
-                <p>Esta ação é <strong>irreversível</strong> e irá:</p>
+                <p>Esta aÃ§Ã£o Ã© <strong>irreversÃ­vel</strong> e irÃ¡:</p>
                 <ul>
                     <li>Desativar permanentemente a sua conta</li>
                     <li>Impedir futuros logins</li>
-                    <li>Ocultar todos os seus anúncios</li>
+                    <li>Ocultar todos os seus anÃºncios</li>
                 </ul>
                 <p class="text-danger">
                     <i class="bi bi-exclamation-circle-fill"></i> 
-                    <strong>Não será possível recuperar esta conta!</strong>
+                    <strong>NÃ£o serÃ¡ possÃ­vel recuperar esta conta!</strong>
                 </p>
             </div>
             <div class="modal-footer">
@@ -311,7 +311,7 @@
     <partial name="_ValidationScriptsPartial" />
     
     <script>
-        // Manter tab ativa após refresh
+        // Manter tab ativa apÃ³s refresh
         document.addEventListener('DOMContentLoaded', function() {
             var activeTab = localStorage.getItem('activePerfilTab');
             if (activeTab) {

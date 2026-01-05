@@ -37,7 +37,7 @@
                         <!-- Dropdown do Utilizador -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle"></i> @User.Identity?.Name?.Split("@@")[0]
+                                <i class="bi bi-person-circle"></i> @(User.Identity?.Name?.Split('@')[0] ?? "Utilizador")
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <li>
@@ -59,7 +59,7 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form asp-area="" asp-controller="Conta" asp-action="Logout" method="post" class="px-2">
-                                        @@Html.AntiForgeryToken()
+                                        @Html.AntiForgeryToken()
                                         <button type="submit" class="dropdown-item text-danger">
                                             <i class="bi bi-box-arrow-right"></i> Logout
                                         </button>

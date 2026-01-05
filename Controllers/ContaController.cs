@@ -338,8 +338,16 @@ namespace AutoMarket.Controllers
             {
                 // Recarregar ViewBag para estatísticas
                 var userTemp = await _userManager.GetUserAsync(User);
-                ViewBag.IsVendedor = await _userManager.IsInRoleAsync(userTemp!, Roles.Vendedor);
-                ViewBag.IsComprador = await _userManager.IsInRoleAsync(userTemp!, Roles.Comprador);
+                if (userTemp == null)
+                {
+                    ViewBag.IsVendedor = false;
+                    ViewBag.IsComprador = false;
+                }
+                else
+                {
+                    ViewBag.IsVendedor = await _userManager.IsInRoleAsync(userTemp, Roles.Vendedor);
+                    ViewBag.IsComprador = await _userManager.IsInRoleAsync(userTemp, Roles.Comprador);
+                }
                 return View(model);
             }
 

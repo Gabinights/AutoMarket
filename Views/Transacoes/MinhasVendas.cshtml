@@ -10,7 +10,7 @@
             <h2 class="fw-bold">
                 <i class="bi bi-graph-up-arrow text-success"></i> Minhas Vendas
             </h2>
-            <p class="text-muted">Histórico de todas as suas transações como vendedor</p>
+            <p class="text-muted">HistÃ³rico de todas as suas transaÃ§Ãµes como vendedor</p>
         </div>
     </div>
 
@@ -18,10 +18,10 @@
     {
         <div class="alert alert-info text-center py-5">
             <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
-            <h5>Ainda não realizou nenhuma venda</h5>
-            <p class="mb-3">Comece a vender os seus veículos na nossa plataforma!</p>
+            <h5>Ainda nÃ£o realizou nenhuma venda</h5>
+            <p class="mb-3">Comece a vender os seus veÃ­culos na nossa plataforma!</p>
             <a asp-area="Vendedores" asp-controller="Veiculos" asp-action="Create" class="btn btn-success">
-                <i class="bi bi-plus-circle"></i> Adicionar Veículo
+                <i class="bi bi-plus-circle"></i> Adicionar VeÃ­culo
             </a>
         </div>
     }
@@ -34,7 +34,7 @@
                     <div class="card shadow-sm hover-card">
                         <div class="card-body">
                             <div class="row align-items-center">
-                                <!-- Imagem do Veículo -->
+                                <!-- Imagem do VeÃ­culo -->
                                 <div class="col-md-3 col-12 mb-3 mb-md-0">
                                     @if (!string.IsNullOrEmpty(transacao.VeiculoImagemCapa))
                                     {
@@ -52,7 +52,7 @@
                                     }
                                 </div>
 
-                                <!-- Detalhes da Transação -->
+                                <!-- Detalhes da TransaÃ§Ã£o -->
                                 <div class="col-md-6 col-12">
                                     <h5 class="fw-bold mb-2">
                                         <a asp-controller="Veiculos" asp-action="Detalhe" asp-route-id="@transacao.VeiculoId" 
@@ -77,7 +77,7 @@
                                         <strong>Comprador:</strong> @transacao.CompradorNome
                                     </p>
                                     <p class="mb-1 small">
-                                        <strong>Método:</strong> @transacao.Metodo
+                                        <strong>MÃ©todo:</strong> @transacao.Metodo
                                     </p>
                                     @if (!string.IsNullOrEmpty(transacao.MoradaEnvioSnapshot))
                                     {
@@ -87,7 +87,7 @@
                                     }
                                 </div>
 
-                                <!-- Valor e Ações -->
+                                <!-- Valor e AÃ§Ãµes -->
                                 <div class="col-md-3 col-12 text-md-end">
                                     <h4 class="fw-bold text-success mb-3">
                                         @transacao.ValorPago.ToString("C2")
@@ -95,7 +95,7 @@
                                     <div class="d-grid gap-2">
                                         <a asp-controller="Veiculos" asp-action="Detalhe" asp-route-id="@transacao.VeiculoId" 
                                            class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i> Ver Veículo
+                                            <i class="bi bi-eye"></i> Ver VeÃ­culo
                                         </a>
                                         @if (!string.IsNullOrEmpty(transacao.NifFaturacaoSnapshot))
                                         {
@@ -126,7 +126,7 @@
                     </div>
                     <div class="col-md-4 col-12">
                         <h5 class="fw-bold text-info">@Model.Count(t => t.Estado == AutoMarket.Models.Enums.EstadoTransacao.Pago)</h5>
-                        <p class="text-muted mb-0">Vendas Concluídas</p>
+                        <p class="text-muted mb-0">Vendas ConcluÃ­das</p>
                     </div>
                 </div>
             </div>
@@ -135,7 +135,7 @@
         <!-- Dica para Vendedores -->
         <div class="alert alert-success mt-4">
             <i class="bi bi-lightbulb-fill"></i>
-            <strong>Dica:</strong> Mantenha os seus veículos sempre atualizados com fotos e descrições detalhadas para aumentar as vendas!
+            <strong>Dica:</strong> Mantenha os seus veÃ­culos sempre atualizados com fotos e descriÃ§Ãµes detalhadas para aumentar as vendas!
         </div>
     }
 </div>

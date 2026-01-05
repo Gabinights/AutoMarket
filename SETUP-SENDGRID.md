@@ -1,15 +1,15 @@
-# ?? Configuração SendGrid - AutoMarket
+ï»¿# ?? Configuraï¿½ï¿½o SendGrid - AutoMarket
 
-## O que é SendGrid?
-SendGrid é um **serviço profissional de email** usado por empresas como Uber, Spotify e Airbnb. Oferece 100 emails/dia GRÁTIS.
+## O que ï¿½ SendGrid?
+SendGrid ï¿½ um **serviï¿½o profissional de email** usado por empresas como Uber, Spotify e Airbnb. Oferece 100 emails/dia GRï¿½TIS.
 
 ## ? Vantagens
 - ? **Emails reais** enviados aos utilizadores
-- ? **100 emails/dia grátis** (para sempre)
-- ? **Relatórios e analytics**
-- ? **Alta deliverability** (não vai para spam)
+- ? **100 emails/dia grï¿½tis** (para sempre)
+- ? **Relatï¿½rios e analytics**
+- ? **Alta deliverability** (nï¿½o vai para spam)
 - ? **API Key** (mais seguro que passwords)
-- ? **Escalável** (até milhões de emails)
+- ? **Escalï¿½vel** (atï¿½ milhï¿½es de emails)
 
 ---
 
@@ -31,7 +31,7 @@ SendGrid é um **serviço profissional de email** usado por empresas como Uber, Sp
 
 ## ?? Passo 2: Criar API Key
 
-1. Após login, vá a: **Settings** ? **API Keys**
+1. Apï¿½s login, vï¿½ a: **Settings** ? **API Keys**
 2. Clique em **"Create API Key"**
 3. Configure:
    - **API Key Name**: `AutoMarket Production`
@@ -39,7 +39,7 @@ SendGrid é um **serviço profissional de email** usado por empresas como Uber, Sp
      - Escolha **"Restricted Access"**
      - Ative apenas: **Mail Send** ? Full Access
 4. Clique em **"Create & View"**
-5. **?? COPIE A API KEY AGORA** (só aparece uma vez!)
+5. **?? COPIE A API KEY AGORA** (sï¿½ aparece uma vez!)
    - Formato: `SG.xxxx-xxxx.yyyy_zzzz`
 
 ---
@@ -48,39 +48,39 @@ SendGrid é um **serviço profissional de email** usado por empresas como Uber, Sp
 
 SendGrid exige verificar o email "From" para prevenir spam:
 
-### Opção A: Single Sender Verification (Mais rápido)
+### Opï¿½ï¿½o A: Single Sender Verification (Mais rï¿½pido)
 
-1. Vá a: **Settings** ? **Sender Authentication** ? **Single Sender Verification**
+1. Vï¿½ a: **Settings** ? **Sender Authentication** ? **Single Sender Verification**
 2. Clique em **"Create New Sender"**
 3. Preencha:
    - **From Name**: AutoMarket
    - **From Email Address**: seu-email@gmail.com (ou qualquer email que controle)
    - **Reply To**: (mesmo que From)
    - **Company**: AutoMarket
-   - **Address, City, State, Zip, Country**: (pode ser fictício)
+   - **Address, City, State, Zip, Country**: (pode ser fictï¿½cio)
 4. Clique em **"Create"**
-5. **Verifique o email** que recebeu no endereço "From Email"
-6. Clique no link de verificação
+5. **Verifique o email** que recebeu no endereï¿½o "From Email"
+6. Clique no link de verificaï¿½ï¿½o
 
-### Opção B: Domain Authentication (Produção)
+### Opï¿½ï¿½o B: Domain Authentication (Produï¿½ï¿½o)
 
-Se tiver domínio próprio (automarket.com):
+Se tiver domï¿½nio prï¿½prio (automarket.com):
 1. **Settings** ? **Sender Authentication** ? **Authenticate Your Domain**
 2. Siga wizard para adicionar registos DNS
-3. (Mais complexo - use Single Sender para começar)
+3. (Mais complexo - use Single Sender para comeï¿½ar)
 
 ---
 
 ## ?? Passo 4: Configurar AutoMarket
 
-### Opção A: Usando o Script PowerShell
+### Opï¿½ï¿½o A: Usando o Script PowerShell
 
 ```powershell
-# Execute no diretório do projeto
+# Execute no diretï¿½rio do projeto
 .\setup-email-secrets.ps1
 
 # Quando pedir:
-# - Escolha opção "2. Outro (SMTP customizado)"
+# - Escolha opï¿½ï¿½o "2. Outro (SMTP customizado)"
 # - SMTP Server: smtp.sendgrid.net
 # - SMTP Port: 587
 # - SMTP Username: apikey (exatamente assim!)
@@ -90,11 +90,13 @@ Se tiver domínio próprio (automarket.com):
 # - From Name: AutoMarket
 ```
 
-### Opção B: Manual (Comandos PowerShell)
+### Opï¿½ï¿½o B: Manual (Comandos PowerShell)
 
 ```powershell
 # Navegue para o projeto
-cd "C:\Users\nunos\Source\Repos\AutoMarket2"
+cd "<path-to-your-project>"
+
+**Nota:** Navegue atÃ© ao diretÃ³rio onde clonou o projeto AutoMarket.
 
 # Configure User Secrets
 dotnet user-secrets init
@@ -112,11 +114,11 @@ dotnet user-secrets set "EmailSettings:SecureSocketOptions" "StartTls"
 ## ?? Passo 5: Testar
 
 ```powershell
-# Execute a aplicação
+# Execute a aplicaï¿½ï¿½o
 dotnet run
 
 # Registe um novo utilizador com SEU email real
-# - Vá a: https://localhost:XXXX/Conta/Register
+# - Vï¿½ a: https://localhost:XXXX/Conta/Register
 # - Use seu email pessoal
 # - Clique em "Registar"
 
@@ -127,8 +129,8 @@ dotnet run
 
 ## ?? Passo 6: Monitorizar (Opcional)
 
-1. Vá a: **Activity** no dashboard SendGrid
-2. Veja estatísticas:
+1. Vï¿½ a: **Activity** no dashboard SendGrid
+2. Veja estatï¿½sticas:
    - Emails enviados
    - Emails entregues
    - Aberturas (opens)
@@ -144,9 +146,9 @@ dotnet run
 ? API Key criada e copiada
 ? Sender Identity verificada
 ? User Secrets configurados
-? Aplicação executada
+? Aplicaï¿½ï¿½o executada
 ? Email REAL recebido
-? Link de confirmação funcionou
+? Link de confirmaï¿½ï¿½o funcionou
 ```
 
 ---
@@ -154,20 +156,20 @@ dotnet run
 ## ?? Troubleshooting
 
 ### Erro: "Mail Send permission required"
-- Verificar que API Key tem permissão **Mail Send ? Full Access**
+- Verificar que API Key tem permissï¿½o **Mail Send ? Full Access**
 
 ### Erro: "The from address does not match a verified Sender Identity"
-- Verificar que `FromEmail` é exatamente o email verificado no passo 3
+- Verificar que `FromEmail` ï¿½ exatamente o email verificado no passo 3
 - Ir a **Settings** ? **Sender Authentication** e confirmar status
 
-### Email não chega
+### Email nï¿½o chega
 - Verificar pasta spam/lixo
 - Ir a **Activity** no SendGrid para ver status da entrega
-- Verificar logs da aplicação para "Email sent successfully"
+- Verificar logs da aplicaï¿½ï¿½o para "Email sent successfully"
 
 ### Rate limit exceeded
 - Free tier: 100 emails/dia
-- Para mais, upgrade para plano pago (a partir de $19.95/mês para 50k emails)
+- Para mais, upgrade para plano pago (a partir de $19.95/mï¿½s para 50k emails)
 
 ---
 
@@ -175,28 +177,28 @@ dotnet run
 
 - ? **100 emails/dia** (para sempre!)
 - ? Email support (help@sendgrid.com)
-- ? Estatísticas básicas
+- ? Estatï¿½sticas bï¿½sicas
 - ? API completa
 - ? Webhooks
 
 **Suficiente para:**
 - Desenvolvimento
-- Produção inicial (até ~1000 utilizadores/mês)
+- Produï¿½ï¿½o inicial (atï¿½ ~1000 utilizadores/mï¿½s)
 
 ---
 
-## ?? Segurança
+## ?? Seguranï¿½a
 
 - ? API Key com scopes limitados
-- ? Rotação de keys fácil
+- ? Rotaï¿½ï¿½o de keys fï¿½cil
 - ? Logs de acesso
-- ? 2FA disponível
+- ? 2FA disponï¿½vel
 - ? Sem passwords pessoais
 
 **Para revogar API Key:**
 1. **Settings** ? **API Keys**
-2. Clique no ícone de lixo ao lado da key
-3. Crie nova key se necessário
+2. Clique no ï¿½cone de lixo ao lado da key
+3. Crie nova key se necessï¿½rio
 
 ---
 
@@ -204,29 +206,29 @@ dotnet run
 
 Considere upgrade para plano pago quando:
 - Enviar mais de 100 emails/dia
-- Precisar de suporte prioritário
-- Querer analytics avançadas
+- Precisar de suporte prioritï¿½rio
+- Querer analytics avanï¿½adas
 - Precisar de IP dedicado
 
-**Preços:**
-- **Essentials**: $19.95/mês ? 50k emails
-- **Pro**: $89.95/mês ? 100k emails + IP dedicado
-- **Premier**: Custom ? Milhões + Account Manager
+**Preï¿½os:**
+- **Essentials**: $19.95/mï¿½s ? 50k emails
+- **Pro**: $89.95/mï¿½s ? 100k emails + IP dedicado
+- **Premier**: Custom ? Milhï¿½es + Account Manager
 
 ---
 
-## ?? Próximos Passos
+## ?? Prï¿½ximos Passos
 
-### Para Produção:
-1. ? Autenticar domínio próprio (automarket.com)
+### Para Produï¿½ï¿½o:
+1. ? Autenticar domï¿½nio prï¿½prio (automarket.com)
 2. ? Configurar templates de email
 3. ? Implementar webhooks (tracking de opens/clicks)
-4. ? Configurar rate limiting no código
-5. ? Monitorizar reputação do sender
+4. ? Configurar rate limiting no cï¿½digo
+5. ? Monitorizar reputaï¿½ï¿½o do sender
 
 ### Exemplo de Template:
 SendGrid permite criar templates HTML profissionais:
 - **Marketing** ? **Dynamic Templates**
-- Usar handlebars para personalização
+- Usar handlebars para personalizaï¿½ï¿½o
 - Testar antes de enviar
 
