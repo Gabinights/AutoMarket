@@ -12,7 +12,10 @@ $files = @(
     "SETUP-MAILTRAP.md",
     "SETUP-SENDGRID.md",
     "CORRECAO-ACCESS-DENIED-404.md",
-    "PAGINA-PERFIL-COMPLETA.md"
+    "PAGINA-PERFIL-COMPLETA.md",
+    "CORRECOES_FASE2_ENCODING.md",
+    "CORRECOES_IMPLEMENTADAS.md",
+    "RELATORIO_FINAL_COMPLETO.md"
 )
 
 # Mapa CORRIGIDO de substituicoes - SEM duplicados, SEM no-ops
@@ -57,6 +60,22 @@ $replacements = @{
     "instala??o" = "instalação"
     "RECOMENDA??O" = "RECOMENDAÇÃO"
     "IMPLEMENTA??O" = "IMPLEMENTAÇÃO"
+    "CORRE??ES" = "CORREÇÕES"
+    "substitui??es" = "substituições"
+    "substitu??es" = "substituições"
+    "modifica??o" = "modificação"
+    "descri??o" = "descrição"
+    "fun??o" = "função"
+    "vers?o" = "versão"
+    "informa??o" = "informação"
+    "navega??o" = "navegação"
+    "integra??o" = "integração"
+    "migra??o" = "migração"
+    "autentica??o" = "autenticação"
+    "autoriza??o" = "autorização"
+    "codifica??o" = "codificação"
+    "tradi??o" = "tradição"
+    "preven??o" = "prevenção"
     
     # Padrao 2: Interrogacao (?)
     "S?nior" = "Sénior"
