@@ -1,0 +1,208 @@
+@model List<AutoMarket.Models.Entities.Visita>
+@using AutoMarket.Models.Enums
+
+@{
+    ViewData["Title"] = "Minhas Visitas";
+}
+
+<div class="container py-5">
+    <h1 class="mb-4">
+        <i class="bi bi-calendar-check"></i> Minhas Visitas Agendadas
+    </h1>
+
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Sucesso"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Erro"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Erro"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i> Ainda não agendou nenhuma visita.
+            <a href="@Url.Action("Index", "Veiculos")" class="alert-link">Procurar veículos e agendar</a>
+        </div>
+        return;
+    }
+
+    <!-- Separar visitas por status -->
+    @{
+        var visitasProximas = Model.Where(v => v.EstáAgendada).OrderBy(v => v.DataHora).ToList();
+        var visitasPassadas = Model.Where(v => !v.EstáAgendada).OrderByDescending(v => v.DataHora).ToList();
+    }
+
+    @if (visitasProximas.Any())
+    {
+        <h4 class="mb-3 mt-4">
+            <i class="bi bi-hourglass-split"></i> Próximas Visitas
+        </h4>
+
+        <div class="row g-4 mb-5">
+            @foreach (var visita in visitasProximas)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-primary">
+                        <!-- Imagem -->
+                        <div style="height: 200px; overflow: hidden;">
+                            @if (visita.Veiculo.Imagens.Any())
+                            {
+                                <img src="@visita.Veiculo.Imagens.First().CaminhoFicheiro"
+                                     class="card-img-top"
+                                     alt="@visita.Veiculo.Marca"
+                                     style="object-fit: cover; height: 100%;">
+                            }
+                            else
+                            {
+                                <img src="https://via.placeholder.com/400x300"
+                                     class="card-img-top"
+                                     alt="Sem imagem">
+                            }
+
+                            <!-- Estado Badge -->
+                            <span class="position-absolute top-0 end-0 m-2">
+                                @if (visita.Estado == EstadoVisita.Pendente)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-hourglass-split"></i> Aguardando Confirmação
+                                    </span>
+                                }
+                                else if (visita.Estado == EstadoVisita.Confirmada)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Confirmada
+                                    </span>
+                                }
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Veículo -->
+                            <h5 class="card-title">
+                                @visita.Veiculo.Marca <strong>@visita.Veiculo.Modelo</strong>
+                            </h5>
+
+                            <!-- Data/Hora -->
+                            <div class="alert alert-light border-primary mb-3">
+                                <i class="bi bi-calendar-event"></i>
+                                <strong>@visita.DataHora.ToString("dddd, dd/MM/yyyy 'às' HH:mm")</strong><br>
+                                <small class="text-muted">Agendada em @visita.DataAgendamento.ToShortDateString()</small>
+                            </div>
+
+                            <!-- Vendedor -->
+                            <p class="small mb-2">
+                                <i class="bi bi-person"></i>
+                                <strong>Vendedor:</strong> @visita.Vendedor.User.Nome<br>
+                                <i class="bi bi-telephone"></i> @visita.Vendedor.User.PhoneNumber
+                            </p>
+
+                            <!-- Notas do Comprador -->
+                            @if (!string.IsNullOrEmpty(visita.Notas))
+                            {
+                                <div class="small text-muted border-start ps-2 mb-2">
+                                    <i class="bi bi-chat-dots"></i>
+                                    <strong>Suas notas:</strong><br>
+                                    @visita.Notas
+                                </div>
+                            }
+
+                            <!-- Notas do Vendedor -->
+                            @if (!string.IsNullOrEmpty(visita.NotasVendedor))
+                            {
+                                <div class="alert alert-info small mb-2">
+                                    <i class="bi bi-chat-left"></i>
+                                    <strong>Notas do Vendedor:</strong><br>
+                                    @visita.NotasVendedor
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-white border-top">
+                            <div class="d-grid gap-2">
+                                <a href="@Url.Action("Detalhe", "Reservas", new { id = visita.VeiculoId })"
+                                   class="btn btn-info btn-sm">
+                                    <i class="bi bi-eye"></i> Ver Veículo
+                                </a>
+                            </div>
+
+                            @if (visita.EstáAgendada)
+                            {
+                                <form asp-action="CancelarVisita" asp-controller="Visitas" method="post" class="mt-2">
+                                    <input type="hidden" name="id" value="@visita.Id" />
+                                    <button type="submit"
+                                            class="btn btn-danger btn-sm w-100"
+                                            onclick="return confirm('Tem a certeza?')">
+                                        <i class="bi bi-trash"></i> Cancelar Visita
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (visitasPassadas.Any())
+    {
+        <h4 class="mb-3 mt-4">
+            <i class="bi bi-clock-history"></i> Histórico de Visitas
+        </h4>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Veículo</th>
+                        <th>Data</th>
+                        <th>Vendedor</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var visita in visitasPassadas)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@visita.Veiculo.Marca @visita.Veiculo.Modelo</strong>
+                            </td>
+                            <td>
+                                @visita.DataHora.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td>
+                                @visita.Vendedor.User.Nome
+                            </td>
+                            <td>
+                                @if (visita.Estado == EstadoVisita.Realizada)
+                                {
+                                    <span class="badge bg-success">Realizada</span>
+                                }
+                                else if (visita.Estado == EstadoVisita.Cancelada)
+                                {
+                                    <span class="badge bg-danger">Cancelada</span>
+                                }
+                                else if (visita.Estado == EstadoVisita.NaoRealizada)
+                                {
+                                    <span class="badge bg-warning">Não Realizada</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@visita.Estado</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

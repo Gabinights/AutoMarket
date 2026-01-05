@@ -63,6 +63,13 @@ builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 
 builder.Services.AddScoped<ICarrinhoService, CarrinhoService>();
 
+// Adicionar serviços de Reservas e Visitas
+builder.Services.AddScoped<IReservaService, ReservaService>();
+builder.Services.AddScoped<IVisitaService, VisitaService>();
+
+// Adicionar Background Service para limpeza de reservas expiradas
+builder.Services.AddHostedService<LimparReservasHostedService>();
+
 builder.Services.AddSession(options => {                 
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;

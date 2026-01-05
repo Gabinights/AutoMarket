@@ -1,0 +1,311 @@
+@model List<AutoMarket.Models.Entities.Visita>
+@using AutoMarket.Models.Enums
+
+@{
+    ViewData["Title"] = "Painel de Visitas";
+}
+
+<div class="container-fluid py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                <i class="bi bi-calendar2-check"></i> Painel de Visitas Agendadas
+            </h1>
+            <p class="text-muted">Gerencie as visitas que os compradores agendaram para seus veículos</p>
+        </div>
+    </div>
+
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Sucesso"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Erro"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Erro"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i> Nenhuma visita agendada ainda.
+        </div>
+        return;
+    }
+
+    <!-- Estatísticas -->
+    @{
+        var pendentes = Model.Count(v => v.Estado == EstadoVisita.Pendente);
+        var confirmadas = Model.Count(v => v.Estado == EstadoVisita.Confirmada);
+        var realizadas = Model.Count(v => v.Estado == EstadoVisita.Realizada);
+        var canceladas = Model.Count(v => v.Estado == EstadoVisita.Cancelada);
+    }
+
+    <div class="row mb-5 g-3">
+        <div class="col-md-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">
+                        <i class="bi bi-hourglass-split"></i>
+                    </h5>
+                    <h3 class="card-text">@pendentes</h3>
+                    <small class="text-muted">Aguardando Confirmação</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="bi bi-check-circle"></i>
+                    </h5>
+                    <h3 class="card-text">@confirmadas</h3>
+                    <small class="text-muted">Confirmadas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h5 class="card-title text-info">
+                        <i class="bi bi-calendar-check"></i>
+                    </h5>
+                    <h3 class="card-text">@realizadas</h3>
+                    <small class="text-muted">Realizadas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">
+                        <i class="bi bi-x-circle"></i>
+                    </h5>
+                    <h3 class="card-text">@canceladas</h3>
+                    <small class="text-muted">Canceladas</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visitas Organizadas por Estado -->
+    @{
+        var visitasPendentes = Model.Where(v => v.Estado == EstadoVisita.Pendente).OrderBy(v => v.DataHora).ToList();
+        var visitasConfirmadas = Model.Where(v => v.Estado == EstadoVisita.Confirmada).OrderBy(v => v.DataHora).ToList();
+        var outrasVisitas = Model.Where(v => v.Estado != EstadoVisita.Pendente && v.Estado != EstadoVisita.Confirmada).OrderByDescending(v => v.DataHora).ToList();
+    }
+
+    @if (visitasPendentes.Any())
+    {
+        <h4 class="mb-3 text-warning">
+            <i class="bi bi-hourglass-split"></i> Aguardando Confirmação (@visitasPendentes.Count)
+        </h4>
+
+        <div class="table-responsive mb-5">
+            <table class="table table-hover border">
+                <thead class="table-warning">
+                    <tr>
+                        <th>Veículo</th>
+                        <th>Comprador</th>
+                        <th>Data/Hora</th>
+                        <th>Contato</th>
+                        <th>Notas</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var visita in visitasPendentes)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@visita.Veiculo.Marca @visita.Veiculo.Modelo</strong><br>
+                                <small class="text-muted">@visita.Veiculo.Ano</small>
+                            </td>
+                            <td>
+                                @visita.Comprador.User.Nome
+                            </td>
+                            <td>
+                                <strong>@visita.DataHora.ToString("dd/MM/yyyy HH:mm")</strong><br>
+                                <small class="text-muted">
+                                    @{
+                                        var diasFalta = (visita.DataHora - DateTime.UtcNow).TotalDays;
+                                        if (diasFalta < 1)
+                                        {
+                                            <span class="badge bg-danger">Hoje/Amanhã</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Em @Math.Round(diasFalta) dias</span>
+                                        }
+                                    }
+                                </small>
+                            </td>
+                            <td>
+                                <i class="bi bi-telephone"></i> @visita.Comprador.User.PhoneNumber<br>
+                                <i class="bi bi-envelope"></i>
+                                <small>@visita.Comprador.User.Email</small>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(visita.Notas))
+                                {
+                                    <small class="text-muted">@visita.Notas</small>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">-</small>
+                                }
+                            </td>
+                            <td>
+                                <form asp-action="ConfirmarVisita" asp-controller="Visitas" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@visita.Id" />
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-circle"></i> Confirmar
+                                    </button>
+                                </form>
+
+                                <form asp-action="CancelarVisita" asp-controller="Visitas" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@visita.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Deseja rejeitar?')">
+                                        <i class="bi bi-x-circle"></i> Rejeitar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (visitasConfirmadas.Any())
+    {
+        <h4 class="mb-3 text-success">
+            <i class="bi bi-check-circle"></i> Confirmadas (@visitasConfirmadas.Count)
+        </h4>
+
+        <div class="table-responsive mb-5">
+            <table class="table table-hover border">
+                <thead class="table-success">
+                    <tr>
+                        <th>Veículo</th>
+                        <th>Comprador</th>
+                        <th>Data/Hora</th>
+                        <th>Contato</th>
+                        <th>Notas Comprador</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var visita in visitasConfirmadas)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@visita.Veiculo.Marca @visita.Veiculo.Modelo</strong><br>
+                                <small class="text-muted">€@visita.Veiculo.Preco.ToString("N2")</small>
+                            </td>
+                            <td>
+                                @visita.Comprador.User.Nome
+                            </td>
+                            <td>
+                                <strong>@visita.DataHora.ToString("dd/MM/yyyy HH:mm")</strong>
+
+                                @if (visita.DataJáPassou)
+                                {
+                                    <br>
+                                    <small class="badge bg-danger">Data Passou</small>
+                                }
+                                else
+                                {
+                                    <br>
+                                    <small class="text-muted">Em @Math.Round((visita.DataHora - DateTime.UtcNow).TotalHours) horas</small>
+                                }
+                            </td>
+                            <td>
+                                <i class="bi bi-telephone"></i> @visita.Comprador.User.PhoneNumber<br>
+                                <i class="bi bi-envelope"></i>
+                                <small>@visita.Comprador.User.Email</small>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(visita.Notas))
+                                {
+                                    <small>@visita.Notas</small>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">-</small>
+                                }
+                            </td>
+                            <td>
+                                @if (visita.DataJáPassou)
+                                {
+                                    <form asp-action="MarcarRealizada" asp-controller="Visitas" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@visita.Id" />
+                                        <button type="submit" class="btn btn-sm btn-info">
+                                            <i class="bi bi-calendar-check"></i> Marcar Realizada
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (outrasVisitas.Any())
+    {
+        <h4 class="mb-3">
+            <i class="bi bi-clock-history"></i> Histórico
+        </h4>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>Veículo</th>
+                        <th>Comprador</th>
+                        <th>Data/Hora</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var visita in outrasVisitas)
+                    {
+                        <tr class="table-light">
+                            <td>
+                                @visita.Veiculo.Marca @visita.Veiculo.Modelo
+                            </td>
+                            <td>
+                                @visita.Comprador.User.Nome
+                            </td>
+                            <td>
+                                @visita.DataHora.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td>
+                                @if (visita.Estado == EstadoVisita.Realizada)
+                                {
+                                    <span class="badge bg-success">Realizada</span>
+                                }
+                                else if (visita.Estado == EstadoVisita.Cancelada)
+                                {
+                                    <span class="badge bg-danger">Cancelada</span>
+                                }
+                                else if (visita.Estado == EstadoVisita.NaoRealizada)
+                                {
+                                    <span class="badge bg-warning">Não Realizada</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

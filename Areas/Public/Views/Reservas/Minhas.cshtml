@@ -1,0 +1,182 @@
+@model List<AutoMarket.Models.Entities.Reserva>
+@using AutoMarket.Models.Enums
+
+@{
+    ViewData["Title"] = "Minhas Reservas";
+}
+
+<div class="container py-5">
+    <h1 class="mb-4">
+        <i class="bi bi-bookmark-fill"></i> Minhas Reservas
+    </h1>
+
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Sucesso"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Erro"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Erro"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i> Não tem reservas criadas ainda.
+            <a href="@Url.Action("Index", "Veiculos")" class="alert-link">Começar a pesquisar veículos</a>
+        </div>
+        return;
+    }
+
+    <div class="row g-4">
+        @foreach (var reserva in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <!-- Imagem do Veículo -->
+                    <div class="position-relative" style="height: 200px; overflow: hidden;">
+                        @if (reserva.Veiculo.Imagens.Any())
+                        {
+                            <img src="@reserva.Veiculo.Imagens.First().CaminhoFicheiro"
+                                 class="card-img-top"
+                                 alt="@reserva.Veiculo.Marca"
+                                 style="object-fit: cover; height: 100%;">
+                        }
+                        else
+                        {
+                            <img src="https://via.placeholder.com/400x300?text=Sem+Imagem"
+                                 class="card-img-top"
+                                 alt="Sem imagem"
+                                 style="object-fit: cover; height: 100%;">
+                        }
+
+                        <!-- Badge de Estado -->
+                        <span class="position-absolute top-0 end-0 m-2">
+                            @if (reserva.Estado == EstadoReserva.Pendente)
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-hourglass-split"></i> Pendente
+                                </span>
+                            }
+                            else if (reserva.Estado == EstadoReserva.Confirmada)
+                            {
+                                <span class="badge bg-info text-white">
+                                    <i class="bi bi-check-circle"></i> Confirmada
+                                </span>
+                            }
+                            else if (reserva.Estado == EstadoReserva.Expirada)
+                            {
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-x-circle"></i> Expirada
+                                </span>
+                            }
+                            else if (reserva.Estado == EstadoReserva.Cancelada)
+                            {
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-trash"></i> Cancelada
+                                </span>
+                            }
+                            else if (reserva.Estado == EstadoReserva.Concluida)
+                            {
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-all"></i> Concluída
+                                </span>
+                            }
+                        </span>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- Título e Detalhes -->
+                        <h5 class="card-title">
+                            @reserva.Veiculo.Marca <strong>@reserva.Veiculo.Modelo</strong>
+                        </h5>
+
+                        <p class="card-text text-muted small">
+                            <i class="bi bi-calendar"></i> @reserva.Veiculo.Ano |
+                            <i class="bi bi-speedometer2"></i> @reserva.Veiculo.Km km
+                        </p>
+
+                        <!-- Preço -->
+                        <h6 class="text-success fw-bold">
+                            €@reserva.Veiculo.Preco.ToString("N2")
+                        </h6>
+
+                        <!-- Informações de Reserva -->
+                        <div class="small text-muted mb-3">
+                            <p class="mb-1">
+                                <i class="bi bi-calendar-event"></i>
+                                Criada: @reserva.DataCriacao.ToShortDateString()
+                            </p>
+                            <p class="mb-1">
+                                <i class="bi bi-calendar-x"></i>
+                                Válida até: <strong>@reserva.DataExpiracao.ToShortDateString()</strong>
+                            </p>
+                            @if (reserva.MotivoCancel != null)
+                            {
+                                <p class="mb-1">
+                                    <i class="bi bi-info-circle"></i>
+                                    Motivo: @reserva.MotivoCancel
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Vendedor -->
+                        <p class="card-text small">
+                            <i class="bi bi-person"></i>
+                            <strong>Vendedor:</strong> @reserva.Veiculo.Vendedor.User.Nome
+                        </p>
+                    </div>
+
+                    <div class="card-footer bg-white border-top">
+                        <!-- Botões de Ação -->
+                        @if (reserva.EstáVálida)
+                        {
+                            <!-- Reserva ainda é válida -->
+                            <div class="d-grid gap-2">
+                                <a href="@Url.Action("Agendar", "Visitas", new { veiculoId = reserva.VeiculoId })"
+                                   class="btn btn-primary btn-sm">
+                                    <i class="bi bi-calendar-check"></i> Agendar Visita
+                                </a>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-2">
+                                <a href="@Url.Action("Detalhes", "Reservas", new { id = reserva.Id })"
+                                   class="btn btn-info btn-sm">
+                                    <i class="bi bi-eye"></i> Ver Detalhes
+                                </a>
+                            </div>
+
+                            <form asp-action="Cancelar" asp-controller="Reservas" method="post" class="mt-2">
+                                <input type="hidden" name="id" value="@reserva.Id" />
+                                <button type="submit"
+                                        class="btn btn-danger btn-sm w-100"
+                                        onclick="return confirm('Tem a certeza que quer cancelar?')">
+                                    <i class="bi bi-trash"></i> Cancelar Reserva
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <!-- Reserva expirada ou cancelada -->
+                            <div class="alert alert-warning small mb-0">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Esta reserva não é mais válida.
+                            </div>
+                            <a href="@Url.Action("Detalhe", "Veiculos", new { id = reserva.VeiculoId })"
+                               class="btn btn-outline-secondary btn-sm w-100 mt-2">
+                                <i class="bi bi-eye"></i> Ver Veículo
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

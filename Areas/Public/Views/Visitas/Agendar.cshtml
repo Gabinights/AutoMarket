@@ -1,0 +1,137 @@
+@model AutoMarket.Models.Entities.Veiculo
+
+@{
+    ViewData["Title"] = "Agendar Visita";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Detalhes do Veículo -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div style="height: 250px; overflow: hidden;">
+                    @if (Model.Imagens.Any())
+                    {
+                        <img src="@Model.Imagens.First().CaminhoFicheiro"
+                             class="card-img-top"
+                             alt="@Model.Marca"
+                             style="object-fit: cover; height: 100%;">
+                    }
+                    else
+                    {
+                        <img src="https://via.placeholder.com/400x300?text=Sem+Imagem"
+                             class="card-img-top"
+                             alt="Sem imagem">
+                    }
+                </div>
+
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Marca <strong>@Model.Modelo</strong></h5>
+
+                    <p class="card-text">
+                        <strong>€@Model.Preco.ToString("N2")</strong><br>
+                        @Model.Ano | @Model.Km km | @Model.Combustivel
+                    </p>
+
+                    <p class="small text-muted">
+                        <i class="bi bi-geo-alt"></i> @Model.Localizacao<br>
+                        <i class="bi bi-person"></i> @Model.Vendedor.User.Nome<br>
+                        <i class="bi bi-telephone"></i> @Model.Vendedor.User.PhoneNumber
+                    </p>
+
+                    <a href="@Url.Action("Detalhe", "Veiculos", new { id = Model.Id })"
+                       class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-eye"></i> Ver Anúncio Completo
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Agendamento -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">
+                        <i class="bi bi-calendar-check"></i> Agendar Visita
+                    </h4>
+
+                    @if (ViewBag.Erro != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @ViewBag.Erro
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Agendar" asp-controller="Visitas" method="post" class="needs-validation">
+                        <input type="hidden" name="veiculoId" value="@Model.Id" />
+
+                        <!-- Data e Hora -->
+                        <div class="mb-3">
+                            <label for="dataHora" class="form-label">
+                                <i class="bi bi-calendar-event"></i> Data e Hora da Visita
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="datetime-local"
+                                   id="dataHora"
+                                   name="dataHora"
+                                   class="form-control"
+                                   required
+                                   min="@ViewBag.DataMinima" />
+                            <small class="form-text text-muted d-block mt-2">
+                                ?? <strong>Horário de funcionamento:</strong> Segunda a Sexta, 09:00 - 18:00<br>
+                                ?? <strong>Mínimo:</strong> 1 hora a partir de agora
+                            </small>
+                        </div>
+
+                        <!-- Notas -->
+                        <div class="mb-3">
+                            <label for="notas" class="form-label">
+                                <i class="bi bi-chat-dots"></i> Notas (Opcional)
+                            </label>
+                            <textarea id="notas"
+                                      name="notas"
+                                      class="form-control"
+                                      rows="4"
+                                      placeholder="Ex: Tenho interesse especial em ver a suspensão..."></textarea>
+                            <small class="form-text text-muted">
+                                Deixe aqui algum comentário relevante para o vendedor
+                            </small>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="alert alert-info small mb-3">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Após agendar,</strong> o vendedor receberá uma notificação e poderá confirmar ou rejeitar.
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                            <a href="@Url.Action("Detalhe", "Veiculos", new { id = Model.Id })"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Confirmar Agendamento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Validação HTML5
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+</script>

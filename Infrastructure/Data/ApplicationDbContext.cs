@@ -26,6 +26,8 @@ namespace AutoMarket.Infrastructure.Data
         public DbSet<Mensagem> Mensagens { get; set; }
         public DbSet<Transacao> Transacoes { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<Reserva> Reservas { get; set; } = null!;
+        public DbSet<Visita> Visitas { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -40,6 +42,8 @@ namespace AutoMarket.Infrastructure.Data
             builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>().HasMaxLength(50);
             builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>().HasMaxLength(50);
             builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Reserva>().Property(r => r.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Visita>().Property(v => v.Estado).HasConversion<string>().HasMaxLength(50);
 
             // Tipos SQL Especificos (Money)
             builder.Entity<Veiculo>().Property(v => v.Preco).HasColumnType("decimal(18,2)");
@@ -71,6 +75,36 @@ namespace AutoMarket.Infrastructure.Data
                 .HasIndex(v => v.Marca)
                 .HasDatabaseName("IX_Veiculo_Marca");
 
+            // Índices para Reservas
+            builder.Entity<Reserva>()
+                .HasIndex(r => r.VeiculoId)
+                .HasDatabaseName("IX_Reserva_VeiculoId");
+
+            builder.Entity<Reserva>()
+                .HasIndex(r => r.CompradorId)
+                .HasDatabaseName("IX_Reserva_CompradorId");
+
+            builder.Entity<Reserva>()
+                .HasIndex(r => r.DataExpiracao)
+                .HasDatabaseName("IX_Reserva_DataExpiracao");
+
+            // Índices para Visitas
+            builder.Entity<Visita>()
+                .HasIndex(v => v.VeiculoId)
+                .HasDatabaseName("IX_Visita_VeiculoId");
+
+            builder.Entity<Visita>()
+                .HasIndex(v => v.CompradorId)
+                .HasDatabaseName("IX_Visita_CompradorId");
+
+            builder.Entity<Visita>()
+                .HasIndex(v => v.VendedorId)
+                .HasDatabaseName("IX_Visita_VendedorId");
+
+            builder.Entity<Visita>()
+                .HasIndex(v => v.DataHora)
+                .HasDatabaseName("IX_Visita_DataHora");
+
             // Soft Delete Global Query Filter
             builder.Entity<Utilizador>().HasQueryFilter(u => !u.IsDeleted);
 
@@ -88,19 +122,40 @@ namespace AutoMarket.Infrastructure.Data
 
             // #region 3. Relacoes: Delete CASCADE (Pai morre -> Filhos morrem)
 
-            // Se apagar Vendedor -> Apaga os seus Ve�culos
+            // Se apagar Vendedor -> Apaga os seus Veículos
             builder.Entity<Veiculo>()
                 .HasOne(v => v.Vendedor)
                 .WithMany()
                 .HasForeignKey(v => v.VendedorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Se apagar Ve�culo -> Apaga as suas Imagens
+            // Se apagar Veículo -> Apaga as suas Imagens
             builder.Entity<VeiculoImagem>()
                 .HasOne(i => i.Veiculo)
                 .WithMany(v => v.Imagens)
                 .HasForeignKey(i => i.VeiculoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Se apagar Veículo -> Apaga as suas Reservas (NoAction para evitar ciclos)
+            builder.Entity<Reserva>()
+                .HasOne(r => r.Veiculo)
+                .WithMany()
+                .HasForeignKey(r => r.VeiculoId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Se apagar Vendedor -> Apaga as suas Visitas (NoAction para evitar ciclos)
+            builder.Entity<Visita>()
+                .HasOne(v => v.Vendedor)
+                .WithMany()
+                .HasForeignKey(v => v.VendedorId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Se apagar Veículo -> Apaga as suas Visitas (NoAction para evitar ciclos)
+            builder.Entity<Visita>()
+                .HasOne(v => v.Veiculo)
+                .WithMany()
+                .HasForeignKey(v => v.VeiculoId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // #endregion
 
