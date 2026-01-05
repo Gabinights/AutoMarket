@@ -1,3 +1,4 @@
+using AutoMarket.Models.Entities;
 using AutoMarket.Models.Enums;
 
 namespace AutoMarket.Models.ViewModels.Veiculos

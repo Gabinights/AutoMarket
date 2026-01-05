@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AutoMarket.Models.Entities;
 using AutoMarket.Models.Enums;
 using Microsoft.AspNetCore.Http;
 

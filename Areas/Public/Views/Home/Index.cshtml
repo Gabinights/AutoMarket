@@ -1,0 +1,149 @@
+@using AutoMarket.Models.Entities
+@using Microsoft.AspNetCore.Identity;
+@inject SignInManager<Utilizador> SignInManager
+@{
+    ViewData["Title"] = "Início";
+}
+
+<main class="py-5">
+    <!-- Hero Section -->
+    <section class="text-center mb-5 pb-4">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-4">Encontre o Seu Próximo Veículo</h1>
+            
+            <!-- Search Form -->
+            <form class="row g-3 justify-content-center mb-4" method="get" asp-area="" asp-controller="Veiculos" asp-action="Index">
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Marca" name="marca" />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Modelo" name="modelo" />
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control" placeholder="Preço até" name="precoMax" />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Pesquisar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Featured Vehicles -->
+    <section class="container mb-5">
+        <h2 class="h3 mb-4">Veículos em Destaque</h2>
+        <div class="row g-4">
+            <!-- Card 1 -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card h-100 shadow-sm vehicle-card">
+                    <img src="/images/carro_exemplo1.jpg" class="card-img-top" alt="BMW Série 1" style="height: 200px; object-fit: cover;" />
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">BMW Série 1</h5>
+                        <p class="card-text text-danger fw-bold fs-5">€19.900</p>
+                        <small class="text-muted">2019 • 45.000km • Lisboa</small>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card h-100 shadow-sm vehicle-card">
+                    <img src="/images/carro_exemplo2.jpg" class="card-img-top" alt="Renault Clio" style="height: 200px; object-fit: cover;" />
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Renault Clio</h5>
+                        <p class="card-text text-danger fw-bold fs-5">€13.400</p>
+                        <small class="text-muted">2018 • 33.000km • Porto</small>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card h-100 shadow-sm vehicle-card">
+                    <img src="/images/carro_exemplo3.jpg" class="card-img-top" alt="Volkswagen Golf" style="height: 200px; object-fit: cover;" />
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Volkswagen Golf</h5>
+                        <p class="card-text text-danger fw-bold fs-5">€22.500</p>
+                        <small class="text-muted">2020 • 29.900km • Braga</small>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card h-100 shadow-sm vehicle-card">
+                    <img src="/images/carro_exemplo4.jpg" class="card-img-top" alt="Fiat 500" style="height: 200px; object-fit: cover;" />
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Fiat 500</h5>
+                        <p class="card-text text-danger fw-bold fs-5">€10.950</p>
+                        <small class="text-muted">2016 • 70.000km • Faro</small>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row g-4 text-center">
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <h5 class="text-primary mb-2">
+                            <i class="bi bi-check-circle fs-3"></i>
+                        </h5>
+                        <h6>Garantia de Qualidade</h6>
+                        <p class="text-muted small">Todos os veículos são verificados e avaliados.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <h5 class="text-primary mb-2">
+                            <i class="bi bi-headset fs-3"></i>
+                        </h5>
+                        <h6>Suporte Dedicado</h6>
+                        <p class="text-muted small">Acompanhamento antes, durante e após a compra.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-box">
+                        <h5 class="text-primary mb-2">
+                            <i class="bi bi-shield-lock fs-3"></i>
+                        </h5>
+                        <h6>Compra Segura</h6>
+                        <p class="text-muted small">Pagamentos e reservas com total transparência.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<style>
+    .vehicle-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .vehicle-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .feature-box {
+        padding: 1.5rem;
+    }
+</style>

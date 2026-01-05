@@ -1,0 +1,50 @@
+﻿@using AutoMarket.Models;
+@using AutoMarket.Models.Entities
+@using Microsoft.AspNetCore.Identity;
+@inject SignInManager<Utilizador> SignInManager
+
+<header class="bg-primary py-3 sticky-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold fs-5" asp-area="Public" asp-controller="Home" asp-action="Index">
+                🚗 AutoMarket
+            </a>
+
+            <!-- Toggler para Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menu Principal -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Links Centrais -->
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Public" asp-controller="Home" asp-action="Sobre">Sobre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Public" asp-controller="Home" asp-action="Ajuda">Ajuda</a>
+                    </li>
+                </ul>
+
+                <!-- Links Direita (Autenticação) -->
+                <partial name="~/Areas/Public/Views/Shared/_LoginPartial.cshtml" />
+            </div>
+        </div>
+    </nav>
+</header>
+
+<style>
+    header .navbar-dark .nav-link:hover {
+        color: var(--cor-cta) !important;
+        transition: color 0.2s;
+    }
+
+    header .btn-warning:hover {
+        background-color: #e6a800 !important;
+    }
+</style>
+
+
+

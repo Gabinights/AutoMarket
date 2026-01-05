@@ -1,5 +1,5 @@
-using AutoMarket.Data;
-using AutoMarket.Models;
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Models.Entities;
 using AutoMarket.Models.Enums;
 using AutoMarket.Models.ViewModels.Veiculos;
 using AutoMarket.Services.Interfaces;
@@ -12,12 +12,10 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 {
     /// <summary>
     /// Controller para gerenciar ve�culos da �rea de Vendedores.
-    /// Requer autentica��o e email confirmado.
+    /// Requer autenticação e email confirmado.
     /// </summary>
     [Area("Vendedores")]
-    [Authorize]
     [Authorize(Policy = "VendedorAprovado")]
-    [Route("Vendedores/{controller=Veiculos}/{action=Index}/{id?}")]
     public class VeiculosController : Controller
     {
         private readonly ApplicationDbContext _context;
