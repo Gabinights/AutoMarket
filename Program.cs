@@ -50,7 +50,8 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 })
 .AddUserStore<CustomUserStore>()
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddClaimsPrincipalFactory<CustomClaimsPrincipalFactory>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthorizationHandler, VendedorAprovadoHandler>();

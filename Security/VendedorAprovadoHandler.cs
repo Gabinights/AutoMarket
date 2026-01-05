@@ -35,14 +35,25 @@ namespace AutoMarket.Security
                 return;
             }
 
-            var userId = _userManager.GetUserId(userPrincipal);
-            if (string.IsNullOrEmpty(userId)) return;
+            // 2. Tentar obter StatusVendedor da claim (otimização - evita query à BD)
+            var statusClaim = userPrincipal.FindFirst("StatusVendedor")?.Value;
+            StatusAprovacao? status = null;
 
-            // 2. Ir à Base de Dados ver o Status
-            var status = await _context.Vendedores
-                .Where(v => v.UserId == userId)
-                .Select(v => v.Status)
-                .FirstOrDefaultAsync();
+            if (!string.IsNullOrEmpty(statusClaim) && Enum.TryParse<StatusAprovacao>(statusClaim, out var parsedStatus))
+            {
+                status = parsedStatus;
+            }
+            else
+            {
+                // Fallback: Se a claim não existir, fazer query à BD (compatibilidade)
+                var userId = _userManager.GetUserId(userPrincipal);
+                if (string.IsNullOrEmpty(userId)) return;
+
+                status = await _context.Vendedores
+                    .Where(v => v.UserId == userId)
+                    .Select(v => v.Status)
+                    .FirstOrDefaultAsync();
+            }
 
             // 3. O momento da verdade
             if (status == StatusAprovacao.Aprovado)

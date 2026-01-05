@@ -14,11 +14,16 @@ namespace AutoMarket.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
+        private readonly SignInManager<Utilizador> _signInManager;
 
-        public AdminController(ApplicationDbContext context, UserManager<Utilizador> userManager)
+        public AdminController(
+            ApplicationDbContext context, 
+            UserManager<Utilizador> userManager,
+            SignInManager<Utilizador> signInManager)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         // GET: Admin/Index (Lista de Pendentes)
@@ -52,6 +57,13 @@ namespace AutoMarket.Controllers
             vendedor.Aprovar(_userManager.GetUserId(User));
             await _context.SaveChangesAsync();
 
+            // Refresh do cookie para atualizar as claims (StatusVendedor)
+            var user = await _userManager.FindByIdAsync(vendedor.UserId);
+            if (user != null)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+            }
+
             TempData["MensagemStatus"] = "Vendedor aprovado com sucesso!";
             return RedirectToAction(nameof(Index));
         }
@@ -71,6 +83,13 @@ namespace AutoMarket.Controllers
 
             vendedor.Rejeitar(_userManager.GetUserId(User), motivo);
             await _context.SaveChangesAsync();
+
+            // Refresh do cookie para atualizar as claims (StatusVendedor)
+            var user = await _userManager.FindByIdAsync(vendedor.UserId);
+            if (user != null)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+            }
 
             TempData["MensagemStatus"] = "Vendedor rejeitado.";
             return RedirectToAction(nameof(Index));
