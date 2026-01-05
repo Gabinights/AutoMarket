@@ -1,5 +1,3 @@
-using AutoMarket.Models.Enums;
-
 namespace AutoMarket.Models.DTOs
 {
     public sealed record CheckoutInitDto(

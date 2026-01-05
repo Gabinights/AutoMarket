@@ -1,6 +1,5 @@
 ﻿using AutoMarket.Infrastructure.Data;
 using AutoMarket.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers

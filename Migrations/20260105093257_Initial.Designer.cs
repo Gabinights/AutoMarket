@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoMarket.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251224132323_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260105093257_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,112 +25,7 @@ namespace AutoMarket.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("AutoMarket.Models.Carro", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Ano")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Caixa")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("CategoriaId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Combustivel")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("DataCriacao")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Km")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Localizacao")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Marca")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Modelo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<decimal>("Preco")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("VendedorId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoriaId");
-
-                    b.HasIndex("VendedorId");
-
-                    b.ToTable("Carros");
-                });
-
-            modelBuilder.Entity("AutoMarket.Models.CarroImagem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CaminhoFicheiro")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int>("CarroId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("IsCapa")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CarroId");
-
-                    b.ToTable("CarroImagens");
-                });
-
-            modelBuilder.Entity("AutoMarket.Models.Categoria", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Categoria", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -148,7 +43,7 @@ namespace AutoMarket.Migrations
                     b.ToTable("Categorias");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Comprador", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Comprador", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -171,7 +66,7 @@ namespace AutoMarket.Migrations
                     b.ToTable("Compradores");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Denuncia", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Denuncia", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -195,18 +90,19 @@ namespace AutoMarket.Migrations
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Motivo")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<int?>("TargetCarroId")
-                        .HasColumnType("int");
-
                     b.Property<string>("TargetUserId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("TargetVeiculoId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -214,23 +110,20 @@ namespace AutoMarket.Migrations
 
                     b.HasIndex("DenuncianteId");
 
-                    b.HasIndex("TargetCarroId");
-
                     b.HasIndex("TargetUserId");
+
+                    b.HasIndex("TargetVeiculoId");
 
                     b.ToTable("Denuncias");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Mensagem", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Mensagem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CarroId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Conteudo")
                         .IsRequired()
@@ -251,27 +144,27 @@ namespace AutoMarket.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                    b.Property<int?>("VeiculoId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("CarroId");
+                    b.HasKey("Id");
 
                     b.HasIndex("DestinatarioId");
 
                     b.HasIndex("RemetenteId");
 
+                    b.HasIndex("VeiculoId");
+
                     b.ToTable("Mensagens");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Transacao", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Transacao", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CarroId")
-                        .HasColumnType("int");
 
                     b.Property<int>("CompradorId")
                         .HasColumnType("int");
@@ -281,11 +174,13 @@ namespace AutoMarket.Migrations
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Metodo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("MoradaEnvioSnapshot")
                         .IsRequired()
@@ -298,16 +193,19 @@ namespace AutoMarket.Migrations
                     b.Property<decimal>("ValorPago")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("VeiculoId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("CarroId");
-
                     b.HasIndex("CompradorId");
+
+                    b.HasIndex("VeiculoId");
 
                     b.ToTable("Transacoes");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Utilizador", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Utilizador", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -340,6 +238,9 @@ namespace AutoMarket.Migrations
                     b.Property<bool>("IsBlocked")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -350,6 +251,10 @@ namespace AutoMarket.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NIF")
+                        .HasMaxLength(9)
+                        .HasColumnType("nvarchar(9)");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -396,7 +301,134 @@ namespace AutoMarket.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Vendedor", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Veiculo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Ano")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Caixa")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CategoriaId1")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Combustivel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Condicao")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Km")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Localizacao")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Marca")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Modelo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Preco")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("VendedorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VendedorId1")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("CategoriaId1");
+
+                    b.HasIndex("Estado")
+                        .HasDatabaseName("IX_Veiculo_Estado");
+
+                    b.HasIndex("Marca")
+                        .HasDatabaseName("IX_Veiculo_Marca");
+
+                    b.HasIndex("VendedorId")
+                        .HasDatabaseName("IX_Veiculo_VendedorId");
+
+                    b.HasIndex("VendedorId1");
+
+                    b.ToTable("Veiculos");
+                });
+
+            modelBuilder.Entity("AutoMarket.Models.Entities.VeiculoImagem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CaminhoFicheiro")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsCapa")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("VeiculoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VeiculoId");
+
+                    b.ToTable("VeiculoImagens");
+                });
+
+            modelBuilder.Entity("AutoMarket.Models.Entities.Vendedor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -412,16 +444,15 @@ namespace AutoMarket.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("NIF")
-                        .HasMaxLength(9)
-                        .HasColumnType("nvarchar(9)");
-
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("TipoConta")
-                        .HasColumnType("int");
+                    b.Property<string>("TipoConta")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -570,39 +601,9 @@ namespace AutoMarket.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Carro", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Comprador", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Categoria", "Categoria")
-                        .WithMany("Carros")
-                        .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AutoMarket.Models.Vendedor", "Vendedor")
-                        .WithMany("CarrosAVenda")
-                        .HasForeignKey("VendedorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Categoria");
-
-                    b.Navigation("Vendedor");
-                });
-
-            modelBuilder.Entity("AutoMarket.Models.CarroImagem", b =>
-                {
-                    b.HasOne("AutoMarket.Models.Carro", "Carro")
-                        .WithMany("Imagens")
-                        .HasForeignKey("CarroId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Carro");
-                });
-
-            modelBuilder.Entity("AutoMarket.Models.Comprador", b =>
-                {
-                    b.HasOne("AutoMarket.Models.Utilizador", "User")
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -611,88 +612,126 @@ namespace AutoMarket.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Denuncia", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Denuncia", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Utilizador", "AnalisadoPorAdmin")
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "AnalisadoPorAdmin")
                         .WithMany()
                         .HasForeignKey("AnalisadoPorAdminId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("AutoMarket.Models.Utilizador", "Denunciante")
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "Denunciante")
                         .WithMany()
                         .HasForeignKey("DenuncianteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("AutoMarket.Models.Carro", "TargetCarro")
-                        .WithMany()
-                        .HasForeignKey("TargetCarroId");
-
-                    b.HasOne("AutoMarket.Models.Utilizador", "TargetUser")
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "TargetUser")
                         .WithMany()
                         .HasForeignKey("TargetUserId");
+
+                    b.HasOne("AutoMarket.Models.Entities.Veiculo", "TargetVeiculo")
+                        .WithMany()
+                        .HasForeignKey("TargetVeiculoId");
 
                     b.Navigation("AnalisadoPorAdmin");
 
                     b.Navigation("Denunciante");
 
-                    b.Navigation("TargetCarro");
-
                     b.Navigation("TargetUser");
+
+                    b.Navigation("TargetVeiculo");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Mensagem", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Mensagem", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Carro", "Carro")
-                        .WithMany()
-                        .HasForeignKey("CarroId");
-
-                    b.HasOne("AutoMarket.Models.Utilizador", "Destinatario")
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "Destinatario")
                         .WithMany()
                         .HasForeignKey("DestinatarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("AutoMarket.Models.Utilizador", "Remetente")
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "Remetente")
                         .WithMany()
                         .HasForeignKey("RemetenteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Carro");
+                    b.HasOne("AutoMarket.Models.Entities.Veiculo", "Veiculo")
+                        .WithMany()
+                        .HasForeignKey("VeiculoId");
 
                     b.Navigation("Destinatario");
 
                     b.Navigation("Remetente");
+
+                    b.Navigation("Veiculo");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Transacao", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Transacao", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Carro", "Carro")
-                        .WithMany()
-                        .HasForeignKey("CarroId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AutoMarket.Models.Comprador", "Comprador")
+                    b.HasOne("AutoMarket.Models.Entities.Comprador", "Comprador")
                         .WithMany()
                         .HasForeignKey("CompradorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Carro");
+                    b.HasOne("AutoMarket.Models.Entities.Veiculo", "Veiculo")
+                        .WithMany()
+                        .HasForeignKey("VeiculoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Comprador");
+
+                    b.Navigation("Veiculo");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Vendedor", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Veiculo", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Utilizador", "ApprovedByAdmin")
+                    b.HasOne("AutoMarket.Models.Entities.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AutoMarket.Models.Entities.Categoria", null)
+                        .WithMany("Veiculos")
+                        .HasForeignKey("CategoriaId1");
+
+                    b.HasOne("AutoMarket.Models.Entities.Vendedor", "Vendedor")
+                        .WithMany()
+                        .HasForeignKey("VendedorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AutoMarket.Models.Entities.Vendedor", null)
+                        .WithMany("VeiculosAVenda")
+                        .HasForeignKey("VendedorId1");
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("Vendedor");
+                });
+
+            modelBuilder.Entity("AutoMarket.Models.Entities.VeiculoImagem", b =>
+                {
+                    b.HasOne("AutoMarket.Models.Entities.Veiculo", "Veiculo")
+                        .WithMany("Imagens")
+                        .HasForeignKey("VeiculoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Veiculo");
+                });
+
+            modelBuilder.Entity("AutoMarket.Models.Entities.Vendedor", b =>
+                {
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "ApprovedByAdmin")
                         .WithMany()
                         .HasForeignKey("ApprovedByAdminId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("AutoMarket.Models.Utilizador", "User")
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -714,7 +753,7 @@ namespace AutoMarket.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Utilizador", null)
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -723,7 +762,7 @@ namespace AutoMarket.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Utilizador", null)
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -738,7 +777,7 @@ namespace AutoMarket.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AutoMarket.Models.Utilizador", null)
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -747,26 +786,26 @@ namespace AutoMarket.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("AutoMarket.Models.Utilizador", null)
+                    b.HasOne("AutoMarket.Models.Entities.Utilizador", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Carro", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Categoria", b =>
+                {
+                    b.Navigation("Veiculos");
+                });
+
+            modelBuilder.Entity("AutoMarket.Models.Entities.Veiculo", b =>
                 {
                     b.Navigation("Imagens");
                 });
 
-            modelBuilder.Entity("AutoMarket.Models.Categoria", b =>
+            modelBuilder.Entity("AutoMarket.Models.Entities.Vendedor", b =>
                 {
-                    b.Navigation("Carros");
-                });
-
-            modelBuilder.Entity("AutoMarket.Models.Vendedor", b =>
-                {
-                    b.Navigation("CarrosAVenda");
+                    b.Navigation("VeiculosAVenda");
                 });
 #pragma warning restore 612, 618
         }

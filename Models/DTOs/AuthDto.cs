@@ -1,5 +1,3 @@
-using AutoMarket.Models.Enums;
-
 namespace AutoMarket.Models.DTOs
 {
     public sealed record RegisterDto(string Email, string Password, string Nome, string Morada, string? Contacto, string? Nif, TipoConta TipoConta);

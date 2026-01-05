@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AutoMarket.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -34,8 +34,10 @@ namespace AutoMarket.Migrations
                     Morada = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     DataRegisto = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Contacto = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    NIF = table.Column<string>(type: "nvarchar(9)", maxLength: 9, nullable: true),
                     IsBlocked = table.Column<bool>(type: "bit", nullable: false),
                     BlockReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -202,9 +204,8 @@ namespace AutoMarket.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    NIF = table.Column<string>(type: "nvarchar(9)", maxLength: 9, nullable: true),
-                    TipoConta = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TipoConta = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     ApprovedByAdminId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
                     MotivoRejeicao = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
@@ -226,7 +227,7 @@ namespace AutoMarket.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Carros",
+                name: "Veiculos",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -241,48 +242,39 @@ namespace AutoMarket.Migrations
                     Combustivel = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Caixa = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Localizacao = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Condicao = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     Descricao = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    Estado = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    VendedorId = table.Column<int>(type: "int", nullable: false)
+                    VendedorId = table.Column<int>(type: "int", nullable: false),
+                    CategoriaId1 = table.Column<int>(type: "int", nullable: true),
+                    VendedorId1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Carros", x => x.Id);
+                    table.PrimaryKey("PK_Veiculos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Carros_Categorias_CategoriaId",
+                        name: "FK_Veiculos_Categorias_CategoriaId",
                         column: x => x.CategoriaId,
                         principalTable: "Categorias",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Carros_Vendedores_VendedorId",
+                        name: "FK_Veiculos_Categorias_CategoriaId1",
+                        column: x => x.CategoriaId1,
+                        principalTable: "Categorias",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Veiculos_Vendedores_VendedorId",
                         column: x => x.VendedorId,
                         principalTable: "Vendedores",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "CarroImagens",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CaminhoFicheiro = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    ContentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    IsCapa = table.Column<bool>(type: "bit", nullable: false),
-                    CarroId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CarroImagens", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CarroImagens_Carros_CarroId",
-                        column: x => x.CarroId,
-                        principalTable: "Carros",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_Veiculos_Vendedores_VendedorId1",
+                        column: x => x.VendedorId1,
+                        principalTable: "Vendedores",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -292,10 +284,10 @@ namespace AutoMarket.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DenuncianteId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TargetCarroId = table.Column<int>(type: "int", nullable: true),
+                    TargetVeiculoId = table.Column<int>(type: "int", nullable: true),
                     TargetUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Motivo = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Estado = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DecisaoAdmin = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AnalisadoPorAdminId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true)
@@ -321,9 +313,9 @@ namespace AutoMarket.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Denuncias_Carros_TargetCarroId",
-                        column: x => x.TargetCarroId,
-                        principalTable: "Carros",
+                        name: "FK_Denuncias_Veiculos_TargetVeiculoId",
+                        column: x => x.TargetVeiculoId,
+                        principalTable: "Veiculos",
                         principalColumn: "Id");
                 });
 
@@ -338,7 +330,7 @@ namespace AutoMarket.Migrations
                     Lida = table.Column<bool>(type: "bit", nullable: false),
                     RemetenteId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     DestinatarioId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CarroId = table.Column<int>(type: "int", nullable: true)
+                    VeiculoId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -356,9 +348,9 @@ namespace AutoMarket.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Mensagens_Carros_CarroId",
-                        column: x => x.CarroId,
-                        principalTable: "Carros",
+                        name: "FK_Mensagens_Veiculos_VeiculoId",
+                        column: x => x.VeiculoId,
+                        principalTable: "Veiculos",
                         principalColumn: "Id");
                 });
 
@@ -370,28 +362,50 @@ namespace AutoMarket.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DataTransacao = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ValorPago = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Metodo = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Estado = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Metodo = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     MoradaEnvioSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     NifFaturacaoSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CarroId = table.Column<int>(type: "int", nullable: false),
+                    VeiculoId = table.Column<int>(type: "int", nullable: false),
                     CompradorId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Transacoes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Transacoes_Carros_CarroId",
-                        column: x => x.CarroId,
-                        principalTable: "Carros",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_Transacoes_Compradores_CompradorId",
                         column: x => x.CompradorId,
                         principalTable: "Compradores",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transacoes_Veiculos_VeiculoId",
+                        column: x => x.VeiculoId,
+                        principalTable: "Veiculos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VeiculoImagens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CaminhoFicheiro = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    IsCapa = table.Column<bool>(type: "bit", nullable: false),
+                    VeiculoId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VeiculoImagens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VeiculoImagens_Veiculos_VeiculoId",
+                        column: x => x.VeiculoId,
+                        principalTable: "Veiculos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -434,21 +448,6 @@ namespace AutoMarket.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CarroImagens_CarroId",
-                table: "CarroImagens",
-                column: "CarroId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Carros_CategoriaId",
-                table: "Carros",
-                column: "CategoriaId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Carros_VendedorId",
-                table: "Carros",
-                column: "VendedorId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Compradores_UserId",
                 table: "Compradores",
                 column: "UserId",
@@ -465,19 +464,14 @@ namespace AutoMarket.Migrations
                 column: "DenuncianteId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Denuncias_TargetCarroId",
-                table: "Denuncias",
-                column: "TargetCarroId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Denuncias_TargetUserId",
                 table: "Denuncias",
                 column: "TargetUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Mensagens_CarroId",
-                table: "Mensagens",
-                column: "CarroId");
+                name: "IX_Denuncias_TargetVeiculoId",
+                table: "Denuncias",
+                column: "TargetVeiculoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Mensagens_DestinatarioId",
@@ -490,14 +484,54 @@ namespace AutoMarket.Migrations
                 column: "RemetenteId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transacoes_CarroId",
-                table: "Transacoes",
-                column: "CarroId");
+                name: "IX_Mensagens_VeiculoId",
+                table: "Mensagens",
+                column: "VeiculoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transacoes_CompradorId",
                 table: "Transacoes",
                 column: "CompradorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transacoes_VeiculoId",
+                table: "Transacoes",
+                column: "VeiculoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VeiculoImagens_VeiculoId",
+                table: "VeiculoImagens",
+                column: "VeiculoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Veiculo_Estado",
+                table: "Veiculos",
+                column: "Estado");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Veiculo_Marca",
+                table: "Veiculos",
+                column: "Marca");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Veiculo_VendedorId",
+                table: "Veiculos",
+                column: "VendedorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Veiculos_CategoriaId",
+                table: "Veiculos",
+                column: "CategoriaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Veiculos_CategoriaId1",
+                table: "Veiculos",
+                column: "CategoriaId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Veiculos_VendedorId1",
+                table: "Veiculos",
+                column: "VendedorId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Vendedores_ApprovedByAdminId",
@@ -530,9 +564,6 @@ namespace AutoMarket.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "CarroImagens");
-
-            migrationBuilder.DropTable(
                 name: "Denuncias");
 
             migrationBuilder.DropTable(
@@ -542,13 +573,16 @@ namespace AutoMarket.Migrations
                 name: "Transacoes");
 
             migrationBuilder.DropTable(
+                name: "VeiculoImagens");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Carros");
+                name: "Compradores");
 
             migrationBuilder.DropTable(
-                name: "Compradores");
+                name: "Veiculos");
 
             migrationBuilder.DropTable(
                 name: "Categorias");

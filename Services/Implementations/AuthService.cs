@@ -1,11 +1,6 @@
 using AutoMarket.Infrastructure.Data;
 using AutoMarket.Infrastructure.Utils;
-using AutoMarket.Models;
 using AutoMarket.Models.Constants;
-using AutoMarket.Models.DTOs;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.Enums;
-using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;

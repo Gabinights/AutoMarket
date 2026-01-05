@@ -1,10 +1,5 @@
-﻿using AutoMarket.Models.DTOs;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.ViewModels;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
+﻿using AutoMarket.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 
 namespace AutoMarket.Areas.Public.Controllers
 {

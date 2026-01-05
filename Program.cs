@@ -1,10 +1,6 @@
-using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http;
 using AutoMarket.Services.Implementations;
-using AutoMarket.Models.Entities;
 using AutoMarket.Models.Constants;
 using AutoMarket.Infrastructure.Data;
 using AutoMarket.Infrastructure.Security;
@@ -46,8 +42,8 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = true;
 })
-.AddUserStore<CustomUserStore>()
-.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddEntityFrameworkStores<ApplicationDbContext>() 
+.AddUserStore<CustomUserStore>()                
 .AddDefaultTokenProviders()
 .AddClaimsPrincipalFactory<CustomClaimsPrincipalFactory>();
 

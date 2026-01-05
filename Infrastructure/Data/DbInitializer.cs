@@ -1,10 +1,6 @@
-﻿using AutoMarket.Models;
-using AutoMarket.Models.Constants;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.Enums;
+﻿using AutoMarket.Models.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 
 namespace AutoMarket.Infrastructure.Data
 {

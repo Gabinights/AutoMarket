@@ -34,6 +34,7 @@
     <Folder Include="Areas\Public\Pages\" />
     <Folder Include="Areas\Vendedores\Pages\" />
     <Folder Include="docs\" />
+    <Folder Include="Infrastructure\Migrations\" />
     <Folder Include="Models\ViewModels\Carros\" />
   </ItemGroup>
 </Project>

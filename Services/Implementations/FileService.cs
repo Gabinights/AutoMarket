@@ -3,7 +3,7 @@ using AutoMarket.Services.Interfaces;
 namespace AutoMarket.Services.Implementations
 {
     /// <summary>
-    /// Servi�o para gerenciar upload e processamento de ficheiros.
+    /// Serviço para gerenciar upload e processamento de ficheiros.
     /// </summary>
     public class FileService : IFileService
     {
@@ -157,6 +157,10 @@ namespace AutoMarket.Services.Implementations
                 var maxSizeMB = maxSizeInBytes / (1024 * 1024);
                 return $"Ficheiro demasiado grande. M�ximo: {maxSizeMB} MB";
             }
+
+            // Validar Magic Numbers (segurança crítica)
+            if (!ValidateImageMagicNumbers(file))
+                return "Ficheiro inv�lido: o conte�do do ficheiro n�o corresponde a uma imagem v�lida.";
 
             return string.Empty;
         }

@@ -1,8 +1,5 @@
 ﻿using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers

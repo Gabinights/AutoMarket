@@ -1,6 +1,5 @@
 ﻿using AutoMarket.Models.ViewModels;
 using AutoMarket.Services;
-using Microsoft.AspNetCore.Mvc;
 
 namespace AutoMarket.Areas.Public.Views.Cart
 {
