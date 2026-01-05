@@ -1,4 +1,4 @@
-namespace AutoMarket.Models.Entities
+namespace AutoMarket.Services.Interfaces
 {
     /// <summary>
     /// Interface para entidades que suportam Soft Delete.

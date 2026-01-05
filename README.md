@@ -1,5 +1,6 @@
 Here's the improved README.md file incorporating the new content while maintaining the existing structure and information:
-
+
+
 # Project Title
 
 ## Description
@@ -41,7 +42,8 @@ Set a strong 256-bit encryption key via secret configuration (never commit keys 
 
 ## Contact
 
-[Details on how to contact the project maintainers or contributors.]
+[Details on how to contact the project maintainers or contributors.]
+
 
 ### Changes Made:
 1. Incorporated the new "Security: Encryption Key Configuration" section into the existing structure.

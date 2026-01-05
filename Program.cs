@@ -1,10 +1,12 @@
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Infrastructure.Options;
+using AutoMarket.Infrastructure.Security;
+using AutoMarket.Models.Constants;
+using AutoMarket.Services;
+using AutoMarket.Services.Implementations;
+using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using AutoMarket.Services.Implementations;
-using AutoMarket.Models.Constants;
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Infrastructure.Security;
-using AutoMarket.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,9 +61,15 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ViewRenderService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IReservaService, ReservaService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 
 builder.Services.AddScoped<ICarrinhoService, CarrinhoService>();
+
+// Opções
+builder.Services.Configure<ReservationOptions>(builder.Configuration.GetSection("Reservation"));
+
+
 
 builder.Services.AddSession(options => {                 
     options.IdleTimeout = TimeSpan.FromMinutes(30);

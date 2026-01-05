@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System.Linq;
-using AutoMarket.Models.Entities;
 using AutoMarket.Infrastructure.Security;
 
 namespace AutoMarket.Infrastructure.Data
@@ -26,12 +24,15 @@ namespace AutoMarket.Infrastructure.Data
         public DbSet<Mensagem> Mensagens { get; set; }
         public DbSet<Transacao> Transacoes { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<Reserva> Reservas { get; set; } = null!;
+        public DbSet<Visita> Visitas { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // #region 1. Configuracao de Propriedades (Enums & Tipos SQL)
+            // Aplica todas as configurations (incluindo Reserva/Visita)
+            builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
             // Conversao de Enums para String (Legibilidade na BD)
             builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>().HasMaxLength(50);
@@ -40,6 +41,8 @@ namespace AutoMarket.Infrastructure.Data
             builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>().HasMaxLength(50);
             builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>().HasMaxLength(50);
             builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Reserva>().Property(r => r.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Visita>().Property(v => v.Estado).HasConversion<string>().HasMaxLength(50);
 
             // Tipos SQL Especificos (Money)
             builder.Entity<Veiculo>().Property(v => v.Preco).HasColumnType("decimal(18,2)");
