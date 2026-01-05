@@ -269,30 +269,52 @@ namespace AutoMarket.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            // LÓGICA DE SOFT DELETE
-            // 1. Ofuscar dados pessoais (Opcional, mas recomendado por RGPD)
-            // user.Email = $"deleted_{Guid.NewGuid()}@automarket.com";
-            // user.UserName = user.Email;
-            // user.Nome = "Utilizador Eliminado";
-            // user.NIF = null; 
-
-            // 2. Marcar como eliminado
-            user.IsDeleted = true;
-
-            // 3. Atualizar na BD
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
+            try
             {
-                // 4. Fazer Logout forçado
+                // LÓGICA DE SOFT DELETE
+                // 1. Invalidar sessão IMEDIATAMENTE (antes de atualizar BD)
+                // Isto garante que mesmo se houver erro na BD, a sessão já está invalidada
                 await _signInManager.SignOutAsync();
-                _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete).", user.Id);
+                
+                // 2. Marcar como eliminado
+                user.IsDeleted = true;
+                
+                // 3. Ofuscar dados pessoais (Recomendado por RGPD)
+                // Nota: Manter email único para evitar conflitos, mas torná-lo não utilizável
+                var deletedEmailSuffix = $"deleted_{Guid.NewGuid():N}@automarket.invalid";
+                user.Email = deletedEmailSuffix;
+                user.UserName = deletedEmailSuffix;
+                user.NormalizedEmail = deletedEmailSuffix.ToUpperInvariant();
+                user.NormalizedUserName = deletedEmailSuffix.ToUpperInvariant();
+                user.Nome = "Utilizador Eliminado";
+                user.NIF = null; // Remover NIF encriptado (RGPD: direito ao esquecimento)
+                user.Morada = string.Empty;
+                user.Contacto = string.Empty;
 
+                // 4. Atualizar na BD
+                var result = await _userManager.UpdateAsync(user);
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete). Sessão invalidada.", user.Id);
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // Se falhar a atualização, logar erro mas a sessão já foi invalidada
+                foreach (var error in result.Errors)
+                {
+                    _logger.LogError("Erro ao atualizar utilizador {Id} após soft delete: {Error}", user.Id, error.Description);
+                }
+                
+                // Mesmo com erro, redirecionar para home (sessão já foi invalidada)
                 return RedirectToAction("Index", "Home");
             }
-
-            // Tratar erro...
-            return View("Perfil");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro crítico ao apagar conta do utilizador {Id}", user.Id);
+                // Mesmo com exceção, a sessão foi invalidada, redirecionar
+                return RedirectToAction("Index", "Home");
+            }
         }
     }
 }

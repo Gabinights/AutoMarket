@@ -3,7 +3,7 @@ using AutoMarket.Services.Interfaces;
 namespace AutoMarket.Services
 {
     /// <summary>
-    /// Serviço para gerenciar upload e processamento de ficheiros.
+    /// Serviï¿½o para gerenciar upload e processamento de ficheiros.
     /// </summary>
     public class FileService : IFileService
     {
@@ -17,34 +17,41 @@ namespace AutoMarket.Services
         }
 
         /// <summary>
-        /// Faz upload de um ficheiro único.
+        /// Faz upload de um ficheiro Ãºnico.
         /// </summary>
         public async Task<string> UploadFileAsync(IFormFile file, string uploadFolder)
         {
             try
             {
-                // Validação
+                // ValidaÃ§Ã£o
                 if (file == null || file.Length == 0)
-                    throw new ArgumentException("Ficheiro inválido ou vazio.");
+                    throw new ArgumentException("Ficheiro invÃ¡lido ou vazio.");
 
-                // Validar extensão
+                // Validar extensÃ£o
                 var extension = Path.GetExtension(file.FileName).ToLower();
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
 
                 if (!allowedExtensions.Contains(extension))
-                    throw new ArgumentException($"Extensão '{extension}' não permitida. Use: {string.Join(", ", allowedExtensions)}");
+                    throw new ArgumentException($"ExtensÃ£o '{extension}' nÃ£o permitida. Use: {string.Join(", ", allowedExtensions)}");
 
                 // Validar tamanho (10 MB)
                 const long maxFileSize = 10 * 1024 * 1024;
                 if (file.Length > maxFileSize)
-                    throw new ArgumentException($"Ficheiro demasiado grande. Máximo: 10 MB");
+                    throw new ArgumentException($"Ficheiro demasiado grande. MÃ¡ximo: 10 MB");
 
-                // Criar pasta se não existir
+                // VALIDAÃ‡ÃƒO CRÃTICA: Verificar Magic Numbers (bytes de cabeÃ§alho)
+                // Previne upload de ficheiros maliciosos renomeados (ex: malware.exe -> image.jpg)
+                if (!ValidateImageMagicNumbers(file))
+                {
+                    throw new ArgumentException("Ficheiro invÃ¡lido: o conteÃºdo do ficheiro nÃ£o corresponde a uma imagem vÃ¡lida.");
+                }
+
+                // Criar pasta se nÃ£o existir
                 var uploadPath = Path.Combine(_webHostEnvironment.WebRootPath, uploadFolder);
                 if (!Directory.Exists(uploadPath))
                     Directory.CreateDirectory(uploadPath);
 
-                // Gerar nome único com GUID
+                // Gerar nome Ãºnico com GUID
                 var fileName = $"{Guid.NewGuid()}{extension}";
                 var filePath = Path.Combine(uploadPath, fileName);
 
@@ -65,7 +72,7 @@ namespace AutoMarket.Services
         }
 
         /// <summary>
-        /// Faz upload de múltiplos ficheiros.
+        /// Faz upload de mï¿½ltiplos ficheiros.
         /// </summary>
         public async Task<List<string>> UploadMultipleFilesAsync(List<IFormFile> files, string uploadFolder)
         {
@@ -77,14 +84,14 @@ namespace AutoMarket.Services
 
             const int maxFilesPerCar = 10;
             if (files.Count > maxFilesPerCar)
-                throw new ArgumentException($"Máximo de {maxFilesPerCar} ficheiros permitidos.");
+                throw new ArgumentException($"Mï¿½ximo de {maxFilesPerCar} ficheiros permitidos.");
 
             // Validar tamanho total
             const long maxTotalSize = 50 * 1024 * 1024; // 50 MB
             var totalSize = files.Sum(f => f.Length);
 
             if (totalSize > maxTotalSize)
-                throw new ArgumentException($"Tamanho total demasiado grande. Máximo: 50 MB");
+                throw new ArgumentException($"Tamanho total demasiado grande. Mï¿½ximo: 50 MB");
 
             // Fazer upload de cada ficheiro
             foreach (var file in files)
@@ -97,7 +104,7 @@ namespace AutoMarket.Services
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Erro ao fazer upload de um ficheiro. Continuando com os restantes.");
-                    // Continuar com os próximos ficheiros
+                    // Continuar com os prï¿½ximos ficheiros
                 }
             }
 
@@ -112,39 +119,43 @@ namespace AutoMarket.Services
             if (file == null || file.Length == 0)
                 return false;
 
-            // Validar extensão
+            // Validar extensÃ£o
             var extension = Path.GetExtension(file.FileName).ToLower();
             if (!allowedExtensions.Contains(extension))
                 return false;
 
             // Validar tamanho
             if (file.Length > maxSizeInBytes)
+                return false;
+
+            // Validar Magic Numbers (seguranÃ§a crÃ­tica)
+            if (!ValidateImageMagicNumbers(file))
                 return false;
 
             return true;
         }
 
         /// <summary>
-        /// Obtém mensagem de erro de validação de ficheiro.
+        /// Obtï¿½m mensagem de erro de validaï¿½ï¿½o de ficheiro.
         /// </summary>
         public string GetFileValidationError(IFormFile file, long maxSizeInBytes, string[] allowedExtensions)
         {
             if (file == null)
-                return "Ficheiro não fornecido.";
+                return "Ficheiro nï¿½o fornecido.";
 
             if (file.Length == 0)
                 return "Ficheiro vazio.";
 
-            // Validar extensão
+            // Validar extensï¿½o
             var extension = Path.GetExtension(file.FileName).ToLower();
             if (!allowedExtensions.Contains(extension))
-                return $"Extensão '{extension}' não permitida. Use: {string.Join(", ", allowedExtensions)}";
+                return $"Extensï¿½o '{extension}' nï¿½o permitida. Use: {string.Join(", ", allowedExtensions)}";
 
             // Validar tamanho
             if (file.Length > maxSizeInBytes)
             {
                 var maxSizeMB = maxSizeInBytes / (1024 * 1024);
-                return $"Ficheiro demasiado grande. Máximo: {maxSizeMB} MB";
+                return $"Ficheiro demasiado grande. Mï¿½ximo: {maxSizeMB} MB";
             }
 
             return string.Empty;
@@ -161,7 +172,7 @@ namespace AutoMarket.Services
 
                 if (!File.Exists(fullPath))
                 {
-                    _logger.LogWarning("Ficheiro não encontrado: {FilePath}", fullPath);
+                    _logger.LogWarning("Ficheiro nÃ£o encontrado: {FilePath}", fullPath);
                     return false;
                 }
 
@@ -172,6 +183,72 @@ namespace AutoMarket.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro ao apagar ficheiro: {FilePath}", filePath);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Valida os Magic Numbers (bytes de cabeÃ§alho) de um ficheiro de imagem.
+        /// Esta validaÃ§Ã£o Ã© crÃ­tica para seguranÃ§a: previne upload de ficheiros maliciosos
+        /// que foram renomeados para parecer imagens (ex: malware.exe -> image.jpg).
+        /// </summary>
+        private bool ValidateImageMagicNumbers(IFormFile file)
+        {
+            try
+            {
+                // Ler os primeiros bytes do ficheiro (Magic Numbers)
+                var header = new byte[12];
+                using (var stream = file.OpenReadStream())
+                {
+                    var bytesRead = stream.Read(header, 0, header.Length);
+                    if (bytesRead < 4) // Precisamos pelo menos 4 bytes para validar
+                        return false;
+
+                    stream.Position = 0; // Reset para permitir leitura posterior
+                }
+
+                // JPEG: FF D8 FF
+                if (header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF)
+                {
+                    return true;
+                }
+
+                // PNG: 89 50 4E 47 0D 0A 1A 0A
+                if (header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47 &&
+                    header[4] == 0x0D && header[5] == 0x0A && header[6] == 0x1A && header[7] == 0x0A)
+                {
+                    return true;
+                }
+
+                // WebP: RIFF ... WEBP
+                // RIFF signature: 52 49 46 46 (RIFF em ASCII)
+                // WebP signature comeÃ§a no byte 8: 57 45 42 50 (WEBP em ASCII)
+                if (header.Length >= 12 &&
+                    header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46 &&
+                    header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50)
+                {
+                    return true;
+                }
+
+                // GIF: 47 49 46 38 (GIF8)
+                if (header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x38)
+                {
+                    return true;
+                }
+
+                // BMP: 42 4D (BM em ASCII)
+                if (header[0] == 0x42 && header[1] == 0x4D)
+                {
+                    return true;
+                }
+
+                _logger.LogWarning("Ficheiro rejeitado: Magic Numbers nÃ£o correspondem a uma imagem vÃ¡lida. Primeiros bytes: {Bytes}", 
+                    BitConverter.ToString(header.Take(8).ToArray()));
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao validar Magic Numbers do ficheiro: {FileName}", file.FileName);
                 return false;
             }
         }

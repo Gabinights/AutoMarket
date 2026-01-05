@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using AutoMarket.Models;
+using AutoMarket.Services;
 
 namespace AutoMarket.Data
 {
@@ -71,18 +73,28 @@ namespace AutoMarket.Data
             // Soft Delete Global Query Filter
             builder.Entity<Utilizador>().HasQueryFilter(u => !u.IsDeleted);
 
+            // EncriptaÃ§Ã£o do NIF (RGPD compliance) usando helper estÃ¡tico
+            var nifConverter = new ValueConverter<string?, string?>(
+                v => string.IsNullOrEmpty(v) ? v : NifEncryptionHelper.EncryptNif(v),
+                v => string.IsNullOrEmpty(v) ? v : NifEncryptionHelper.DecryptNif(v),
+                convertsNulls: true);
+
+            builder.Entity<Utilizador>()
+                .Property(u => u.NIF)
+                .HasConversion(nifConverter);
+
             // #endregion
 
             // #region 3. Relacoes: Delete CASCADE (Pai morre -> Filhos morrem)
 
-            // Se apagar Vendedor -> Apaga os seus Veículos
+            // Se apagar Vendedor -> Apaga os seus Veï¿½culos
             builder.Entity<Veiculo>()
                 .HasOne(v => v.Vendedor)
                 .WithMany()
                 .HasForeignKey(v => v.VendedorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Se apagar Veículo -> Apaga as suas Imagens
+            // Se apagar Veï¿½culo -> Apaga as suas Imagens
             builder.Entity<VeiculoImagem>()
                 .HasOne(i => i.Veiculo)
                 .WithMany(v => v.Imagens)

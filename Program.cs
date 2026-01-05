@@ -24,11 +24,14 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
            .AddSupportedUICultures(supportedCultures);
 });
 
+// Adiciona o serviço de encriptação (RGPD compliance)
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+
 // Adiciona o DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Adiciona o ASP.NET Core Identity
+// Adiciona o ASP.NET Core Identity com UserStore customizado (soft delete)
 builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 {
     // --- Configuração de Password ---
@@ -45,6 +48,7 @@ builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = true;
 })
+.AddUserStore<CustomUserStore>()
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
@@ -97,6 +101,10 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+// Inicializar o helper de encriptação do NIF após construir a aplicação
+var encryptionService = app.Services.GetRequiredService<IEncryptionService>();
+NifEncryptionHelper.Initialize(encryptionService);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
