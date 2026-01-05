@@ -1,3 +1,4 @@
+using AutoMarket.Models.Entities;
 using System.ComponentModel.DataAnnotations;
 
 namespace AutoMarket.Models.ViewModels.Veiculos

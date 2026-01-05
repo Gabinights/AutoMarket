@@ -1,0 +1,34 @@
+﻿<footer class="bg-light border-top mt-5 py-4">
+    <div class="container">
+        <div class="row gy-3 align-items-center">
+            <div class="col-md-4 text-md-start text-center">
+                <a class="navbar-brand fw-bold" asp-area="Public" asp-controller="Home" asp-action="Index">
+                    🚗 AutoMarket
+                </a>
+                <div class="text-muted small">© @DateTime.UtcNow.Year AutoMarket. Todos os direitos reservados.</div>
+            </div>
+
+            <div class="col-md-4">
+                <ul class="nav justify-content-center">
+                    <li class="nav-item">
+                        <a class="nav-link px-2 text-muted" asp-area="Public" asp-controller="Home" asp-action="Index">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-2 text-muted" asp-area="Public" asp-controller="Veiculos" asp-action="Index">Veículos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-2 text-muted" asp-area="Public" asp-controller="Home" asp-action="Sobre">Sobre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-2 text-muted" asp-area="Public" asp-controller="Home" asp-action="Ajuda">Ajuda</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-4 text-md-end text-center">
+                <div class="text-muted small">Precisa de ajuda?</div>
+                <a class="text-decoration-none" href="mailto:support@automarket.com">support@automarket.com</a>
+            </div>
+        </div>
+    </div>
+</footer>

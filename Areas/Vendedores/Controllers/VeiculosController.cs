@@ -1,22 +1,21 @@
-using AutoMarket.Data;
-using AutoMarket.Models;
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Models.Entities;
 using AutoMarket.Models.Enums;
 using AutoMarket.Models.ViewModels.Veiculos;
 using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Vendedores.Controllers
 {
     /// <summary>
-    /// Controller para gerenciar veículos da área de Vendedores.
-    /// Requer autenticação e email confirmado.
+    /// Controller para gerenciar veï¿½culos da ï¿½rea de Vendedores.
+    /// Requer autenticaÃ§Ã£o e email confirmado.
     /// </summary>
     [Area("Vendedores")]
-    [Authorize]
     [Authorize(Policy = "VendedorAprovado")]
-    [Route("Vendedores/{controller=Veiculos}/{action=Index}/{id?}")]
     public class VeiculosController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -34,7 +33,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
         }
 
         /// <summary>
-        /// Obtém o vendedor logado pelo userId do contexto.
+        /// Obtï¿½m o vendedor logado pelo userId do contexto.
         /// </summary>
         private async Task<Vendedor?> GetVendedorLogado()
         {
@@ -47,7 +46,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
         /// <summary>
         /// GET: Vendedores/Veiculos/Index
-        /// Lista todos os veículos do vendedor logado (excluindo removidos).
+        /// Lista todos os veï¿½culos do vendedor logado (excluindo removidos).
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -72,7 +71,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
         /// <summary>
         /// GET: Vendedores/Veiculos/Create
-        /// Exibe formulário para criar novo veículo.
+        /// Exibe formulï¿½rio para criar novo veï¿½culo.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Create()
@@ -86,7 +85,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
         /// <summary>
         /// POST: Vendedores/Veiculos/Create
-        /// Cria um novo veículo no sistema com upload de imagens.
+        /// Cria um novo veï¿½culo no sistema com upload de imagens.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -95,7 +94,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
             var vendedor = await GetVendedorLogado();
             if (vendedor == null)
             {
-                _logger.LogWarning("Tentativa de criação de veículo sem vendedor logado");
+                _logger.LogWarning("Tentativa de criaï¿½ï¿½o de veï¿½culo sem vendedor logado");
                 return Unauthorized();
             }
 
@@ -141,23 +140,39 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Veículo criado com sucesso. ID: {VeiculoId}, Vendedor: {VendedorId}, Imagens: {ImagemCount}",
+                    "Veï¿½culo criado com sucesso. ID: {VeiculoId}, Vendedor: {VendedorId}, Imagens: {ImagemCount}",
                     veiculo.Id, vendedor.Id, imagens.Count);
 
-                TempData["Sucesso"] = $"Veículo '{veiculo.Marca} {veiculo.Modelo}' criado com sucesso com {imagens.Count} imagens!";
+                TempData["Sucesso"] = $"Veï¿½culo '{veiculo.Marca} {veiculo.Modelo}' criado com sucesso com {imagens.Count} imagens!";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError(ex, "Erro na validação de ficheiro durante criação de veículo");
+                _logger.LogError(ex, "Erro na validaï¿½ï¿½o de ficheiro durante criaï¿½ï¿½o de veï¿½culo");
                 ModelState.AddModelError("Fotos", ex.Message);
+                viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
+                return View(viewModel);
+            }
+            catch (DbUpdateException ex)
+            {
+                // Check for SQL Server Unique Constraint Violation
+                if (ex.InnerException is SqlException sqlEx 
+                    && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+                {
+                    ModelState.AddModelError("", "JÃ¡ existe um veÃ­culo registado com estes dados.");
+                }
+                else
+                {
+                    _logger.LogError(ex, "Database error creating vehicle for vendedor {VendedorId}", vendedor.Id);
+                    ModelState.AddModelError("", "Erro de base de dados. Tente novamente.");
+                }
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao criar veículo para vendedor {VendedorId}", vendedor.Id);
-                ModelState.AddModelError(string.Empty, "Erro ao guardar o veículo. Tente novamente.");
+                _logger.LogError(ex, "Erro ao criar veï¿½culo para vendedor {VendedorId}", vendedor.Id);
+                ModelState.AddModelError(string.Empty, "Erro ao guardar o veï¿½culo. Tente novamente.");
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
@@ -165,7 +180,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
         /// <summary>
         /// GET: Vendedores/Veiculos/Edit/5
-        /// Exibe formulário para editar um veículo existente.
+        /// Exibe formulï¿½rio para editar um veï¿½culo existente.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Edit(int? id)
@@ -176,7 +191,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
             var vendedor = await GetVendedorLogado();
             if (vendedor == null)
             {
-                _logger.LogWarning("Tentativa de edição sem vendedor logado");
+                _logger.LogWarning("Tentativa de ediï¿½ï¿½o sem vendedor logado");
                 return Unauthorized();
             }
 
@@ -186,15 +201,15 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
             if (veiculo == null)
             {
-                _logger.LogWarning("Veículo não encontrado. ID: {VeiculoId}", id);
+                _logger.LogWarning("Veï¿½culo nï¿½o encontrado. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
-            // Verificar se o veículo pertence ao vendedor logado
+            // Verificar se o veï¿½culo pertence ao vendedor logado
             if (veiculo.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de edição de veículo de outro vendedor. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
+                    "Tentativa de ediï¿½ï¿½o de veï¿½culo de outro vendedor. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
@@ -207,7 +222,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
         /// <summary>
         /// POST: Vendedores/Veiculos/Edit/5
-        /// Atualiza um veículo existente com novo upload de imagens (opcional).
+        /// Atualiza um veï¿½culo existente com novo upload de imagens (opcional).
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -219,7 +234,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
             var vendedor = await GetVendedorLogado();
             if (vendedor == null)
             {
-                _logger.LogWarning("Tentativa de edição sem vendedor logado");
+                _logger.LogWarning("Tentativa de ediï¿½ï¿½o sem vendedor logado");
                 return Unauthorized();
             }
 
@@ -235,14 +250,14 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
             if (veiculoExistente == null)
             {
-                _logger.LogWarning("Veículo não encontrado para edição. ID: {VeiculoId}", id);
+                _logger.LogWarning("Veï¿½culo nï¿½o encontrado para ediï¿½ï¿½o. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
             if (veiculoExistente.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de edição não autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
+                    "Tentativa de ediï¿½ï¿½o nï¿½o autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
@@ -269,7 +284,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                     }
                 }
 
-                // Atualizar campos do veículo
+                // Atualizar campos do veï¿½culo
                 veiculoExistente.Titulo = viewModel.Titulo;
                 veiculoExistente.Marca = viewModel.Marca;
                 veiculoExistente.Modelo = viewModel.Modelo;
@@ -287,23 +302,39 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Veículo atualizado com sucesso. ID: {VeiculoId}, Vendedor: {VendedorId}",
+                    "Veï¿½culo atualizado com sucesso. ID: {VeiculoId}, Vendedor: {VendedorId}",
                     id, vendedor.Id);
 
-                TempData["Sucesso"] = "Veículo atualizado com sucesso!";
+                TempData["Sucesso"] = "Veï¿½culo atualizado com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError(ex, "Erro na validação de ficheiro durante edição de veículo");
+                _logger.LogError(ex, "Erro na validaï¿½ï¿½o de ficheiro durante ediï¿½ï¿½o de veï¿½culo");
                 ModelState.AddModelError("Fotos", ex.Message);
+                viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
+                return View(viewModel);
+            }
+            catch (DbUpdateException ex)
+            {
+                // Check for SQL Server Unique Constraint Violation
+                if (ex.InnerException is SqlException sqlEx 
+                    && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+                {
+                    ModelState.AddModelError("", "JÃ¡ existe um veÃ­culo registado com estes dados.");
+                }
+                else
+                {
+                    _logger.LogError(ex, "Database error updating vehicle. ID: {VeiculoId}", id);
+                    ModelState.AddModelError("", "Erro de base de dados. Tente novamente.");
+                }
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao atualizar veículo. ID: {VeiculoId}", id);
-                ModelState.AddModelError(string.Empty, "Erro ao guardar o veículo. Tente novamente.");
+                _logger.LogError(ex, "Erro ao atualizar veï¿½culo. ID: {VeiculoId}", id);
+                ModelState.AddModelError(string.Empty, "Erro ao guardar o veï¿½culo. Tente novamente.");
                 viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
                 return View(viewModel);
             }
@@ -311,7 +342,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
         /// <summary>
         /// GET: Vendedores/Veiculos/Delete/5
-        /// Exibe confirmação antes de eliminar um veículo (soft delete).
+        /// Exibe confirmaï¿½ï¿½o antes de eliminar um veï¿½culo (soft delete).
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Delete(int? id)
@@ -322,7 +353,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
             var vendedor = await GetVendedorLogado();
             if (vendedor == null)
             {
-                _logger.LogWarning("Tentativa de eliminação sem vendedor logado");
+                _logger.LogWarning("Tentativa de eliminaï¿½ï¿½o sem vendedor logado");
                 return Unauthorized();
             }
 
@@ -332,14 +363,14 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
             if (veiculo == null)
             {
-                _logger.LogWarning("Veículo não encontrado para eliminação. ID: {VeiculoId}", id);
+                _logger.LogWarning("Veï¿½culo nï¿½o encontrado para eliminaï¿½ï¿½o. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
             if (veiculo.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de eliminação não autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
+                    "Tentativa de eliminaï¿½ï¿½o nï¿½o autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
@@ -368,44 +399,44 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
             if (veiculo == null)
             {
-                _logger.LogWarning("Veículo não encontrado para soft delete. ID: {VeiculoId}", id);
+                _logger.LogWarning("Veï¿½culo nï¿½o encontrado para soft delete. ID: {VeiculoId}", id);
                 return NotFound();
             }
 
             if (veiculo.VendedorId != vendedor.Id)
             {
                 _logger.LogWarning(
-                    "Tentativa de soft delete não autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
+                    "Tentativa de soft delete nï¿½o autorizada. VeiculoId: {VeiculoId}, VendedorId: {VendedorId}",
                     id, vendedor.Id);
                 return Forbid();
             }
 
             try
             {
-                // Soft Delete: Mudar estado para Pausado (mantém dados para recuperar)
+                // Soft Delete: Mudar estado para Pausado (mantï¿½m dados para recuperar)
                 veiculo.Estado = EstadoVeiculo.Pausado;
 
                 _context.Veiculos.Update(veiculo);
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation(
-                    "Veículo removido (soft delete). ID: {VeiculoId}, Vendedor: {VendedorId}",
+                    "Veï¿½culo removido (soft delete). ID: {VeiculoId}, Vendedor: {VendedorId}",
                     id, vendedor.Id);
 
-                TempData["Sucesso"] = "Veículo removido com sucesso!";
+                TempData["Sucesso"] = "Veï¿½culo removido com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao remover veículo. ID: {VeiculoId}", id);
-                TempData["Erro"] = "Erro ao remover o veículo. Tente novamente.";
+                _logger.LogError(ex, "Erro ao remover veï¿½culo. ID: {VeiculoId}", id);
+                TempData["Erro"] = "Erro ao remover o veï¿½culo. Tente novamente.";
                 return RedirectToAction(nameof(Index));
             }
         }
 
         /// <summary>
         /// GET: Vendedores/Veiculos/Details/5
-        /// Exibe detalhes de um veículo.
+        /// Exibe detalhes de um veï¿½culo.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Details(int? id)
@@ -416,7 +447,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
             var vendedor = await GetVendedorLogado();
             if (vendedor == null)
             {
-                _logger.LogWarning("Tentativa de visualização de detalhes sem vendedor logado");
+                _logger.LogWarning("Tentativa de visualizaï¿½ï¿½o de detalhes sem vendedor logado");
                 return Unauthorized();
             }
 
@@ -427,7 +458,7 @@ namespace AutoMarket.Areas.Vendedores.Controllers
 
             if (veiculo == null)
             {
-                _logger.LogWarning("Veículo não encontrado. ID: {VeiculoId}", id);
+                _logger.LogWarning("Veï¿½culo nï¿½o encontrado. ID: {VeiculoId}", id);
                 return NotFound();
             }
 

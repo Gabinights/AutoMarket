@@ -1,0 +1,44 @@
+@using AutoMarket.Models.Entities
+@using Microsoft.AspNetCore.Identity;
+@inject SignInManager<Utilizador> SignInManager
+@{
+    ViewData["Title"] = "Sobre o AutoMarket";
+}
+<header>
+    <div class="nav">
+        <nav>
+            <ul>
+                <li><a href="/Veiculos">Veículos</a></li>
+                <li><a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a></li>
+                <li><a href="/Home/Sobre">Sobre</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <a href="/Conta/Favoritos" title="Favoritos"><span style="font-size:1.2em">&#10084;&#65039;</span></a>
+            }
+            <a href="/Anuncios/Criar" class="btn-cta">Vender Carro</a>
+        </div>
+    </div>
+</header>
+<main style="max-width:800px;margin:3rem auto;text-align:center;">
+    <h1>Sobre o AutoMarket</h1>
+    <p style="margin-top:2rem;font-size:1.15rem;">O AutoMarket é um marketplace inovador dedicado exclusivamente à compra e venda de veículos usados em Portugal.<br/><br/>Com uma interface moderna e intuitiva, funcionalidades avançadas de pesquisa e total transparência, é o melhor aliado para vendedores e compradores.<br/><br/>Diferencia-se pelo seu compromisso com qualidade, suporte próximo ao utilizador, segurança nas transações e seleção criteriosa dos veículos listados.</p>
+    <div style="margin-top:2.5rem;">
+        <img src="/images/logo_grande.png" alt="AutoMarket logo" style="width:190px;opacity:0.75;" />
+    </div>
+</main>
+<footer>
+    &copy; 2025 AutoMarket<br /> Plataforma de compra e venda de veículos usados.
+</footer>
+@section Styles {
+    <link rel="stylesheet" href="/css/style.css" />
+}
+@section Scripts {
+    <script src="/js/script.js"></script>
+}
+
+
+
+
