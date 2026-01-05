@@ -1,9 +1,10 @@
+using AutoMarket.Models.Entities;
+
 namespace AutoMarket.Services.Interfaces
 {
     public interface ICheckoutService
     {
-        Task<CheckoutInitDto> GetCheckoutAsync(string userId);
-        Task<CheckoutProcessResultDto> ProcessAsync(string userId, CheckoutInputDto input);
-        Task<TransacaoDto?> GetTransacaoAsync(string userId, int transacaoId);
+        Task<Transacao> ProcessCheckoutAsync(string userId, Transacao checkout);
+        Task<Transacao?> GetTransacaoAsync(string userId, int transacaoId);
     }
 }

@@ -2,6 +2,7 @@
 using AutoMarket.Models.Constants;
 using AutoMarket.Models.Entities;
 using AutoMarket.Models.Enums;
+using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,27 @@ namespace AutoMarket.Areas.Admin.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
+        private readonly IEstatisticasService _estatisticasService;
 
         public AdminController(
             ApplicationDbContext context, 
             UserManager<Utilizador> userManager,
-            SignInManager<Utilizador> signInManager)
+            SignInManager<Utilizador> signInManager,
+            IEstatisticasService estatisticasService)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
+            _estatisticasService = estatisticasService;
+        }
+
+        // GET: Admin/Dashboard
+        [HttpGet]
+        [Route("Admin/Dashboard")]
+        public async Task<IActionResult> Dashboard()
+        {
+            var stats = await _estatisticasService.ObterEstatisticasAsync();
+            return View(stats);
         }
 
         // GET: Admin/Index (Lista de Pendentes)

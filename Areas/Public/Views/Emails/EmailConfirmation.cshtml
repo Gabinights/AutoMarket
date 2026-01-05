@@ -1,18 +1,9 @@
-@model AutoMarket.Models.ViewModels.EmailConfirmationViewModel
+@model dynamic
 @using System.Net
-@inject Microsoft.Extensions.Localization.IStringLocalizer Localizer
 @{
     Layout = null;
-    
-    // Use localization with fallback values
-    var welcomeHeader = Localizer["Email_Welcome_Header"].Value ?? "Bem-vindo ao AutoMarket!";
-    var greeting = string.Format(Localizer["Email_Greeting"].Value ?? "Olá {0},", Model.UserName);
-    var intro = Localizer["Email_Confirmation_Intro"].Value ?? "Obrigado por se registar no AutoMarket. Para completar o seu registo, por favor confirme o seu endereço de email clicando no botão abaixo:";
-    var confirmButton = Localizer["Email_Confirm_Button"].Value ?? "Confirmar Email";
-    var linkAlternative = Localizer["Email_Link_Alternative"].Value ?? "Ou copie e cole o seguinte link no seu navegador:";
-    var linkExpiry = Localizer["Email_Link_Expiry"].Value ?? "Este link expirará em 24 horas.";
-    var ignoreMessage = Localizer["Email_Ignore_Message"].Value ?? "Se não criou uma conta no AutoMarket, pode ignorar este email.";
-    var copyright = Localizer["Email_Footer_Copyright"].Value ?? "© 2025 AutoMarket. Todos os direitos reservados.";
+    var userName = Model?.UserName ?? "Utilizador";
+    var confirmationLink = Model?.ConfirmationLink ?? "#";
 }
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -82,21 +73,21 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>@(welcomeHeader)</h1>
+            <h1>Bem-vindo ao AutoMarket!</h1>
         </div>
         <div class="content">
-            <p>@(greeting)</p>
-            <p>@(intro)</p>
+            <p>Olá @(userName),</p>
+            <p>Obrigado por se registar no AutoMarket. Para completar o seu registo, por favor confirme o seu endereço de email clicando no botão abaixo:</p>
             <p class="text-center">
-                <a href="@Model.ConfirmationLink" class="button">@WebUtility.HtmlEncode(confirmButton)</a>
+                <a href="@confirmationLink" class="button">Confirmar Email</a>
             </p>
-            <p>@(linkAlternative)</p>
-            <p class="link-text">@Model.ConfirmationLink</p>
-            <p>@(linkExpiry)</p>
-            <p>@(ignoreMessage)</p>
+            <p>Ou copie e cole o seguinte link no seu navegador:</p>
+            <p class="link-text">@confirmationLink</p>
+            <p>Este link expirará em 24 horas.</p>
+            <p>Se não criou uma conta no AutoMarket, pode ignorar este email.</p>
         </div>
         <div class="footer">
-            <p>@copyright</p>
+            <p>© 2025 AutoMarket. Todos os direitos reservados.</p>
         </div>
     </div>
 </body>

@@ -4,6 +4,7 @@ using AutoMarket.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoMarket.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260105195749_AddAuditoriaFavoritosNotificacoes")]
+    partial class AddAuditoriaFavoritosNotificacoes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -372,16 +375,11 @@ namespace AutoMarket.Migrations
                     b.Property<int>("VeiculoId")
                         .HasColumnType("int");
 
-                    b.Property<int>("VendedorId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CompradorId");
 
                     b.HasIndex("VeiculoId");
-
-                    b.HasIndex("VendedorId");
 
                     b.ToTable("Transacoes");
                 });
@@ -979,17 +977,9 @@ namespace AutoMarket.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("AutoMarket.Models.Vendedor", "Vendedor")
-                        .WithMany()
-                        .HasForeignKey("VendedorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Comprador");
 
                     b.Navigation("Veiculo");
-
-                    b.Navigation("Vendedor");
                 });
 
             modelBuilder.Entity("AutoMarket.Models.Entities.Veiculo", b =>

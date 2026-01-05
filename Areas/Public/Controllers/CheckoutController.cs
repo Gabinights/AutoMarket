@@ -1,4 +1,6 @@
-﻿using AutoMarket.Models.ViewModels;
+﻿using AutoMarket.Models.Entities;
+using AutoMarket.Models.Enums;
+using AutoMarket.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 
 namespace AutoMarket.Areas.Public.Controllers
@@ -21,71 +23,43 @@ namespace AutoMarket.Areas.Public.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Index()
-        {
-            var userId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login", "Conta");
-
-            var checkout = await _checkoutService.GetCheckoutAsync(userId);
-            if (checkout == null) return RedirectToAction("Index", "Carrinho");
-
-            var model = new CheckoutViewModel
-            {
-                NomeCompleto = checkout.NomeCompleto,
-                Morada = checkout.Morada ?? string.Empty,
-                NifFaturacao = checkout.Nif,
-                QueroFaturaComNif = !string.IsNullOrEmpty(checkout.Nif),
-                ValorTotal = checkout.ValorTotal
-            };
-
-            return View(model);
-        }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessarCompra(CheckoutViewModel model)
+        public async Task<IActionResult> ProcessarPagamento(int veiculoId, string morada, string nif)
         {
-            var userId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login", "Conta");
-
-            if (!ModelState.IsValid)
+            try
             {
-                model.ValorTotal = model.ValorTotal == 0 ? model.ValorTotal : model.ValorTotal;
-                return View("Index", model);
+                var userId = _userManager.GetUserId(User);
+                if (string.IsNullOrEmpty(userId)) 
+                    return RedirectToAction("Login", "Conta");
+
+                var transacao = new Transacao
+                {
+                    VeiculoId = veiculoId,
+                    MoradaEnvioSnapshot = morada,
+                    NifFaturacaoSnapshot = nif
+                };
+
+                var result = await _checkoutService.ProcessCheckoutAsync(userId, transacao);
+                return RedirectToAction("Confirmacao", new { id = result.Id });
             }
-
-            var result = await _checkoutService.ProcessAsync(
-                userId,
-                new CheckoutInputDto(
-                    model.Morada,
-                    model.CodigoPostal,
-                    model.QueroFaturaComNif,
-                    model.NifFaturacao,
-                    model.MetodoPagamento));
-
-            if (result.Success && result.FirstTransactionId.HasValue)
+            catch (Exception ex)
             {
-                return RedirectToAction("Sucesso", new { id = result.FirstTransactionId.Value });
+                _logger.LogError(ex, "Erro ao processar pagamento");
+                return RedirectToAction("Index", "Veiculos");
             }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error);
-            }
-
-            model.ValorTotal = model.ValorTotal == 0 ? model.ValorTotal : model.ValorTotal;
-            return View("Index", model);
         }
 
         [HttpGet]
-        public async Task<IActionResult> Sucesso(int id)
+        public async Task<IActionResult> Confirmacao(int id)
         {
             var userId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login", "Conta");
+            if (string.IsNullOrEmpty(userId)) 
+                return RedirectToAction("Login", "Conta");
 
             var transacao = await _checkoutService.GetTransacaoAsync(userId, id);
-            if (transacao == null) return NotFound();
+            if (transacao == null) 
+                return NotFound();
 
             return View(transacao);
         }

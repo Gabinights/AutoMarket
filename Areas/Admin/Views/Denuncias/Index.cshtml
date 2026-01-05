@@ -1,0 +1,161 @@
+@using AutoMarket.Models.Entities
+@model IEnumerable<Denuncia>
+@{
+    ViewData["Title"] = "Gestão de Denúncias";
+    var contagens = ViewData["Contagens"] as Dictionary<string, int> ?? new();
+    var estadoFiltro = ViewData["EstadoFiltro"]?.ToString() ?? "";
+}
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Denúncias</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/Admin" class="btn btn-secondary">? Voltar ao Dashboard</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Filtrar por Estado</label>
+                            <select name="estado" class="form-select">
+                                <option value="">Todas</option>
+                                <option value="Aberta">Aberta</option>
+                                <option value="EmAnalise">Em Análise</option>
+                                <option value="Encerrada">Encerrada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Abertas</h6>
+                    <h3 class="text-danger">@(contagens.ContainsKey("Aberta") ? contagens["Aberta"] : 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Em Análise</h6>
+                    <h3 class="text-warning">@(contagens.ContainsKey("EmAnalise") ? contagens["EmAnalise"] : 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Encerradas</h6>
+                    <h3 class="text-success">@(contagens.ContainsKey("Encerrada") ? contagens["Encerrada"] : 0)</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">Total</h6>
+                    <h3>@(contagens.Values.Sum())</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h6 class="mb-0">Lista de Denúncias</h6>
+        </div>
+        <div class="card-body p-0">
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info m-3">
+                    Nenhuma denúncia encontrada.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#ID</th>
+                                <th>Denunciante</th>
+                                <th>Alvo</th>
+                                <th>Tipo</th>
+                                <th>Data</th>
+                                <th>Estado</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var denuncia in Model)
+                            {
+                                <tr>
+                                    <td><strong>#@denuncia.Id</strong></td>
+                                    <td>@denuncia.Denunciante?.Nome</td>
+                                    <td>
+                                        @if (denuncia.TargetVeiculo != null)
+                                        {
+                                            <span class="badge bg-info">Veículo #@denuncia.TargetVeiculoId</span>
+                                        }
+                                        else if (denuncia.TargetUser != null)
+                                        {
+                                            <span class="badge bg-warning">Utilizador: @denuncia.TargetUser.Nome</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @{
+                                            var motivo = denuncia.Motivo;
+                                            if (motivo.Length > 30)
+                                            {
+                                                <text>@motivo.Substring(0, 30)...</text>
+                                            }
+                                            else
+                                            {
+                                                <text>@motivo</text>
+                                            }
+                                        }
+                                    </td>
+                                    <td>@denuncia.DataCriacao.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @switch (denuncia.Estado.ToString())
+                                        {
+                                            case "Aberta":
+                                                <span class="badge bg-danger">Aberta</span>
+                                                break;
+                                            case "EmAnalise":
+                                                <span class="badge bg-warning">Em Análise</span>
+                                                break;
+                                            case "Encerrada":
+                                                <span class="badge bg-success">Encerrada</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("Detalhe", "Denuncias", new { id = denuncia.Id })" class="btn btn-sm btn-info">
+                                            Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

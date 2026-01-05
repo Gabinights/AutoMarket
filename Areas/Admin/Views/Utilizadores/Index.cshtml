@@ -1,0 +1,134 @@
+@using AutoMarket.Models.Entities
+@model IEnumerable<Utilizador>
+@{
+    ViewData["Title"] = "Gestão de Utilizadores";
+}
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Utilizadores Bloqueados</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/Admin" class="btn btn-secondary">? Voltar ao Dashboard</a>
+        </div>
+    </div>
+
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Sucesso"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Erro"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Erro"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h6 class="mb-0">Lista de Utilizadores Bloqueados</h6>
+        </div>
+        <div class="card-body p-0">
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info m-3">
+                    Nenhum utilizador bloqueado.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Contacto</th>
+                                <th>Motivo do Bloqueio</th>
+                                <th>Data de Registo</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@user.Nome</strong>
+                                    </td>
+                                    <td>@user.Email</td>
+                                    <td>@user.Contacto</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            @if (!string.IsNullOrEmpty(user.BlockReason))
+                                            {
+                                                @user.BlockReason
+                                            }
+                                            else
+                                            {
+                                                <em>Sem motivo registado</em>
+                                            }
+                                        </small>
+                                    </td>
+                                    <td>@user.DataRegisto.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <form method="post" action="@Url.Action("Desbloquear", "Utilizadores")" style="display: inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="utilizadorId" value="@user.Id" />
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Desbloquear este utilizador?')">
+                                                Desbloquear
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Modal para Bloquear Novo Utilizador (opcional) -->
+    <div class="mt-4">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalBloquear">
+            + Bloquear Novo Utilizador
+        </button>
+    </div>
+</div>
+
+<!-- Modal Bloquear -->
+<div class="modal fade" id="modalBloquear" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="@Url.Action("Bloquear", "Utilizadores")">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Bloquear Utilizador</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Email do Utilizador</label>
+                        <input type="email" name="utilizadorId" class="form-control" placeholder="email@example.com" required />
+                        <small class="form-text text-muted">Nota: This should be refactored to use a dropdown with user list</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo do Bloqueio</label>
+                        <textarea name="motivo" class="form-control" rows="4" required placeholder="Descreva o motivo..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Bloquear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

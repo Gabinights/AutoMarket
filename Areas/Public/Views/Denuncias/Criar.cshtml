@@ -1,0 +1,126 @@
+@using AutoMarket.Models.Entities
+@{
+    ViewData["Title"] = "Fazer Denúncia";
+}
+
+<div class="container mt-5" style="max-width: 600px;">
+    <div class="row">
+        <div class="col-12">
+            <h2>Fazer Denúncia</h2>
+            <p class="text-muted">Denuncie práticas irregulares ou anúncios suspeitos</p>
+
+            <form id="formDenuncia" class="mt-4">
+                <div class="mb-3">
+                    <label class="form-label">Tipo de Denúncia</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tipo" id="tipoVeiculo" value="veiculo" checked onchange="toggleVeiculoFields()">
+                        <label class="form-check-label" for="tipoVeiculo">
+                            Denunciar um Anúncio (Veículo)
+                        </label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="tipo" id="tipoUtilizador" value="utilizador" onchange="toggleVeiculoFields()">
+                        <label class="form-check-label" for="tipoUtilizador">
+                            Denunciar um Utilizador
+                        </label>
+                    </div>
+                </div>
+
+                <div id="veiculoSection" class="mb-3">
+                    <label for="veiculoId" class="form-label">ID do Anúncio (Veículo)</label>
+                    <input type="number" class="form-control" id="veiculoId" name="veiculoId" placeholder="Ex: 12345">
+                    <small class="text-muted">Deixe em branco se estiver denunciando um utilizador</small>
+                </div>
+
+                <div id="utilizadorSection" class="mb-3" style="display: none;">
+                    <label for="utilizadorEmail" class="form-label">Email do Utilizador</label>
+                    <input type="email" class="form-control" id="utilizadorEmail" name="utilizadorEmail" placeholder="email@example.com">
+                    <small class="text-muted">Deixe em branco se estiver denunciando um anúncio</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="motivo" class="form-label">Motivo da Denúncia *</label>
+                    <textarea class="form-control" id="motivo" name="motivo" rows="5" required
+                              placeholder="Descreva detalhadamente o motivo da denúncia..."></textarea>
+                    <small class="text-muted">Seja o mais específico possível para facilitar a análise</small>
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100">Enviar Denúncia</button>
+                <a href="/" class="btn btn-secondary w-100 mt-2">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleVeiculoFields() {
+        const tipo = document.querySelector('input[name="tipo"]:checked').value;
+        const veiculoSection = document.getElementById('veiculoSection');
+        const utilizadorSection = document.getElementById('utilizadorSection');
+
+        if (tipo === 'veiculo') {
+            veiculoSection.style.display = 'block';
+            utilizadorSection.style.display = 'none';
+            document.getElementById('veiculoId').required = true;
+            document.getElementById('utilizadorEmail').required = false;
+        } else {
+            veiculoSection.style.display = 'none';
+            utilizadorSection.style.display = 'block';
+            document.getElementById('veiculoId').required = false;
+            document.getElementById('utilizadorEmail').required = true;
+        }
+    }
+
+    document.getElementById('formDenuncia').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const tipo = document.querySelector('input[name="tipo"]:checked').value;
+        const motivo = document.getElementById('motivo').value;
+        
+        let veiculoId = null;
+        let targetUserId = null;
+
+        if (tipo === 'veiculo') {
+            veiculoId = parseInt(document.getElementById('veiculoId').value);
+            if (!veiculoId) {
+                alert('Por favor, informe o ID do anúncio.');
+                return;
+            }
+        } else {
+            const email = document.getElementById('utilizadorEmail').value;
+            if (!email) {
+                alert('Por favor, informe o email do utilizador.');
+                return;
+            }
+            // Aqui seria necessário fazer lookup do utilizador por email
+            // Para simplificar, usamos um endpoint que aceita email
+            targetUserId = email;
+        }
+
+        try {
+            const response = await fetch('/api/denuncias/criar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify({
+                    veiculoId: veiculoId,
+                    targetUserId: targetUserId,
+                    motivo: motivo
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Denúncia enviada com sucesso!');
+                window.location.href = '/';
+            } else {
+                alert('Erro: ' + (data.message || 'Não foi possível enviar a denúncia'));
+            }
+        } catch (error) {
+            alert('Erro ao enviar denúncia: ' + error);
+        }
+    });
+</script>

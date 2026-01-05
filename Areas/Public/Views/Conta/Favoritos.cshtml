@@ -1,35 +1,93 @@
 @using AutoMarket.Models.Entities
-@using Microsoft.AspNetCore.Identity;
-@inject SignInManager<Utilizador> SignInManager
+@model IEnumerable<Veiculo>
 @{
-    ViewData["Title"] = "Favoritos";
+    ViewData["Title"] = "Meus Favoritos";
+    var total = ViewData["TotalFavoritos"] ?? 0;
+    var page = ViewData["CurrentPage"] ?? 1;
+    var totalPages = ViewData["TotalPages"] ?? 1;
 }
-<main class="container-main">
-    <h1 class="favorites-title">Os Meus Favoritos</h1>
-    <div class="favorites-cards">
-        <!-- Cards exemplo de favoritos -->
-        <div class="vehicle-card">
-            <img src="/images/carro_exemplo1.jpg" alt="BMW SÃ©rie 1" />
-            <h3>BMW SÃ©rie 1</h3>
-            <div class="price">â‚¬19.900</div>
-            <div class="meta">2019 â€¢ 45.000km â€¢ Lisboa</div>
-            <button class="btn-cta remove-fav-btn">Remover dos Favoritos</button>
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Meus Favoritos</h2>
+            <p class="text-muted">Total: @total veículos</p>
         </div>
-        <div class="vehicle-card">
-            <img src="/images/carro_exemplo2.jpg" alt="Renault Clio" />
-            <h3>Renault Clio</h3>
-            <div class="price">â‚¬13.400</div>
-            <div class="meta">2018 â€¢ 33.000km â€¢ Porto</div>
-            <button class="btn-cta remove-fav-btn">Remover dos Favoritos</button>
+        <div class="col-md-4 text-end">
+            <a href="/" class="btn btn-secondary">? Voltar</a>
         </div>
     </div>
-</main>
-<footer>
-    &copy; 2025 AutoMarket<br /> Plataforma de compra e venda de veÃ­culos usados.
-</footer>
-@section Styles {
-    <link rel="stylesheet" href="/css/style.css" />
-}
-@section Scripts {
-    <script src="/js/script.js"></script>
-}
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            Nenhum veículo nos favoritos. <a href="/Veiculos">Explorar veículos</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var veiculo in Model)
+            {
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 shadow-sm">
+                        @if (veiculo.Imagens?.Any() == true)
+                        {
+                            <img src="/images/@veiculo.Imagens.First().CaminhoFicheiro" class="card-img-top" alt="@veiculo.Titulo" style="height: 200px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div style="height: 200px; background: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-muted">Sem imagem</span>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@veiculo.Marca @veiculo.Modelo</h5>
+                            <p class="card-text text-danger fw-bold">€@veiculo.Preco.ToString("N2")</p>
+                            <small class="text-muted">
+                                @veiculo.Ano • @veiculo.Km km • @veiculo.Localizacao
+                            </small>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="/Veiculos/Detalhe/@veiculo.Id" class="btn btn-primary btn-sm w-100">Ver Detalhe</a>
+                            <button class="btn btn-danger btn-sm w-100 mt-2" onclick="removerFavorito(@veiculo.Id)">Remover</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if ((int)totalPages > 1)
+        {
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    @for (int i = 1; i <= (int)totalPages; i++)
+                    {
+                        <li class="page-item @(i == (int)page ? "active" : "")">
+                            <a class="page-link" href="?page=@i">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+</div>
+
+<script>
+    function removerFavorito(veiculoId) {
+        if (!confirm('Remover dos favoritos?')) return;
+        
+        fetch(`/api/favoritos/remover/${veiculoId}`, {
+            method: 'DELETE',
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        })
+        .then(r => r.json())
+        .then(d => {
+            alert(d.message);
+            location.reload();
+        })
+        .catch(e => alert('Erro: ' + e));
+    }
+</script>

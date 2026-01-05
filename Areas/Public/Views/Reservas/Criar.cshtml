@@ -1,0 +1,73 @@
+@model Veiculo
+@using AutoMarket.Models.Entities
+@{
+    ViewData["Title"] = "Reservar Veículo";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white py-4">
+                    <h3 class="mb-0">?? Reservar Veículo</h3>
+                </div>
+                <div class="card-body p-4">
+                    <!-- RESUMO VEÍCULO -->
+                    <div class="alert alert-info mb-4">
+                        <h5>@Model.Marca @Model.Modelo (@Model.Ano)</h5>
+                        <p class="mb-1">€@Model.Preco.ToString("F2")</p>
+                        <small>@Model.Titulo</small>
+                    </div>
+
+                    <form method="post" asp-action="CriarReserva">
+                        <input type="hidden" name="veiculoId" value="@Model.Id">
+
+                        <!-- DATA EXPIRAÇÃO -->
+                        <div class="mb-4">
+                            <label for="dataExpiracao" class="form-label fw-bold">
+                                Até quando deseja manter a reserva?
+                            </label>
+                            <select class="form-select form-select-lg" id="dataExpiracao" name="diasExpiracao" required>
+                                <option value="">-- Selecione --</option>
+                                <option value="7">7 dias (Uma semana)</option>
+                                <option value="14">14 dias (Duas semanas)</option>
+                                <option value="21">21 dias (Três semanas)</option>
+                                <option value="30">30 dias (Um mês)</option>
+                            </select>
+                            <small class="text-muted d-block mt-2">
+                                A reserva será automaticamente cancelada após este período se não for confirmada a compra.
+                            </small>
+                        </div>
+
+                        <!-- NOTAS OPCIONAIS -->
+                        <div class="mb-4">
+                            <label for="notas" class="form-label fw-bold">Notas Adicionais (Opcional)</label>
+                            <textarea class="form-control" id="notas" name="notas" rows="3" placeholder="Ex: Tenho interesse em agendar uma visita..."></textarea>
+                        </div>
+
+                        <!-- CONFIRMAÇÃO -->
+                        <div class="alert alert-warning mb-4">
+                            <h6 class="mb-2">?? Informações Importantes</h6>
+                            <ul class="mb-0 small">
+                                <li>A reserva garante que o veículo não será vendido durante este período</li>
+                                <li>Pode agendar uma visita após criar a reserva</li>
+                                <li>O vendedor entrará em contacto para coordenar a compra</li>
+                                <li>Se não confirmar a compra, a reserva será cancelada automaticamente</li>
+                            </ul>
+                        </div>
+
+                        <!-- BOTÕES -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg fw-bold">
+                                ? Confirmar Reserva
+                            </button>
+                            <a href="/Public/Veiculos/Detalhe/@Model.Id" class="btn btn-outline-secondary btn-lg">
+                                ? Voltar ao Anúncio
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

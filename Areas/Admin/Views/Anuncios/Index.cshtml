@@ -1,0 +1,60 @@
+@model IEnumerable<Veiculo>
+@using AutoMarket.Models.Entities
+@using AutoMarket.Models.Enums
+@{
+    ViewData["Title"] = "Moderar Anúncios";
+    var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var estadoFiltro = ViewData["EstadoFiltro"]?.ToString() ?? "";
+}
+
+<div class="container-fluid py-4">
+    <h1 class="fw-bold mb-4">?? Moderar Anúncios</h1>
+
+    @if (Model?.Any() == true)
+    {
+        <div class="table-responsive">
+            <table class="table table-hover bg-white shadow-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Veículo</th>
+                        <th>Vendedor</th>
+                        <th>Preço</th>
+                        <th>Estado</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var veiculo in Model)
+                    {
+                        <tr>
+                            <td>@veiculo.Marca @veiculo.Modelo (@veiculo.Ano)</td>
+                            <td>@veiculo.Vendedor?.User?.Nome</td>
+                            <td>€@veiculo.Preco.ToString("F2")</td>
+                            <td>
+                                <span class="badge @(veiculo.Estado == EstadoVeiculo.Ativo ? "bg-success" : "bg-warning")">
+                                    @veiculo.Estado
+                                </span>
+                            </td>
+                            <td>@veiculo.DataCriacao.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <a href="/Public/Veiculos/Detalhe/@veiculo.Id" class="btn btn-sm btn-info" target="_blank">???</a>
+                                <form method="post" asp-action="Pausar" asp-route-id="@veiculo.Id" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning">??</button>
+                                </form>
+                                <form method="post" asp-action="Remover" asp-route-id="@veiculo.Id" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remover?');">???</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">Nenhum anúncio encontrado</div>
+    }
+</div>

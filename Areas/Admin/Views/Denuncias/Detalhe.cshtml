@@ -1,0 +1,207 @@
+@using AutoMarket.Models.Entities
+@model Denuncia
+@{
+    ViewData["Title"] = $"Denúncia #{Model.Id}";
+}
+
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Denúncia #@Model.Id</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/Admin/Denuncias" class="btn btn-secondary">? Voltar à Lista</a>
+        </div>
+    </div>
+
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Sucesso"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Erro"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Erro"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Informações da Denúncia -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">Informações da Denúncia</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small">ESTADO</label>
+                            <p>
+                                @switch (Model.Estado.ToString())
+                                {
+                                    case "Aberta":
+                                        <span class="badge bg-danger">Aberta</span>
+                                        break;
+                                    case "EmAnalise":
+                                        <span class="badge bg-warning">Em Análise</span>
+                                        break;
+                                    case "Encerrada":
+                                        <span class="badge bg-success">Encerrada</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small">DATA DE CRIAÇÃO</label>
+                            <p>@Model.DataCriacao.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="text-muted small">DENUNCIANTE</label>
+                            <p>
+                                @Model.Denunciante?.Nome
+                                <small class="text-muted">(@Model.Denunciante?.Email)</small>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="text-muted small">ALVO</label>
+                            <p>
+                                @if (Model.TargetVeiculo != null)
+                                {
+                                    <span class="badge bg-info mb-2">Veículo</span>
+                                    <br />
+                                    <strong>@Model.TargetVeiculo.Titulo</strong>
+                                    <br />
+                                    <small class="text-muted">Vendedor: @Model.TargetVeiculo.Vendedor?.User?.Nome</small>
+                                }
+                                else if (Model.TargetUser != null)
+                                {
+                                    <span class="badge bg-warning mb-2">Utilizador</span>
+                                    <br />
+                                    <strong>@Model.TargetUser.Nome</strong>
+                                    <br />
+                                    <small class="text-muted">@Model.TargetUser.Email</small>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="text-muted small">MOTIVO</label>
+                            <p>@Model.Motivo</p>
+                        </div>
+                    </div>
+
+                    @if (Model.Estado == EstadoDenuncia.Encerrada)
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                <label class="text-muted small">DECISÃO DO ADMIN</label>
+                                <p>
+                                    <strong>@Model.DecisaoAdmin</strong>
+                                    <br />
+                                    <small class="text-muted">por @Model.AnalisadoPorAdmin?.Nome</small>
+                                </p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de Ações -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">Ações</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.Estado == EstadoDenuncia.Aberta)
+                    {
+                        <form method="post" action="@Url.Action("IniciarAnalise", "Denuncias", new { id = Model.Id })" class="mb-3">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-play"></i> Iniciar Análise
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.Estado == EstadoDenuncia.EmAnalise)
+                    {
+                        <div class="alert alert-info small mb-3">
+                            <strong>Análise em Curso</strong><br />
+                            Iniciada por: @Model.AnalisadoPorAdmin?.Nome
+                        </div>
+
+                        <button class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#modalEncerrar" data-procedente="true">
+                            <i class="bi bi-check"></i> Encerrar como Procedente
+                        </button>
+                        <button class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#modalEncerrar" data-procedente="false">
+                            <i class="bi bi-x"></i> Encerrar como Não Procedente
+                        </button>
+                    }
+
+                    @if (Model.Estado == EstadoDenuncia.Encerrada)
+                    {
+                        <div class="alert alert-success small">
+                            <strong>Denúncia Encerrada</strong><br />
+                            Esta denúncia já foi analisada.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Encerrar Denúncia -->
+<div class="modal fade" id="modalEncerrar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="@Url.Action("Encerrar", "Denuncias", new { id = Model.Id })">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Encerrar Denúncia</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Resultado</label>
+                        <input type="hidden" name="procedente" id="procedente" value="true" />
+                        <div id="resultado"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Decisão Detalhada</label>
+                        <textarea name="decisao" class="form-control" rows="4" required placeholder="Explique a decisão..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Encerrar Denúncia</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('modalEncerrar').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const procedente = button.dataset.procedente === 'true';
+        document.getElementById('procedente').value = procedente;
+        document.getElementById('resultado').innerHTML = procedente
+            ? '<span class="badge bg-success">Procedente</span>'
+            : '<span class="badge bg-secondary">Não Procedente</span>';
+    });
+</script>

@@ -9,25 +9,28 @@ namespace AutoMarket.Services.Implementations
 {
 	public class AuthService : IAuthService
 	{
-		private readonly UserManager<Utilizador> _userManager;
-		private readonly SignInManager<Utilizador> _signInManager;
-		private readonly ApplicationDbContext _context;
-		private readonly IEmailAuthService _emailAuthService;
-		private readonly ILogger<AuthService> _logger;
+	private readonly UserManager<Utilizador> _userManager;
+	private readonly SignInManager<Utilizador> _signInManager;
+	private readonly ApplicationDbContext _context;
+	private readonly IEmailAuthService _emailAuthService;
+	private readonly ILogger<AuthService> _logger;
+	private readonly IHostEnvironment _environment;
 
-		public AuthService(
-			UserManager<Utilizador> userManager,
-			SignInManager<Utilizador> signInManager,
-			ApplicationDbContext context,
-			IEmailAuthService emailAuthService,
-			ILogger<AuthService> logger)
-		{
-			_userManager = userManager;
-			_signInManager = signInManager;
-			_context = context;
-			_emailAuthService = emailAuthService;
-			_logger = logger;
-		}
+	public AuthService(
+		UserManager<Utilizador> userManager,
+		SignInManager<Utilizador> signInManager,
+		ApplicationDbContext context,
+		IEmailAuthService emailAuthService,
+		ILogger<AuthService> logger,
+		IHostEnvironment environment)
+	{
+		_userManager = userManager;
+		_signInManager = signInManager;
+		_context = context;
+		_emailAuthService = emailAuthService;
+		_logger = logger;
+		_environment = environment;
+	}
 
 		public async Task<RegisterResultDto> RegisterAsync(RegisterDto dto, string confirmationBaseUrl)
 		{
@@ -43,16 +46,17 @@ namespace AutoMarket.Services.Implementations
 
 			try
 			{
-				var user = new Utilizador
-				{
-					UserName = dto.Email,
-					Email = dto.Email,
-					Nome = dto.Nome,
-					Morada = dto.Morada,
-					PhoneNumber = dto.Contacto,
-					NIF = dto.Nif,
-					DataRegisto = DateTime.UtcNow
-				};
+			var user = new Utilizador
+			{
+				UserName = dto.Email,
+				Email = dto.Email,
+				Nome = dto.Nome,
+				Morada = dto.Morada,
+				PhoneNumber = dto.Contacto,
+				NIF = dto.Nif,
+				DataRegisto = DateTime.UtcNow
+				// EmailConfirmed removido - não é necessário
+			};
 
 				var identityResult = await _userManager.CreateAsync(user, dto.Password);
 				if (!identityResult.Succeeded)
@@ -61,17 +65,18 @@ namespace AutoMarket.Services.Implementations
 					return new RegisterResultDto(false, errors, null);
 				}
 
-				if (dto.TipoConta == TipoConta.Vendedor || dto.TipoConta == TipoConta.Empresa)
+			if (dto.TipoConta == TipoConta.Vendedor || dto.TipoConta == TipoConta.Empresa)
+			{
+				var vendedor = new Vendedor
 				{
-					var vendedor = new Vendedor
-					{
-						UserId = user.Id,
-						TipoConta = dto.TipoConta,
-						Status = StatusAprovacao.Pendente
-					};
-					_context.Vendedores.Add(vendedor);
-					await _userManager.AddToRoleAsync(user, Roles.Vendedor);
-				}
+					UserId = user.Id,
+					TipoConta = dto.TipoConta,
+					Status = _environment.IsDevelopment() ? StatusAprovacao.Aprovado : StatusAprovacao.Pendente,
+					ApprovedByAdminId = _environment.IsDevelopment() ? user.Id : null // Auto-aprovar em dev
+				};
+				_context.Vendedores.Add(vendedor);
+				await _userManager.AddToRoleAsync(user, Roles.Vendedor);
+			}
 				else
 				{
 					var comprador = new Comprador
@@ -86,25 +91,12 @@ namespace AutoMarket.Services.Implementations
 				await _context.SaveChangesAsync();
 				await transaction.CommitAsync();
 
-				var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-				var confirmationLink = QueryHelpers.AddQueryString(
-					confirmationBaseUrl,
-					new Dictionary<string, string?>
-					{
-						["userId"] = user.Id,
-						["token"] = token
-					});
+				// Auto-login após registo
+				await _signInManager.SignInAsync(user, isPersistent: false);
 
-				if (string.IsNullOrEmpty(confirmationLink))
-				{
-					_logger.LogError("Falha ao gerar link de confirmação para {Email}", user.Email);
-				}
-				else
-				{
-					await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
-				}
+				_logger.LogInformation("Utilizador {Email} registado e auto-logado com sucesso", user.Email);
 
-				return new RegisterResultDto(true, Enumerable.Empty<string>(), confirmationLink);
+				return new RegisterResultDto(true, Enumerable.Empty<string>(), null);
 			}
 			catch (Exception ex)
 			{
@@ -121,7 +113,7 @@ namespace AutoMarket.Services.Implementations
 			var signInResult = await _signInManager.PasswordSignInAsync(dto.Email, dto.Password, dto.RememberMe, false);
 			if (!signInResult.Succeeded)
 			{
-				errors.Add("Login inválido.");
+				errors.Add("Email ou password inválidos.");
 				return new LoginResultDto(false, null, errors);
 			}
 
