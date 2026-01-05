@@ -130,7 +130,8 @@ namespace AutoMarket.Controllers
             }
             catch (Exception ex)
             {
-                await dbTransaction.RollbackAsync();
+                // NO explicit RollbackAsync needed here. 
+                // It happens automatically when 'dbTransaction' goes out of scope.
                 _logger.LogError(ex, "Erro ao processar compra para o utilizador {UserId}", user.Id);
                 ModelState.AddModelError("", ex.Message);
                 model.ValorTotal = _carrinhoService.GetTotal();

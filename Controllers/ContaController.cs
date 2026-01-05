@@ -118,8 +118,8 @@ namespace AutoMarket.Controllers
             }
             catch (Exception ex)
             {
-                // Se ocorrer um erro, reverter a transação
-                await transaction.RollbackAsync();
+                // NO explicit RollbackAsync needed here. 
+                // It happens automatically when 'transaction' goes out of scope.
                 _logger.LogError(ex, "Erro ao registar utilizador {Email}", model.Email);
                 ModelState.AddModelError(string.Empty, "Ocorreu um erro interno. Tente novamente.");
             }
