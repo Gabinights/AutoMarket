@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoMarket.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260105160302_Reserva-Visita")]
-    partial class ReservaVisita
+    [Migration("20260105180032_InitialCreate_Fixed")]
+    partial class InitialCreate_Fixed
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
