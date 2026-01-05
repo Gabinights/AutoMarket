@@ -36,6 +36,5 @@
     <Folder Include="docs\" />
     <Folder Include="Infrastructure\Migrations\" />
     <Folder Include="Models\ViewModels\Carros\" />
-    <Folder Include="Resources\Areas\Vendedores\Views\Veiculos\" />
   </ItemGroup>
 </Project>

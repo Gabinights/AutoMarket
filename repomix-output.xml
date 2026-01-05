@@ -167,6 +167,7 @@ wwwroot/css/site.css
 wwwroot/css/style.css
 wwwroot/js/script.js
 wwwroot/js/site.js
+wwwroot/js/veiculos-create.js
 </directory_structure>
 
 <files>
@@ -2687,207 +2688,6 @@ else
 <file path="Areas/Vendedores/_ViewStart.cshtml">
 @{
 	Layout = "~/Areas/Vendedores/Views/Shared/_Layout.cshtml";
-}
-</file>
-
-<file path="Areas/Vendedores/Views/Veiculos/Create.cshtml">
-@model AutoMarket.Models.ViewModels.Veiculos.CreateVeiculoViewModel
-@{
-    ViewData["Title"] = "Criar Novo Veьculo";
-    Layout = "~/Views/Shared/_Layout.cshtml";
-}
-
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <h1 class="h3 mb-4">Criar Novo Veьculo</h1>
-
-            <form asp-action="Create" asp-controller="Veiculos" asp-area="Vendedores" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                @Html.AntiForgeryToken()
-
-                <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-
-                <!-- Seусo 1: Informaушes Bрsicas -->
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Informaушes Bрsicas</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label asp-for="Titulo" class="form-label">Tьtulo do AnЩncio *</label>
-                            <input asp-for="Titulo" class="form-control" placeholder="Ex: BMW 320i 2018 em perfeito estado" required />
-                            <span asp-validation-for="Titulo" class="text-danger"></span>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Marca" class="form-label">Marca *</label>
-                                <input asp-for="Marca" class="form-control" placeholder="Ex: BMW" required />
-                                <span asp-validation-for="Marca" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Modelo" class="form-label">Modelo *</label>
-                                <input asp-for="Modelo" class="form-control" placeholder="Ex: 320i" required />
-                                <span asp-validation-for="Modelo" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Ano" class="form-label">Ano *</label>
-                                <input asp-for="Ano" type="number" class="form-control" placeholder="2023" required />
-                                <span asp-validation-for="Ano" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="CategoriaId" class="form-label">Tipo/Segmento *</label>
-                                <select asp-for="CategoriaId" class="form-select" required>
-                                    <option value="">-- Selecione uma categoria --</option>
-                                    @if (Model.CategoriesDropdown.Any())
-                                    {
-                                        @foreach (var cat in Model.CategoriesDropdown)
-                                        {
-                                            <option value="@cat.Id">@cat.Nome</option>
-                                        }
-                                    }
-                                </select>
-                                <span asp-validation-for="CategoriaId" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Seусo 2: Especificaушes Tжcnicas -->
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Especificaушes Tжcnicas</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Combustivel" class="form-label">Combustьvel *</label>
-                                <select asp-for="Combustivel" class="form-select" required>
-                                    <option value="">-- Selecione --</option>
-                                    <option value="Gasolina">Gasolina</option>
-                                    <option value="Gasзleo">Gasзleo</option>
-                                    <option value="Hьbrido">Hьbrido</option>
-                                    <option value="Elжtrico">Elжtrico</option>
-                                    <option value="GLP">GLP</option>
-                                </select>
-                                <span asp-validation-for="Combustivel" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Caixa" class="form-label">Caixa *</label>
-                                <select asp-for="Caixa" class="form-select" required>
-                                    <option value="">-- Selecione --</option>
-                                    <option value="Manual">Manual</option>
-                                    <option value="Automрtica">Automрtica</option>
-                                    <option value="CVT">CVT</option>
-                                </select>
-                                <span asp-validation-for="Caixa" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="Km" class="form-label">Quilзmetros</label>
-                                <input asp-for="Km" type="number" class="form-control" placeholder="45000" />
-                                <span asp-validation-for="Km" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="Condicao" class="form-label">Condiусo</label>
-                                <input asp-for="Condicao" class="form-control" placeholder="Ex: Usado, Novo" />
-                                <span asp-validation-for="Condicao" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label asp-for="Preco" class="form-label">Preуo (ђ) *</label>
-                                <input asp-for="Preco" type="number" step="0.01" class="form-control" placeholder="25000.00" required />
-                                <span asp-validation-for="Preco" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Seусo 3: Localizaусo e Descriусo -->
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Localizaусo e Descriусo</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label asp-for="Localizacao" class="form-label">Localizaусo *</label>
-                            <input asp-for="Localizacao" class="form-control" placeholder="Ex: Lisboa, Portugal" required />
-                            <span asp-validation-for="Localizacao" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Descricao" class="form-label">Descriусo Detalhada *</label>
-                            <textarea asp-for="Descricao" class="form-control" rows="5" placeholder="Descreva em detalhe o estado do veьculo, histзrico de manutenусo, reparaушes, etc." required></textarea>
-                            <small class="form-text text-muted">Mрximo 2000 caracteres</small>
-                            <span asp-validation-for="Descricao" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Seусo 4: Fotos -->
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Fotos (Mрximo 10 imagens)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label asp-for="Fotos" class="form-label">Selecione as Fotos *</label>
-                            <input asp-for="Fotos" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple required />
-                            <small class="form-text text-muted">
-                                Formatos: JPG, JPEG, PNG, WebP | Mрximo 10 imagens | Mрximo 5 MB por imagem
-                            </small>
-                            <span asp-validation-for="Fotos" class="text-danger"></span>
-                        </div>
-
-                        <div id="preview" class="row mt-3"></div>
-                    </div>
-                </div>
-
-                <!-- Botшes -->
-                <div class="d-flex gap-2 mb-5">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-check-circle"></i> Criar Veьculo
-                    </button>
-                    <a href="@Url.Action("Index", "Veiculos", new { area = "Vendedores" })" class="btn btn-secondary btn-lg">
-                        <i class="bi bi-arrow-left"></i> Cancelar
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        document.querySelector('input[type="file"]').addEventListener('change', function(e) {
-            const preview = document.getElementById('preview');
-            preview.innerHTML = '';
-            
-            Array.from(this.files).slice(0, 10).forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-3 col-sm-4 col-6 mb-3';
-                    col.innerHTML = `
-                        <div class="position-relative">
-                            <img src="${event.target.result}" class="img-fluid rounded" style="width: 100%; height: 200px; object-fit: cover;">
-                            <small class="d-block mt-1 text-muted">${file.name}</small>
-                        </div>
-                    `;
-                    preview.appendChild(col);
-                };
-                reader.readAsDataURL(file);
-            });
-
-            if (this.files.length > 10) {
-                alert('Mрximo de 10 imagens permitidas. Apenas as primeiras 10 serсo usadas.');
-            }
-        });
-    </script>
 }
 </file>
 
@@ -6023,6 +5823,10 @@ namespace AutoMarket.Services.Interfaces
 }
 </file>
 
+<file path="wwwroot/js/veiculos-create.js">
+
+</file>
+
 <file path="Areas/Public/Controllers/CarrinhoController.cs">
 using AutoMarket.Infrastructure.Data;
 using AutoMarket.Services;
@@ -6463,6 +6267,209 @@ namespace AutoMarket.Areas.Public.Views.Cart
         padding: 1.5rem;
     }
 </style>
+</file>
+
+<file path="Areas/Vendedores/Views/Veiculos/Create.cshtml">
+@model AutoMarket.Models.ViewModels.Veiculos.CreateVeiculoViewModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer Localizer
+@{
+    ViewData["Title"] = Localizer["PageTitle"];
+    Layout = "~/Areas/Vendedores/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="h3 mb-4 text-center">@Localizer["PublishHeading"]</h1>
+
+            <div class="wizard-progress">
+                <div class="progress-track"></div>
+                <div class="progress-fill" id="progressFill"></div>
+                <div class="step-indicators">
+                    <div class="step-indicator active" data-step="1">
+                        <div class="step-circle"><i class="bi bi-car-front"></i></div>
+                        <div class="step-label">@Localizer["Step1Label"]</div>
+                    </div>
+                    <div class="step-indicator" data-step="2">
+                        <div class="step-circle"><i class="bi bi-gear-wide-connected"></i></div>
+                        <div class="step-label">@Localizer["Step2Label"]</div>
+                    </div>
+                    <div class="step-indicator" data-step="3">
+                        <div class="step-circle"><i class="bi bi-images"></i></div>
+                        <div class="step-label">@Localizer["Step3Label"]</div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Create" asp-controller="Veiculos" asp-area="Vendedores"
+                  method="post" enctype="multipart/form-data" id="createCarForm">
+
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" aria-live="polite"></div>
+
+                <div class="step-content active" id="step1">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 text-primary">@Localizer["WhatSelling"]</h5>
+
+                            <div class="mb-3">
+                                <label asp-for="Titulo" class="form-label fw-bold"></label>
+                                <input asp-for="Titulo" class="form-control form-control-lg" placeholder="@Localizer["TitlePlaceholder"]" />
+                                <span asp-validation-for="Titulo" class="text-danger"></span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Marca" class="form-label"></label>
+                                    <input asp-for="Marca" class="form-control" placeholder="@Localizer["MarcaPlaceholder"]" />
+                                    <span asp-validation-for="Marca" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Modelo" class="form-label"></label>
+                                    <input asp-for="Modelo" class="form-control" placeholder="@Localizer["ModeloPlaceholder"]" />
+                                    <span asp-validation-for="Modelo" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Ano" class="form-label"></label>
+                                    <input asp-for="Ano" type="number" class="form-control" placeholder="@Localizer["AnoPlaceholder", DateTime.Now.Year]" />
+                                    <span asp-validation-for="Ano" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="CategoriaId" class="form-label"></label>
+                                    <select asp-for="CategoriaId" class="form-select">
+                                        <option value="">@Localizer["CategoriaPrompt"]</option>
+                                        @foreach (var cat in Model.CategoriesDropdown)
+                                        {
+                                            <option value="@cat.Id">@cat.Nome</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-content" id="step2">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 text-primary">@Localizer["TechnicalDetails"]</h5>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Combustivel" class="form-label"></label>
+                                    <select asp-for="Combustivel" class="form-select">
+                                        <option value="">@Localizer["SelectPrompt"]</option>
+                                        <option value="Gasolina">@Localizer["CombustivelGasolina"]</option>
+                                        <option value="Gasóleo">@Localizer["CombustivelGasoleo"]</option>
+                                        <option value="Híbrido">@Localizer["CombustivelHibrido"]</option>
+                                        <option value="Elétrico">@Localizer["CombustivelEletrico"]</option>
+                                        <option value="GLP">@Localizer["CombustivelGlp"]</option>
+                                    </select>
+                                    <span asp-validation-for="Combustivel" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Caixa" class="form-label"></label>
+                                    <select asp-for="Caixa" class="form-select">
+                                        <option value="">@Localizer["SelectPrompt"]</option>
+                                        <option value="Manual">@Localizer["CaixaManual"]</option>
+                                        <option value="Automática">@Localizer["CaixaAutomatica"]</option>
+                                    </select>
+                                    <span asp-validation-for="Caixa" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="Km" class="form-label"></label>
+                                    <div class="input-group">
+                                        <input asp-for="Km" type="number" class="form-control" />
+                                        <span class="input-group-text">@Localizer["KmSuffix"]</span>
+                                    </div>
+                                    <span asp-validation-for="Km" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="Condicao" class="form-label"></label>
+                                    <select asp-for="Condicao" class="form-select">
+                                        <option value="Usado">@Localizer["CondicaoUsado"]</option>
+                                        <option value="Novo">@Localizer["CondicaoNovo"]</option>
+                                        <option value="Semi-novo">@Localizer["CondicaoSemiNovo"]</option>
+                                    </select>
+                                    <span asp-validation-for="Condicao" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="Preco" class="form-label fw-bold"></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">€</span>
+                                        <input asp-for="Preco" type="number" step="0.01" class="form-control" />
+                                    </div>
+                                    <span asp-validation-for="Preco" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-content" id="step3">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-4 text-primary">@Localizer["MediaAndLocation"]</h5>
+
+                            <div class="mb-4">
+                                <label asp-for="Fotos" class="form-label fw-bold">@Localizer["PhotosLabel"]</label>
+                                <div class="upload-area" onclick="document.getElementById('Fotos').click()" aria-describedby="uploadHelp" role="button" tabindex="0">
+                                    <i class="bi bi-cloud-upload display-4 text-muted"></i>
+                                    <p class="mt-2 text-muted">@Localizer["UploadPrompt"]</p>
+                                    <small class="text-muted d-block" id="uploadHelp">@Localizer["UploadMax"]</small>
+                                </div>
+                                <input asp-for="Fotos"
+                                       id="Fotos"
+                                       type="file"
+                                       class="d-none"
+                                       accept=".jpg,.jpeg,.png,.webp"
+                                       multiple
+                                       onchange="previewImages(this)"
+                                       aria-describedby="uploadHelp"
+                                       data-max-files="10"
+                                       data-max-files-message="@Localizer["MaxFilesMessage"]" />
+                                <span asp-validation-for="Fotos" class="text-danger"></span>
+                                <div id="imagePreviewContainer" class="row mt-3 g-2"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Localizacao" class="form-label"></label>
+                                <input asp-for="Localizacao" class="form-control" placeholder="@Localizer["LocationPlaceholder"]" />
+                                <span asp-validation-for="Localizacao" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Descricao" class="form-label"></label>
+                                <textarea asp-for="Descricao" class="form-control" rows="4" placeholder="@Localizer["DescriptionPlaceholder"]"></textarea>
+                                <span asp-validation-for="Descricao" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-secondary btn-lg" id="btnPrev" style="display:none;">
+                        <i class="bi bi-arrow-left"></i> @Localizer["Prev"]
+                    </button>
+
+                    <button type="button" class="btn btn-primary btn-lg ms-auto" id="btnNext">
+                        @Localizer["Next"] <i class="bi bi-arrow-right"></i>
+                    </button>
+
+                    <button type="submit" class="btn btn-success btn-lg ms-auto" id="btnSubmit" style="display:none;">
+                        <i class="bi bi-check-lg"></i> @Localizer["Publish"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/veiculos-create.js"></script>
+}
 </file>
 
 <file path="Infrastructure/Data/DbInitializer.cs">
@@ -8468,42 +8475,6 @@ namespace AutoMarket.Services.Interfaces
 }
 </file>
 
-<file path="wwwroot/css/site.css">
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-    margin-bottom: 60px;
-}
-
-/* Authentication form containers */
-.login-container {
-  max-width: 450px;
-  margin: 2rem auto;
-}
-
-.register-container {
-  max-width: 520px;
-  margin: 2rem auto;
-}
-</file>
-
 <file path="wwwroot/js/script.js">
 // AutoMarket JS
 // Interatividade inicial (abas, formulários, etc.)
@@ -8592,6 +8563,153 @@ namespace AutoMarket.Models.Enums
         Pausado = 3
     }
 }
+</file>
+
+<file path="wwwroot/css/site.css">
+:root {
+  --cor-primaria: #0d6efd;
+  --cor-cta: #f0ad4e;
+}
+
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+/* Authentication form containers */
+.login-container {
+  max-width: 450px;
+  margin: 2rem auto;
+}
+
+.register-container {
+  max-width: 520px;
+  margin: 2rem auto;
+}
+
+/* --- Wizard de Criaзгo de Veнculo --- */
+.wizard-progress {
+    position: relative;
+    margin-bottom: 3rem;
+    counter-reset: step;
+}
+
+.progress-track {
+    position: absolute;
+    top: 15px;
+    width: 100%;
+    height: 4px;
+    background-color: #e9ecef;
+    z-index: 1;
+}
+
+.progress-fill {
+    position: absolute;
+    top: 15px;
+    height: 4px;
+    background-color: var(--cor-cta);
+    width: 0%;
+    transition: width 0.3s ease;
+    z-index: 2;
+}
+
+.step-indicators {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 3;
+}
+
+.step-indicator {
+    text-align: center;
+    background: white;
+    padding: 0 10px;
+}
+
+.step-circle {
+    width: 35px;
+    height: 35px;
+    background-color: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    color: #6c757d;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.step-indicator.active .step-circle {
+    background-color: var(--cor-primaria);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(0, 33, 71, 0.2);
+}
+
+.step-indicator.completed .step-circle {
+    background-color: var(--cor-cta);
+    color: white;
+}
+
+.step-indicator.active .step-label {
+    color: var(--cor-primaria);
+    font-weight: bold;
+}
+
+.step-content {
+    display: none;
+    animation: fadeIn 0.4s;
+}
+
+    .step-content.active {
+        display: block;
+    }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Бrea de Upload Melhorada */
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    transition: border-color 0.3s;
+    cursor: pointer;
+}
+
+    .upload-area:hover {
+        border-color: var(--cor-primaria);
+        background: #e9ecef;
+    }
 </file>
 
 <file path="README.md">
@@ -8969,6 +9087,7 @@ footer {
     <Folder Include="docs\" />
     <Folder Include="Infrastructure\Migrations\" />
     <Folder Include="Models\ViewModels\Carros\" />
+    <Folder Include="Resources\Areas\Vendedores\Views\Veiculos\" />
   </ItemGroup>
 </Project>
 </file>
