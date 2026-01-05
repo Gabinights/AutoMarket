@@ -8,7 +8,7 @@
         <div class="container">
             <!-- Brand -->
             <a class="navbar-brand fw-bold fs-5" asp-area="Public" asp-controller="Home" asp-action="Index">
-                🚗 AutoMarket
+                AutoMarket
             </a>
 
             <!-- Toggler para Mobile -->
@@ -21,10 +21,19 @@
                 <!-- Links Centrais -->
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" asp-area="Public" asp-controller="Home" asp-action="Sobre">Sobre</a>
+                        <a class="nav-link fw-semibold" asp-area="Public" asp-controller="Veiculos" asp-action="Index">
+                            <i class="bi bi-car-front-fill me-1"></i>Anúncios
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-area="Public" asp-controller="Home" asp-action="Ajuda">Ajuda</a>
+                        <a class="nav-link" asp-area="Public" asp-controller="Home" asp-action="Sobre">
+                            <i class="bi bi-info-circle me-1"></i>Sobre
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="Public" asp-controller="Home" asp-action="Ajuda">
+                            <i class="bi bi-question-circle me-1"></i>Ajuda
+                        </a>
                     </li>
                 </ul>
 
