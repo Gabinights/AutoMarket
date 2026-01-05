@@ -1,0 +1,125 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@using AutoMarket.Models;
+@inject SignInManager<Utilizador> SignInManager
+
+<header class="bg-primary py-3 sticky-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold fs-5" asp-area="" asp-controller="Home" asp-action="Index">
+                🚗 AutoMarket
+            </a>
+
+            <!-- Toggler para Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menu Principal -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <!-- Links Centrais -->
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="" asp-controller="Veiculos" asp-action="Index">Veículos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Sobre">Sobre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Ajuda">Ajuda</a>
+                    </li>
+                </ul>
+
+                <!-- Links Direita (Autenticação) -->
+                <ul class="navbar-nav ms-auto gap-2">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <!-- Dropdown do Utilizador -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle"></i> @(User.Identity?.Name?.Split('@')[0] ?? "Utilizador")
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-controller="Conta" asp-action="Perfil">
+                                        <i class="bi bi-person"></i> O Meu Perfil
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-controller="Transacoes" asp-action="MinhasCompras">
+                                        <i class="bi bi-bag-check"></i> Minhas Compras
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-area="" asp-controller="Transacoes" asp-action="MinhasVendas">
+                                        <i class="bi bi-cash-stack"></i> Minhas Vendas
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="" asp-controller="Conta" asp-action="Logout" method="post" class="px-2">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-box-arrow-right"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Conta" asp-action="Login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Conta" asp-action="Register">Registar</a>
+                        </li>
+                    }
+
+                    <!-- Botão CTA (Vender) -->
+                    <li class="nav-item">
+                        <a class="btn btn-warning fw-bold ms-2" asp-area="Vendedores" asp-controller="Carros" asp-action="Index">
+                            ➕ Vender Carro
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<style>
+    header .navbar-dark .nav-link:hover {
+        color: var(--cor-cta) !important;
+        transition: color 0.2s;
+    }
+
+    header .btn-warning:hover {
+        background-color: #e6a800 !important;
+    }
+
+    /* Dropdown Menu Styling */
+    .dropdown-menu {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-top: 0.5rem;
+    }
+
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        transition: background-color 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .dropdown-item i {
+        margin-right: 0.5rem;
+    }
+</style>
+
+
+

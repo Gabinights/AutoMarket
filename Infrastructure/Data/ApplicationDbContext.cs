@@ -174,6 +174,12 @@ namespace AutoMarket.Infrastructure.Data
                 .HasForeignKey(t => t.VeiculoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Transacao>()
+                .HasOne(t => t.Vendedor)
+                .WithMany()
+                .HasForeignKey(t => t.VendedorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // --- Denuncias (Auditoria) ---
             builder.Entity<Denuncia>()
                 .HasOne(d => d.Denunciante)

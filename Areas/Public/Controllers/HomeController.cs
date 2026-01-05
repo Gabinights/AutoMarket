@@ -38,6 +38,23 @@ namespace AutoMarket.Areas.Public.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Renders the about page with information about AutoMarket.
+        /// </summary>
+        /// <returns>A view containing the about page.</returns>
+        public IActionResult Sobre()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Renders the help center with FAQ and support information.
+        /// </summary>
+        /// <returns>A view containing the help center.</returns>
+        public IActionResult Ajuda()
+        {
+            return View();
+        }
 
         /// <summary>
         /// Renders the error page including the current request identifier.
