@@ -101,6 +101,15 @@ _ReSharper*/
 # User Secrets (sensitive configuration)
 secrets.json
 
+# .NET User Secrets
+**/Properties/launchSettings.json
+**/UserSecrets/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 # Note: appsettings.json, appsettings.Development.json, and appsettings.Production.json
 # are kept in source control with placeholders. Never commit real credentials.
 # Use User Secrets for development or environment variables for production.
