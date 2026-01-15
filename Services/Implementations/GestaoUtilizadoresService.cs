@@ -1,31 +1,32 @@
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using AutoMarket.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
 
 namespace AutoMarket.Services.Implementations
 {
     /// <summary>
-    /// Implementação do serviço de gestão de utilizadores.
+    /// Implementacao do serviÃ§o de gestao de utilizadores.
     /// </summary>
     public class GestaoUtilizadoresService : IGestaoUtilizadoresService
     {
         private readonly UserManager<Utilizador> _userManager;
         private readonly IAuditoriaService _auditoriaService;
         private readonly INotificacaoService _notificacaoService;
+        private readonly IMemoryCache _cache;
         private readonly ILogger<GestaoUtilizadoresService> _logger;
 
         public GestaoUtilizadoresService(
             UserManager<Utilizador> userManager,
             IAuditoriaService auditoriaService,
             INotificacaoService notificacaoService,
+            IMemoryCache cache,
             ILogger<GestaoUtilizadoresService> logger)
         {
             _userManager = userManager;
             _auditoriaService = auditoriaService;
             _notificacaoService = notificacaoService;
+            _cache = cache;
             _logger = logger;
         }
 
@@ -40,7 +41,7 @@ namespace AutoMarket.Services.Implementations
 
             if (utilizador.IsBlocked)
             {
-                _logger.LogWarning("Utilizador {UtilizadorId} já está bloqueado", utilizadorId);
+                _logger.LogWarning("Utilizador {UtilizadorId} ja esta bloqueado", utilizadorId);
                 return false;
             }
 
@@ -48,12 +49,18 @@ namespace AutoMarket.Services.Implementations
             utilizador.IsBlocked = true;
             utilizador.BlockReason = motivo;
 
+            await _userManager.UpdateSecurityStampAsync(utilizador);
+
             var result = await _userManager.UpdateAsync(utilizador);
             if (!result.Succeeded)
             {
                 _logger.LogError("Erro ao bloquear utilizador {UtilizadorId}", utilizadorId);
                 return false;
             }
+
+            // -- Cache Invalidation
+            var cacheKey = $"User_Status_{utilizadorId}";
+            _cache.Set(cacheKey, false, TimeSpan.FromMinutes(30));
 
             // Registar auditoria
             await _auditoriaService.RegistarAcaoAsync(
@@ -70,7 +77,7 @@ namespace AutoMarket.Services.Implementations
                 utilizadorId,
                 tipo: "USUARIO_BLOQUEADO",
                 assunto: "A sua conta foi bloqueada",
-                corpo: $"A sua conta foi bloqueada pela administração. Motivo: {motivo}. Contacte o suporte se julgar que isto é um erro.");
+                corpo: $"A sua conta foi bloqueada pela administracao. Motivo: {motivo}. Contacte o suporte se julgar que isto e um erro.");
 
             _logger.LogInformation(
                 "Admin {AdminId} bloqueou utilizador {UtilizadorId}. Motivo: {Motivo}",
@@ -90,7 +97,7 @@ namespace AutoMarket.Services.Implementations
 
             if (!utilizador.IsBlocked)
             {
-                _logger.LogWarning("Utilizador {UtilizadorId} não está bloqueado", utilizadorId);
+                _logger.LogWarning("Utilizador {UtilizadorId} nao esta bloqueado", utilizadorId);
                 return false;
             }
 
@@ -120,7 +127,7 @@ namespace AutoMarket.Services.Implementations
                 utilizadorId,
                 tipo: "USUARIO_DESBLOQUEADO",
                 assunto: "A sua conta foi desbloqueada",
-                corpo: "A sua conta foi desbloqueada pela administração. Pode agora aceder normalmente.");
+                corpo: "A sua conta foi desbloqueada pela administracao. Pode agora aceder normalmente.");
 
             _logger.LogInformation(
                 "Admin {AdminId} desbloqueou utilizador {UtilizadorId}",
@@ -129,7 +136,7 @@ namespace AutoMarket.Services.Implementations
             return true;
         }
 
-        public async Task<string?> ObterMotivoBloquoAsync(string utilizadorId)
+        public async Task<string?> ObterMotivoBloqueioAsync(string utilizadorId)
         {
             var utilizador = await _userManager.FindByIdAsync(utilizadorId);
             if (utilizador == null || !utilizador.IsBlocked)

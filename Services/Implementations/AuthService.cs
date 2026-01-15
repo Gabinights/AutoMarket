@@ -2,8 +2,8 @@ using AutoMarket.Infrastructure.Data;
 using AutoMarket.Infrastructure.Utils;
 using AutoMarket.Models.Constants;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AutoMarket.Services.Implementations
 {
@@ -15,6 +15,7 @@ namespace AutoMarket.Services.Implementations
 	private readonly IEmailAuthService _emailAuthService;
 	private readonly ILogger<AuthService> _logger;
 	private readonly IHostEnvironment _environment;
+        private readonly IMemoryCache _cache;
 
 	public AuthService(
 		UserManager<Utilizador> userManager,
@@ -22,7 +23,8 @@ namespace AutoMarket.Services.Implementations
 		ApplicationDbContext context,
 		IEmailAuthService emailAuthService,
 		ILogger<AuthService> logger,
-		IHostEnvironment environment)
+        IHostEnvironment environment,
+        IMemoryCache cache)
 	{
 		_userManager = userManager;
 		_signInManager = signInManager;
@@ -30,6 +32,7 @@ namespace AutoMarket.Services.Implementations
 		_emailAuthService = emailAuthService;
 		_logger = logger;
 		_environment = environment;
+            _cache = cache;
 	}
 
 		public async Task<RegisterResultDto> RegisterAsync(RegisterDto dto, string confirmationBaseUrl)
@@ -38,7 +41,7 @@ namespace AutoMarket.Services.Implementations
 
 			if (!string.IsNullOrEmpty(dto.Nif) && !NifValidator.IsValid(dto.Nif))
 			{
-				errors.Add("NIF inválido. Por favor, verifique o número introduzido.");
+                errors.Add("NIF invÃ¡lido. Por favor, verifique o nÃºmero introduzido.");
 				return new RegisterResultDto(false, errors, null);
 			}
 
@@ -54,8 +57,7 @@ namespace AutoMarket.Services.Implementations
 				Morada = dto.Morada,
 				PhoneNumber = dto.Contacto,
 				NIF = dto.Nif,
-				DataRegisto = DateTime.UtcNow
-				// EmailConfirmed removido - não é necessário
+                DataRegisto = DateTime.UtcNow
 			};
 
 				var identityResult = await _userManager.CreateAsync(user, dto.Password);
@@ -91,8 +93,8 @@ namespace AutoMarket.Services.Implementations
 				await _context.SaveChangesAsync();
 				await transaction.CommitAsync();
 
-				// Auto-login após registo
-				await _signInManager.SignInAsync(user, isPersistent: false);
+                // Auto-login apos registo
+                await _signInManager.SignInAsync(user, isPersistent: false);
 
 				_logger.LogInformation("Utilizador {Email} registado e auto-logado com sucesso", user.Email);
 
@@ -113,7 +115,7 @@ namespace AutoMarket.Services.Implementations
 			var signInResult = await _signInManager.PasswordSignInAsync(dto.Email, dto.Password, dto.RememberMe, false);
 			if (!signInResult.Succeeded)
 			{
-				errors.Add("Email ou password inválidos.");
+                errors.Add("Email ou password invÃ¡lidos.");
 				return new LoginResultDto(false, null, errors);
 			}
 
@@ -140,7 +142,7 @@ namespace AutoMarket.Services.Implementations
 
 				if (vendedor != null && vendedor.Status != StatusAprovacao.Aprovado)
 				{
-					_logger.LogWarning("Vendedor {Email} tentou entrar mas está com status {Status}", user.Email, vendedor.Status);
+					_logger.LogWarning("Vendedor {Email} tentou entrar mas estï¿½ com status {Status}", user.Email, vendedor.Status);
 					await _signInManager.SignOutAsync();
 					return new LoginResultDto(false, nameof(StatusAprovacao.Pendente), errors);
 				}
@@ -160,14 +162,14 @@ namespace AutoMarket.Services.Implementations
 
 			if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
 			{
-				errors.Add("Link de confirmação inválido ou incompleto.");
+				errors.Add("Link de confirmaï¿½ï¿½o invï¿½lido ou incompleto.");
 				return new ConfirmEmailResultDto(false, errors);
 			}
 
 			var user = await _userManager.FindByIdAsync(userId);
 			if (user == null)
 			{
-				errors.Add("Utilizador não encontrado no sistema.");
+				errors.Add("Utilizador nï¿½o encontrado no sistema.");
 				return new ConfirmEmailResultDto(false, errors);
 			}
 
@@ -175,7 +177,7 @@ namespace AutoMarket.Services.Implementations
 			if (!result.Succeeded)
 			{
 				errors.AddRange(result.Errors.Select(e => e.Description));
-				_logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}", userId, string.Join(", ", errors));
+				_logger.LogWarning("Falha na confirmaï¿½ï¿½o de email para {UserId}: {Errors}", userId, string.Join(", ", errors));
 				return new ConfirmEmailResultDto(false, errors);
 			}
 
@@ -184,36 +186,12 @@ namespace AutoMarket.Services.Implementations
 
 		public async Task<UpdateNifResultDto> UpdateNifAsync(string userId, string nif)
 		{
-			var errors = new List<string>();
-
-			if (string.IsNullOrEmpty(nif))
-			{
-				errors.Add("O NIF é obrigatório.");
-				return new UpdateNifResultDto(false, errors);
-			}
-
-			if (!NifValidator.IsValid(nif))
-			{
-				errors.Add("NIF inválido. Por favor, verifique o número introduzido.");
-				return new UpdateNifResultDto(false, errors);
-			}
-
+            var errors = new List<string>();
 			var user = await _userManager.FindByIdAsync(userId);
-			if (user == null)
-			{
-				errors.Add("Utilizador não encontrado.");
-				return new UpdateNifResultDto(false, errors);
-			}
-
+            if (user == null) return new UpdateNifResultDto(false, new[] { "User not found" });
 			user.NIF = nif;
 			var result = await _userManager.UpdateAsync(user);
-			if (!result.Succeeded)
-			{
-				errors.AddRange(result.Errors.Select(e => e.Description));
-				return new UpdateNifResultDto(false, errors);
-			}
-
-			return new UpdateNifResultDto(true, Enumerable.Empty<string>());
+            return new UpdateNifResultDto(result.Succeeded, result.Errors.Select(e => e.Description));
 		}
 
 		public async Task<SoftDeleteResultDto> SoftDeleteAsync(string userId)
@@ -223,7 +201,7 @@ namespace AutoMarket.Services.Implementations
 
 			if (user == null)
 			{
-				errors.Add("Utilizador não encontrado.");
+                errors.Add("Utilizador nÃ£o encontrado.");
 				return new SoftDeleteResultDto(false, errors);
 			}
 
@@ -246,21 +224,20 @@ namespace AutoMarket.Services.Implementations
 				var result = await _userManager.UpdateAsync(user);
 				if (!result.Succeeded)
 				{
-					errors.AddRange(result.Errors.Select(e => e.Description));
-					foreach (var error in result.Errors)
-					{
-						_logger.LogError("Erro ao atualizar utilizador {Id} após soft delete: {Error}", user.Id, error.Description);
-					}
+                    errors.AddRange(result.Errors.Select(e => e.Description));
 					return new SoftDeleteResultDto(false, errors);
 				}
 
-				_logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete). Sessão invalidada.", user.Id);
+                var cacheKey = $"user_{userId}";
+                _cache.Set(cacheKey, false, TimeSpan.FromMinutes(30));
+
+                _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete). SessÃ£o invalidada.", user.Id);
 				return new SoftDeleteResultDto(true, Enumerable.Empty<string>());
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Erro crítico ao apagar conta do utilizador {Id}", user.Id);
-				errors.Add("Erro crítico ao apagar conta.");
+                _logger.LogError(ex, "Erro crÃ­tico ao apagar conta do utilizador {Id}", user.Id);
+                errors.Add("Erro crÃ­tico ao apagar conta.");
 				return new SoftDeleteResultDto(false, errors);
 			}
 		}

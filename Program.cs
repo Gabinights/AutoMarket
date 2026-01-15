@@ -20,6 +20,9 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
            .AddSupportedUICultures(supportedCultures);
 });
 
+// Adiciona o serviço de cache
+builder.Services.AddMemoryCache();
+
 // Adiciona o serviço de encriptação (RGPD compliance)
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 
@@ -119,12 +122,11 @@ app.UseSession();
 var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(localizationOptions);
 app.UseAuthentication();
+app.UseMiddleware<UserBlockingMiddleware>();
 app.UseAuthorization();
 
 app.UseStatusCodePages(context =>
 {
-    // Deixar o sistema padrão tratar erros 403
-    // Não fazemos redirecionamentos aqui
     return Task.CompletedTask;
 });
 app.MapControllerRoute(

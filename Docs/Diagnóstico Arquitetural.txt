@@ -1,0 +1,54 @@
+Problemas identificados:
+1. Controllers como AdminController e AnunciosController injetam ApplicationDbContext diretamente, ignorando a lógica de negócio encapsulada nos serviços. Duplicação de lógica de negócio e dificuldade em testar unitariamente. Viollação do SoC.
+
+2. Não existe middleware para invalidar sessões ativas se um utilizador for bloqueado (IsBlocked = true). O bloqueio só funciona no próximo login. Um utilizador malicioso bloqueado pode continuar a navegar até a cookie expirar.
+
+3. A construção da query de pesquisa está "hardcoded" no VeiculosController (BuildVeiculosQuery). Dificulta a extensão para novos filtros e torna o Controller "gordo".
+
+4. O LimparReservasHostedService usa um loop While com Task.Delay. Sem gestão de retries, sem dashboard de monitorização e corre na memória da app (perde-se se a app reiniciar).
+
+5. O DenunciaService gere bem os estados, mas a lógica de transição de estados deve ser reforçada para impedir saltos inválidos. Funcional, precisa apenas de refinamento.
+
+---
+
+Refatorizações/Implementações:
+1. (Working - Gemini) O requisito de "sign out immediately" exige um Middleware que intersete cada pedido HTTP. Criar UserBlockingMiddleware em Infrastructure/Security. Este middleware deve verificar uma cache rápida (IMemoryCache) ou a Claim do utilizador. Como as Claims só atualizam no login/refresh, a melhor abordagem é verificar o SecurityStamp ou consultar uma cache de "Blacklisted Users". Registar este middleware no Program.cs antes de app.MapControllerRoute
+
+2. Separation of Concerns (Remover DbContext dos Controllers)
+Vários controllers na área de Admin e Public estão a aceder à base de dados diretamente. Isto cria "Leakage" da camada de dados para a camada de apresentação.
+	- Refatorizar AdminController: Mover a lógica de aprovação/rejeição de vendedores para o IGestaoUtilizadoresService ou um novo IVendedorService.
+	- Refatorizar AnunciosController: Mover a lógica de listagem e pausa de anúncios para o IVeiculoService.
+Regra de Ouro: O ApplicationDbContext nunca deve ser injetado num Controller. Apenas Services e Repositories devem tocá-lo.
+
+3. Motor de Busca Dinâmico (Specification Pattern Lite)
+Para limpar o VeiculosController, vamos usar Extension Methods em IQueryable para construir a query dinamicamente. Criar Infrastructure/Extensions/VeiculoQueryExtensions.cs. Isto permite que o Controller fique limpo.
+
+4. Background Jobs (Hangfire vs HostedService)
+O código atual usa LimparReservasHostedService. Para um MVP robusto que "runs every minute", o Timer nativo é frágil.
+Recomendação: Implementar Hangfire (pacote NuGet). Permite persistência dos Jobs (se o servidor reiniciar, o job não desaparece). Dashboard visual para o Admin ver se as reservas estão a ser limpas. Evita problemas de concorrência com o DbContext (o Hangfire gere os Scopes). Alteração: Substituir LimparReservasHostedService por uma configuração no Program.cs
+
+5. Workflow de Denúncias
+O requisito pede um fluxo específico: Analyze -> HandledBy -> Close. O código atual em DenunciaService tem IniciarAnaliseAsync e EncerrarDenunciaAsync, o que é bom.
+
+O que falta (Melhoria): Adicionar uma validação de Transição de Estado e automatismo no encerramento "Procedente". No método EncerrarDenunciaAsync, se procedente == true:
+Se o alvo for um Veículo: Chamar IVeiculoService.PausarVeiculo(id).
+Se o alvo for um User: Incrementar um contador de "strikes" no user ou sinalizá-lo para revisão.
+
+---
+
+Estrutura de Ficheiros:
+Para cumprir o SoC, a estrutura deve evoluir para:
+/AutoMarket
+  /Areas
+     /Admin (Controllers apenas chamam Services)
+  /Core (Nova pasta para Domain Logic pura)
+     /Interfaces
+     /Entities
+     /Enums
+     /Specifications (Para a pesquisa avançada)
+  /Infrastructure
+     /Data
+     /Security (Middleware, Policies)
+     /Jobs (Hangfire Jobs)
+     /Services (Implementações concretas)
+  /Web (Apenas Views e ViewModels)

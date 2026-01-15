@@ -3,7 +3,7 @@ using AutoMarket.Models.Entities;
 namespace AutoMarket.Services.Interfaces
 {
     /// <summary>
-    /// Interface para serviço de gestão de utilizadores (bloqueio, desbloqueio, etc).
+    /// Interface para serviÃ§o de gestÃ£o de utilizadores (bloqueio, desbloqueio, etc).
     /// </summary>
     public interface IGestaoUtilizadoresService
     {
@@ -18,9 +18,9 @@ namespace AutoMarket.Services.Interfaces
         Task<bool> DesbloquearUtilizadorAsync(string utilizadorId, string adminId);
 
         /// <summary>
-        /// Obter histórico de bloqueios de um utilizador.
+        /// Obter motivo de bloqueio de um utilizador.
         /// </summary>
-        Task<string?> ObterMotivoBloquoAsync(string utilizadorId);
+        Task<string?> ObterMotivoBloqueioAsync(string utilizadorId);
 
         /// <summary>
         /// Listar utilizadores bloqueados.
