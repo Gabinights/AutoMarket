@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoMarket.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260105195749_AddAuditoriaFavoritosNotificacoes")]
-    partial class AddAuditoriaFavoritosNotificacoes
+    [Migration("20260115191011_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -375,11 +375,16 @@ namespace AutoMarket.Migrations
                     b.Property<int>("VeiculoId")
                         .HasColumnType("int");
 
+                    b.Property<int>("VendedorId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompradorId");
 
                     b.HasIndex("VeiculoId");
+
+                    b.HasIndex("VendedorId");
 
                     b.ToTable("Transacoes");
                 });
@@ -977,9 +982,17 @@ namespace AutoMarket.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("AutoMarket.Models.Entities.Vendedor", "Vendedor")
+                        .WithMany()
+                        .HasForeignKey("VendedorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Comprador");
 
                     b.Navigation("Veiculo");
+
+                    b.Navigation("Vendedor");
                 });
 
             modelBuilder.Entity("AutoMarket.Models.Entities.Veiculo", b =>

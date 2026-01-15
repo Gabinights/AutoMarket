@@ -979,7 +979,7 @@ namespace AutoMarket.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("AutoMarket.Models.Vendedor", "Vendedor")
+                    b.HasOne("AutoMarket.Models.Entities.Vendedor", "Vendedor")
                         .WithMany()
                         .HasForeignKey("VendedorId")
                         .OnDelete(DeleteBehavior.Restrict)

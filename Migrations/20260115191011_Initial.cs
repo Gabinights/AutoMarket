@@ -178,6 +178,34 @@ namespace AutoMarket.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuditoriaLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AdminId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TipoAcao = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Descricao = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    EntidadeAfetadaId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
+                    TipoEntidade = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    DadosAntigos = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DadosNovos = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EnderecoIP = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    UserAgent = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    DataHora = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditoriaLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AuditoriaLogs_AspNetUsers_AdminId",
+                        column: x => x.AdminId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Compradores",
                 columns: table => new
                 {
@@ -192,6 +220,33 @@ namespace AutoMarket.Migrations
                     table.ForeignKey(
                         name: "FK_Compradores_AspNetUsers_UserId",
                         column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notificacoes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DestinatarioId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Tipo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Assunto = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Corpo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LinkRelacionado = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Lida = table.Column<bool>(type: "bit", nullable: false),
+                    DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EntidadeRelacionadaId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
+                    TipoEntidadeRelacionada = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notificacoes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notificacoes_AspNetUsers_DestinatarioId",
+                        column: x => x.DestinatarioId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -320,6 +375,33 @@ namespace AutoMarket.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Favoritos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CompradorId = table.Column<int>(type: "int", nullable: false),
+                    VeiculoId = table.Column<int>(type: "int", nullable: false),
+                    DataAdicao = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favoritos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Favoritos_Compradores_CompradorId",
+                        column: x => x.CompradorId,
+                        principalTable: "Compradores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favoritos_Veiculos_VeiculoId",
+                        column: x => x.VeiculoId,
+                        principalTable: "Veiculos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Mensagens",
                 columns: table => new
                 {
@@ -355,6 +437,36 @@ namespace AutoMarket.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Reservas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    VeiculoId = table.Column<int>(type: "int", nullable: false),
+                    CompradorId = table.Column<int>(type: "int", nullable: false),
+                    DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DataExpiracao = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    MotivoCancel = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Notas = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reservas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Reservas_Compradores_CompradorId",
+                        column: x => x.CompradorId,
+                        principalTable: "Compradores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reservas_Veiculos_VeiculoId",
+                        column: x => x.VeiculoId,
+                        principalTable: "Veiculos",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Transacoes",
                 columns: table => new
                 {
@@ -367,7 +479,8 @@ namespace AutoMarket.Migrations
                     MoradaEnvioSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     NifFaturacaoSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     VeiculoId = table.Column<int>(type: "int", nullable: false),
-                    CompradorId = table.Column<int>(type: "int", nullable: false)
+                    CompradorId = table.Column<int>(type: "int", nullable: false),
+                    VendedorId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -382,6 +495,12 @@ namespace AutoMarket.Migrations
                         name: "FK_Transacoes_Veiculos_VeiculoId",
                         column: x => x.VeiculoId,
                         principalTable: "Veiculos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transacoes_Vendedores_VendedorId",
+                        column: x => x.VendedorId,
+                        principalTable: "Vendedores",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -406,6 +525,43 @@ namespace AutoMarket.Migrations
                         principalTable: "Veiculos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Visitas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    VeiculoId = table.Column<int>(type: "int", nullable: false),
+                    CompradorId = table.Column<int>(type: "int", nullable: false),
+                    VendedorId = table.Column<int>(type: "int", nullable: false),
+                    DataHora = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DataAgendamento = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    MotivoCancel = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Notas = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    NotasVendedor = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Visitas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Visitas_Compradores_CompradorId",
+                        column: x => x.CompradorId,
+                        principalTable: "Compradores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Visitas_Veiculos_VeiculoId",
+                        column: x => x.VeiculoId,
+                        principalTable: "Veiculos",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Visitas_Vendedores_VendedorId",
+                        column: x => x.VendedorId,
+                        principalTable: "Vendedores",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -448,6 +604,11 @@ namespace AutoMarket.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AuditoriaLogs_AdminId",
+                table: "AuditoriaLogs",
+                column: "AdminId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Compradores_UserId",
                 table: "Compradores",
                 column: "UserId",
@@ -474,6 +635,17 @@ namespace AutoMarket.Migrations
                 column: "TargetVeiculoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Favoritos_CompradorId_VeiculoId",
+                table: "Favoritos",
+                columns: new[] { "CompradorId", "VeiculoId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Favoritos_VeiculoId",
+                table: "Favoritos",
+                column: "VeiculoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Mensagens_DestinatarioId",
                 table: "Mensagens",
                 column: "DestinatarioId");
@@ -489,6 +661,26 @@ namespace AutoMarket.Migrations
                 column: "VeiculoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Notificacoes_DestinatarioId_Lida_DataCriacao",
+                table: "Notificacoes",
+                columns: new[] { "DestinatarioId", "Lida", "DataCriacao" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reserva_CompradorId",
+                table: "Reservas",
+                column: "CompradorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reserva_DataExpiracao",
+                table: "Reservas",
+                column: "DataExpiracao");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reserva_VeiculoId",
+                table: "Reservas",
+                column: "VeiculoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transacoes_CompradorId",
                 table: "Transacoes",
                 column: "CompradorId");
@@ -497,6 +689,11 @@ namespace AutoMarket.Migrations
                 name: "IX_Transacoes_VeiculoId",
                 table: "Transacoes",
                 column: "VeiculoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transacoes_VendedorId",
+                table: "Transacoes",
+                column: "VendedorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_VeiculoImagens_VeiculoId",
@@ -543,6 +740,26 @@ namespace AutoMarket.Migrations
                 table: "Vendedores",
                 column: "UserId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Visita_CompradorId",
+                table: "Visitas",
+                column: "CompradorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Visita_DataHora",
+                table: "Visitas",
+                column: "DataHora");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Visita_VeiculoId",
+                table: "Visitas",
+                column: "VeiculoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Visita_VendedorId",
+                table: "Visitas",
+                column: "VendedorId");
         }
 
         /// <inheritdoc />
@@ -564,16 +781,31 @@ namespace AutoMarket.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "AuditoriaLogs");
+
+            migrationBuilder.DropTable(
                 name: "Denuncias");
 
             migrationBuilder.DropTable(
+                name: "Favoritos");
+
+            migrationBuilder.DropTable(
                 name: "Mensagens");
+
+            migrationBuilder.DropTable(
+                name: "Notificacoes");
+
+            migrationBuilder.DropTable(
+                name: "Reservas");
 
             migrationBuilder.DropTable(
                 name: "Transacoes");
 
             migrationBuilder.DropTable(
                 name: "VeiculoImagens");
+
+            migrationBuilder.DropTable(
+                name: "Visitas");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
