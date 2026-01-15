@@ -15,7 +15,7 @@ namespace AutoMarket.Infrastructure.Data
         }
 
         // =========================================================
-        // DbSets (Tabelas)
+        // DbSets
         // =========================================================
         public DbSet<Veiculo> Veiculos { get; set; } = null!;
         public DbSet<VeiculoImagem> VeiculoImagens { get; set; } = null!;
@@ -108,8 +108,19 @@ namespace AutoMarket.Infrastructure.Data
                 .HasIndex(v => v.DataHora)
                 .HasDatabaseName("IX_Visita_DataHora");
 
-            // Soft Delete Global Query Filter
+            // --- Soft Delete Configuration ---
+
+            // Base User Soft Delete
             builder.Entity<Utilizador>().HasQueryFilter(u => !u.IsDeleted);
+
+            // Propagate Soft Delete to Profiles
+            builder.Entity<Comprador>().HasQueryFilter(c => !c.User!.IsDeleted);
+            builder.Entity<Vendedor>().HasQueryFilter(v => !v.User!.IsDeleted);
+
+            // Propagate Soft Delete to Dependent Child Entities
+            builder.Entity<Favorito>().HasQueryFilter(f => !f.Comprador.User.IsDeleted);
+            builder.Entity<Veiculo>().HasQueryFilter(v => !v.Vendedor.User.IsDeleted);
+            builder.Entity<VeiculoImagem>().HasQueryFilter(v => !v.Veiculo.Vendedor.User.IsDeleted);
 
             // Encriptação do NIF (RGPD compliance) usando helper estático
             var nifConverter = new ValueConverter<string?, string?>(
@@ -128,7 +139,7 @@ namespace AutoMarket.Infrastructure.Data
             // Se apagar Vendedor -> Apaga os seus Veículos
             builder.Entity<Veiculo>()
                 .HasOne(v => v.Vendedor)
-                .WithMany()
+                .WithMany(v => v.VeiculosAVenda)
                 .HasForeignKey(v => v.VendedorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -144,6 +155,7 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(r => r.Veiculo)
                 .WithMany()
                 .HasForeignKey(r => r.VeiculoId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             // Se apagar Vendedor -> Apaga as suas Visitas (NoAction para evitar ciclos)
@@ -151,6 +163,7 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(v => v.Vendedor)
                 .WithMany()
                 .HasForeignKey(v => v.VendedorId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             // Se apagar Veículo -> Apaga as suas Visitas (NoAction para evitar ciclos)
@@ -158,6 +171,7 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(v => v.Veiculo)
                 .WithMany()
                 .HasForeignKey(v => v.VeiculoId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             // #endregion
@@ -169,18 +183,44 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(t => t.Comprador)
                 .WithMany()
                 .HasForeignKey(t => t.CompradorId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Transacao>()
                 .HasOne(t => t.Veiculo)
                 .WithMany()
                 .HasForeignKey(t => t.VeiculoId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Transacao>()
                 .HasOne(t => t.Vendedor)
                 .WithMany()
                 .HasForeignKey(t => t.VendedorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Reservas ---
+            builder.Entity<Reserva>()
+                .HasOne(r => r.Comprador)
+                .WithMany()
+                .HasForeignKey(r => r.CompradorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Visitas ---
+            builder.Entity<Visita>()
+                .HasOne(v => v.Comprador)
+                .WithMany()
+                .HasForeignKey(v => v.CompradorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Visita>()
+                .HasOne(v => v.Vendedor)
+                .WithMany()
+                .HasForeignKey(v => v.VendedorId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // --- Denuncias (Auditoria) ---
@@ -188,12 +228,14 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(d => d.Denunciante)
                 .WithMany()
                 .HasForeignKey(d => d.DenuncianteId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Denuncia>()
                 .HasOne(d => d.AnalisadoPorAdmin)
                 .WithMany()
                 .HasForeignKey(d => d.AnalisadoPorAdminId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // --- Vendedores (Aprovacoes) ---
@@ -201,6 +243,7 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(v => v.ApprovedByAdmin)
                 .WithMany()
                 .HasForeignKey(v => v.ApprovedByAdminId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // --- Mensagens (Chat) ---
@@ -208,18 +251,20 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(m => m.Remetente)
                 .WithMany()
                 .HasForeignKey(m => m.RemetenteId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Mensagem>()
                 .HasOne(m => m.Destinatario)
                 .WithMany()
                 .HasForeignKey(m => m.DestinatarioId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // --- Categoria ---
             builder.Entity<Veiculo>()
                 .HasOne(v => v.Categoria)
-                .WithMany()
+                .WithMany(c => c.Veiculos)
                 .HasForeignKey(v => v.CategoriaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -228,6 +273,7 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(a => a.Admin)
                 .WithMany()
                 .HasForeignKey(a => a.AdminId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // --- Favoritos (Bookmarks) ---
@@ -253,6 +299,7 @@ namespace AutoMarket.Infrastructure.Data
                 .HasOne(n => n.Destinatario)
                 .WithMany()
                 .HasForeignKey(n => n.DestinatarioId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Índice para consultas de notificações não lidas
@@ -266,10 +313,6 @@ namespace AutoMarket.Infrastructure.Data
         /// Intercepta tentativas de delete físico em entidades ISoftDelete
         /// e converte-as automaticamente em soft delete (IsDeleted = true).
         /// </summary>
-        /// <remarks>
-        /// Mesmo que um developer use _context.Utilizadores.Remove(user),
-        /// o sistema converte automaticamente para soft delete.
-        /// </remarks>
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
         {
             InterceptSoftDeletes();
@@ -280,10 +323,6 @@ namespace AutoMarket.Infrastructure.Data
         /// Intercepta tentativas de delete físico em entidades ISoftDelete
         /// e converte-as automaticamente em soft delete (IsDeleted = true).
         /// </summary>
-        /// <remarks>
-        /// Mesmo que um developer use _context.Utilizadores.Remove(user),
-        /// o sistema converte automaticamente para soft delete.
-        /// </remarks>
         public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
         {
             InterceptSoftDeletes();
@@ -308,7 +347,7 @@ namespace AutoMarket.Infrastructure.Data
                 // Aplicar o soft delete
                 entry.Entity.IsDeleted = true;
 
-                // Opcional: Se a entidade tiver DataRemocao, pode ser adicionado aqui
+                // Opc: Se a entidade tiver DataRemocao, pode ser adicionado aqui
                 // if (entry.Entity is Utilizador utilizador && utilizador.GetType().GetProperty("DataRemocao") != null)
                 // {
                 //     utilizador.DataRemocao = DateTime.UtcNow;

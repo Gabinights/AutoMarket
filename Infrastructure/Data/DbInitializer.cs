@@ -25,35 +25,45 @@ namespace AutoMarket.Infrastructure.Data
             }
 
             // 2. Default Admin
-            var adminEmail = configuration["DefaultAdmin:Email"] ?? "admin@automarket.com";
+            var adminEmail = configuration["DefaultAdmin:Email"];
+            if (string.IsNullOrEmpty(adminEmail))
+            {
+                if (environment.IsProduction())
+                {
+                    throw new InvalidOperationException("O email do Admin não está configurado (DefaultAdmin:Email).");
+                }
+                adminEmail = "admin@automarket.com";
+            }
             var adminPwd = configuration["DefaultAdmin:Password"];
 
-            if (string.IsNullOrWhiteSpace(adminPwd))
+            if (string.IsNullOrEmpty(adminPwd))
             {
-                // Em produção, falha para obrigar a usar secrets
                 if (environment.IsProduction())
                 {
                     throw new InvalidOperationException("A password do Admin não está configurada (DefaultAdmin:Password).");
                 }
-                adminPwd = "Password1231"; // Apenas para dev/local
+                adminPwd = "Password1231";
             }
 
-            var adminUser = await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
-
-            if (environment.IsDevelopment())
+            if (!string.IsNullOrWhiteSpace(adminEmail))
             {
-                // 3. Comprador Teste
-                var compradorUser = await EnsureUserAsync(userManager, "comprador@automarket.com", "Password123!", "Comprador Exemplo", Roles.Comprador);
-                if (compradorUser != null)
+                var adminUser = await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
+
+                if (environment.IsDevelopment())
                 {
-                    if (!await context.Compradores.AnyAsync(c => c.UserId == compradorUser.Id))
+                    // 3. Comprador Teste
+                    var compradorUser = await EnsureUserAsync(userManager, "comprador@automarket.com", "Password123!", "Comprador Exemplo", Roles.Comprador);
+                    if (compradorUser != null)
                     {
-                        context.Compradores.Add(new Comprador
+                        if (!await context.Compradores.AnyAsync(c => c.UserId == compradorUser.Id))
                         {
-                            UserId = compradorUser.Id,
-                            ReceberNotificacoes = true
-                        });
-                        await context.SaveChangesAsync();
+                            context.Compradores.Add(new Comprador
+                            {
+                                UserId = compradorUser.Id,
+                                ReceberNotificacoes = true
+                            });
+                            await context.SaveChangesAsync();
+                        }
                     }
                 }
 
@@ -95,6 +105,8 @@ namespace AutoMarket.Infrastructure.Data
 
         private static async Task<Utilizador?> EnsureUserAsync(UserManager<Utilizador> userManager, string email, string password, string nome, string role)
         {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+
             var user = await userManager.FindByEmailAsync(email);
             if (user == null)
             {
