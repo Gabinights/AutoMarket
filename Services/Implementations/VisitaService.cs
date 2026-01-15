@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AutoMarket.Services.Implementations
 {
     /// <summary>
-    /// Service para gestão de visitas agendadas a veículos.
-    /// Controla o ciclo de vida: Agendamento, Confirmação, Realização.
+    /// Service para gestao de visitas agendadas a veiculos.
+    /// Controla o ciclo de vida: Agendamento, Confirmacao, Realizacao.
     /// </summary>
     public class VisitaService : IVisitaService
     {
@@ -22,8 +22,8 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Agendar uma visita a um veículo.
-        /// Valida data/hora e estado do veículo.
+        /// Agendar uma visita a um veiculo.
+        /// Valida data/hora e estado do veiculo.
         /// </summary>
         public async Task<(bool sucesso, Visita? visita, string mensagem)> AgendarVisitaAsync(
             int veiculoId,
@@ -35,28 +35,28 @@ namespace AutoMarket.Services.Implementations
             {
                 // 1. Validar data/hora
                 if (!ValidarDataVisita(dataHora))
-                    return (false, null, "Data/hora inválida. Deve ser uma data futura durante horário de funcionamento.");
+                    return (false, null, "Data/hora invalida. Deve ser uma data futura durante horario de funcionamento.");
 
-                // 2. Validar veículo existe
+                // 2. Validar veiculo existe
                 var veiculo = await _context.Veiculos
                     .Include(v => v.Vendedor)
                     .FirstOrDefaultAsync(v => v.Id == veiculoId);
 
                 if (veiculo == null)
-                    return (false, null, "Veículo não encontrado.");
+                    return (false, null, "Veiculo nao encontrado.");
 
-                // 3. Validar veículo não está vendido
+                // 3. Validar veiculo nao esta vendido
                 if (await ValidarVeiculoVendidoAsync(veiculoId))
-                    return (false, null, "Não é possível agendar visita. Este veículo já foi vendido.");
+                    return (false, null, "Nao e possivel agendar visita. Este veiculo ja foi vendido.");
 
                 // 4. Validar comprador existe
                 var comprador = await _context.Compradores
                     .FirstOrDefaultAsync(c => c.Id == compradorId);
 
                 if (comprador == null)
-                    return (false, null, "Perfil de comprador não encontrado.");
+                    return (false, null, "Perfil de comprador nao encontrado.");
 
-                // 5. Validar se não tem visita no mesmo horário (opcional - limite de 5 visitas por dia)
+                // 5. Validar se nao tem visita no mesmo horario (opcional - limite de 5 visitas por dia)
                 var visitasNesseDia = await _context.Visitas
                     .Where(v => v.VeiculoId == veiculoId
                         && v.DataHora.Date == dataHora.Date
@@ -86,7 +86,7 @@ namespace AutoMarket.Services.Implementations
                     "Visita agendada: VeiculoId={VeiculoId}, CompradorId={CompradorId}, DataHora={DataHora}",
                     veiculoId, compradorId, dataHora);
 
-                return (true, visita, "Visita agendada com sucesso! Aguardando confirmação do vendedor.");
+                return (true, visita, "Visita agendada com sucesso! Aguardando confirmaï¿½ï¿½o do vendedor.");
             }
             catch (Exception ex)
             {
@@ -108,14 +108,14 @@ namespace AutoMarket.Services.Implementations
                 // 1. Encontrar visita
                 var visita = await _context.Visitas.FirstOrDefaultAsync(v => v.Id == visitaId);
                 if (visita == null)
-                    return (false, "Visita não encontrada.");
+                    return (false, "Visita nï¿½o encontrada.");
 
                 // 2. Validar se pode ser cancelada
                 if (visita.Estado == EstadoVisita.Realizada)
-                    return (false, "Não é possível cancelar uma visita que já foi realizada.");
+                    return (false, "Nï¿½o ï¿½ possï¿½vel cancelar uma visita que jï¿½ foi realizada.");
 
                 if (visita.Estado == EstadoVisita.Cancelada)
-                    return (false, "Esta visita já foi cancelada.");
+                    return (false, "Esta visita jï¿½ foi cancelada.");
 
                 // 3. Mudar estado
                 visita.Estado = EstadoVisita.Cancelada;
@@ -136,7 +136,7 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Confirmar uma visita agendada (ação do vendedor).
+        /// Confirmar uma visita agendada (aï¿½ï¿½o do vendedor).
         /// </summary>
         public async Task<(bool sucesso, string mensagem)> ConfirmarVisitaAsync(int visitaId)
         {
@@ -145,7 +145,7 @@ namespace AutoMarket.Services.Implementations
                 // 1. Encontrar visita
                 var visita = await _context.Visitas.FirstOrDefaultAsync(v => v.Id == visitaId);
                 if (visita == null)
-                    return (false, "Visita não encontrada.");
+                    return (false, "Visita nï¿½o encontrada.");
 
                 // 2. Validar estado
                 if (visita.Estado != EstadoVisita.Pendente)
@@ -169,7 +169,7 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Marcar uma visita como realizada (ação do vendedor).
+        /// Marcar uma visita como realizada (aï¿½ï¿½o do vendedor).
         /// </summary>
         public async Task<(bool sucesso, string mensagem)> MarcarComoRealizadaAsync(
             int visitaId,
@@ -179,11 +179,11 @@ namespace AutoMarket.Services.Implementations
             {
                 var visita = await _context.Visitas.FirstOrDefaultAsync(v => v.Id == visitaId);
                 if (visita == null)
-                    return (false, "Visita não encontrada.");
+                    return (false, "Visita nao encontrada.");
 
                 // Apenas visitas no passado podem ser marcadas como realizadas
-                if (!visita.DataJáPassou)
-                    return (false, "Só pode marcar como realizada após a data/hora agendada.");
+                if (!visita.DataJaPassou)
+                    return (false, "Nao pode marcar como realizada antes da data/hora agendada.");
 
                 visita.Estado = EstadoVisita.Realizada;
                 if (!string.IsNullOrEmpty(notas))
@@ -202,23 +202,23 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Validar se uma data/hora é válida para agendamento.
+        /// Validar se uma data/hora e valida para agendamento.
         /// - Deve ser no futuro
-        /// - Deve estar em horário de funcionamento (9-18h)
+        /// - Deve estar em horario de funcionamento (9-18h)
         /// </summary>
         public bool ValidarDataVisita(DateTime dataHora)
         {
             var agora = DateTime.UtcNow;
 
-            // 1. Deve ser no futuro (mínimo 1 hora a partir de agora)
+            // 1. Deve ser no futuro (minimo 1 hora a partir de agora)
             if (dataHora <= agora.AddHours(1))
                 return false;
 
-            // 2. Horário de funcionamento: 9-18h
+            // 2. Horario de funcionamento: 9-18h
             if (dataHora.Hour < 9 || dataHora.Hour >= 18)
                 return false;
 
-            // 3. Só dias úteis (segunda a sexta)
+            // 3. So diasuteis (segunda a sexta)
             if (dataHora.DayOfWeek == DayOfWeek.Saturday || dataHora.DayOfWeek == DayOfWeek.Sunday)
                 return false;
 
@@ -226,7 +226,7 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Validar se um veículo foi vendido.
+        /// Validar se um veiculo foi vendido.
         /// </summary>
         public async Task<bool> ValidarVeiculoVendidoAsync(int veiculoId)
         {
@@ -265,7 +265,7 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Obter uma visita específica.
+        /// Obter uma visita especï¿½fica.
         /// </summary>
         public async Task<Visita?> ObterVisitaAsync(int visitaId)
         {

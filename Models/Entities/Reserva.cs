@@ -5,7 +5,7 @@ using AutoMarket.Models.Enums;
 namespace AutoMarket.Models.Entities
 {
     /// <summary>
-    /// Representa uma reserva de veículo feita por um comprador.
+    /// Representa uma reserva de veiculo feita por um comprador.
     /// 
     /// Workflow:
     /// 1. Comprador clica em "Reservar" ? Reserva criada (Pendente)
@@ -15,14 +15,14 @@ namespace AutoMarket.Models.Entities
     /// 5. Se comprador compra ? Estado = Concluida + cria Transacao
     /// 6. Se cancelado ? Estado = Cancelada
     /// 
-    /// Durante a reserva, o veículo passa para estado "Reservado" (bloqueado temporariamente).
+    /// Durante a reserva, o veï¿½culo passa para estado "Reservado" (bloqueado temporariamente).
     /// </summary>
     public class Reserva
     {
         [Key]
         public int Id { get; set; }
 
-        /// <summary>Veículo que está a ser reservado</summary>
+        /// <summary>Veiculo que esta a ser reservado</summary>
         [Required]
         public int VeiculoId { get; set; }
 
@@ -37,18 +37,18 @@ namespace AutoMarket.Models.Entities
         public Comprador Comprador { get; set; } = null!;
 
         /// <summary>Quando a reserva foi criada</summary>
-        [Display(Name = "Data de Criação")]
+        [Display(Name = "Data de CriaÃ§Ã£o")]
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
-        /// <summary>Até quando a reserva é válida</summary>
-        [Display(Name = "Data de Expiração")]
+        /// <summary>AtÃ© quando a reserva Ã© valida</summary>
+        [Display(Name = "Data de ExpiraÃ§Ã£o")]
         public DateTime DataExpiracao { get; set; }
 
         /// <summary>Estado actual da reserva</summary>
         [Display(Name = "Estado")]
         public EstadoReserva Estado { get; set; } = EstadoReserva.Pendente;
 
-        /// <summary>Razão do cancelamento (se aplicável)</summary>
+        /// <summary>RazÃ£o do cancelamento (se aplicÃ¡vel)</summary>
         [StringLength(500)]
         public string? MotivoCancel { get; set; }
 
@@ -58,13 +58,13 @@ namespace AutoMarket.Models.Entities
 
         /// <summary>
         /// Verifica se a reserva expirou.
-        /// Útil para validação antes de operações.
+        /// Util para validaÃ§Ã£o antes de operaÃ§Ãµes.
         /// </summary>
-        public bool EstáExpirada => DateTime.UtcNow > DataExpiracao && Estado == EstadoReserva.Pendente;
+        public bool Expirada => DateTime.UtcNow > DataExpiracao && Estado == EstadoReserva.Pendente;
 
         /// <summary>
-        /// Verifica se a reserva ainda é válida (não expirou e não foi cancelada).
+        /// Verifica se a reserva ainda Ã© valida (nÃ£o expirou e nÃ£o foi cancelada).
         /// </summary>
-        public bool EstáVálida => !EstáExpirada && Estado != EstadoReserva.Cancelada && Estado != EstadoReserva.Expirada;
+        public bool Valida => !Expirada && Estado != EstadoReserva.Cancelada && Estado != EstadoReserva.Expirada;
     }
 }

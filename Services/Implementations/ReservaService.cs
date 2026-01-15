@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AutoMarket.Services.Implementations
 {
     /// <summary>
-    /// Service para gestão de reservas de veículos.
-    /// Controla o ciclo de vida: Criação, Confirmação, Expiração, Compra.
+    /// Service para gestï¿½o de reservas de veï¿½culos.
+    /// Controla o ciclo de vida: Criaï¿½ï¿½o, Confirmaï¿½ï¿½o, Expiraï¿½ï¿½o, Compra.
     /// </summary>
     public class ReservaService : IReservaService
     {
@@ -22,8 +22,8 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Criar uma reserva de veículo.
-        /// Valida disponibilidade e muda o estado do veículo para "Reservado".
+        /// Criar uma reserva de veiculo.
+        /// Valida disponibilidade e muda o estado do veiculo para "Reservado".
         /// </summary>
         public async Task<(bool sucesso, Reserva? reserva, string mensagem)> CriarReservaAsync(
             int veiculoId, 
@@ -32,27 +32,27 @@ namespace AutoMarket.Services.Implementations
         {
             try
             {
-                // 1. Validar veículo existe
+                // 1. Validar veiculo existe
                 var veiculo = await _context.Veiculos.FirstOrDefaultAsync(v => v.Id == veiculoId);
                 if (veiculo == null)
-                    return (false, null, "Veículo não encontrado.");
+                    return (false, null, "Veiculo nao encontrado.");
 
-                // 2. Validar veículo está disponível
+                // 2. Validar veiculo disponivel
                 if (veiculo.Estado != EstadoVeiculo.Ativo)
-                    return (false, null, $"Veículo não está disponível. Estado atual: {veiculo.Estado}");
+                    return (false, null, $"Veiculo nao disponivel. Estado atual: {veiculo.Estado}");
 
                 // 3. Validar comprador existe
                 var comprador = await _context.Compradores.FirstOrDefaultAsync(c => c.Id == compradorId);
                 if (comprador == null)
-                    return (false, null, "Perfil de comprador não encontrado.");
+                    return (false, null, "Perfil de comprador nao encontrado.");
 
-                // 4. Validar se já tem reserva ativa para este veículo
+                // 4. Validar se ja tem reserva ativa para este veiculo
                 var reservaExistente = await _context.Reservas
                     .FirstOrDefaultAsync(r => r.VeiculoId == veiculoId 
                         && r.CompradorId == compradorId
-                        && r.EstáVálida);
+                        && r.Valida);
                 if (reservaExistente != null)
-                    return (false, null, "Já tem uma reserva ativa para este veículo.");
+                    return (false, null, "JÃ¡ tem uma reserva ativa para este veÃ­culo.");
 
                 // 5. Criar a reserva
                 var reserva = new Reserva
@@ -64,7 +64,7 @@ namespace AutoMarket.Services.Implementations
                     Estado = EstadoReserva.Pendente
                 };
 
-                // 6. Mudar estado do veículo para Reservado
+                // 6. Mudar estado do veiculo para Reservado
                 veiculo.Estado = EstadoVeiculo.Reservado;
 
                 // 7. Guardar
@@ -76,7 +76,7 @@ namespace AutoMarket.Services.Implementations
                     "Reserva criada: VeiculoId={VeiculoId}, CompradorId={CompradorId}, Validade={DataExpiracao}",
                     veiculoId, compradorId, reserva.DataExpiracao);
 
-                return (true, reserva, "Reserva criada com sucesso! Válida até " + reserva.DataExpiracao.ToShortDateString());
+                return (true, reserva, "Reserva criada com sucesso! VÃ¡lida atÃ© " + reserva.DataExpiracao.ToShortDateString());
             }
             catch (Exception ex)
             {
@@ -88,7 +88,7 @@ namespace AutoMarket.Services.Implementations
 
         /// <summary>
         /// Cancelar uma reserva.
-        /// Muda o veículo para "Ativo" novamente (se não houver outras reservas).
+        /// Muda o veiculo para "Ativo" novamente (se nao houver outras reservas).
         /// </summary>
         public async Task<(bool sucesso, string mensagem)> CancelarReservaAsync(
             int reservaId, 
@@ -102,24 +102,24 @@ namespace AutoMarket.Services.Implementations
                     .FirstOrDefaultAsync(r => r.Id == reservaId);
 
                 if (reserva == null)
-                    return (false, "Reserva não encontrada.");
+                    return (false, "Reserva nÃ£o encontrada.");
 
                 // 2. Validar se pode ser cancelada
                 if (reserva.Estado == EstadoReserva.Concluida)
-                    return (false, "Não é possível cancelar uma reserva que já foi concluída.");
+                    return (false, "NÃ£o Ã© possÃ­vel cancelar uma reserva que jÃ¡ foi concluida.");
 
                 if (reserva.Estado == EstadoReserva.Cancelada)
-                    return (false, "Esta reserva já foi cancelada.");
+                    return (false, "Esta reserva jÃ¡ foi cancelada.");
 
                 // 3. Mudar estado
                 reserva.Estado = EstadoReserva.Cancelada;
                 reserva.MotivoCancel = motivo;
 
-                // 4. Mudar veículo para Ativo (se não tem outra reserva válida)
+                // 4. Mudar veiculo para Ativo (se nÃ£o tem outra reserva valida)
                 var temOutraReserva = await _context.Reservas
                     .AnyAsync(r => r.VeiculoId == reserva.VeiculoId 
                         && r.Id != reserva.Id
-                        && r.EstáVálida);
+                        && r.Valida);
 
                 if (!temOutraReserva)
                 {
@@ -142,21 +142,21 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Verificar se um veículo está disponível para reserva.
+        /// Verificar se um veÃ­culo estÃ¡ disponivel para reserva.
         /// </summary>
-        public async Task<bool> VeiculoEstáDisponivelAsync(int veiculoId)
+        public async Task<bool> VeiculoEstaDisponivelAsync(int veiculoId)
         {
             var veiculo = await _context.Veiculos.FirstOrDefaultAsync(v => v.Id == veiculoId);
             if (veiculo == null) return false;
 
-            // Disponível se está Ativo ou Reservado
+            // DisponÃ­vel se estiver Ativo ou Reservado
             return veiculo.Estado == EstadoVeiculo.Ativo || veiculo.Estado == EstadoVeiculo.Reservado;
         }
 
         /// <summary>
         /// Limpar reservas que expiraram.
-        /// Muda seu estado para "Expirada" e liberta o veículo.
-        /// Este método deve ser chamado por um Background Job.
+        /// Muda seu estado para "Expirada" e liberta o veÃ­culo.
+        /// Este mÃ©todo deve ser chamado por um Background Job.
         /// </summary>
         public async Task LimparReservasExpirasAsync()
         {
@@ -177,7 +177,7 @@ namespace AutoMarket.Services.Implementations
                     // 2. Mudar estado
                     reserva.Estado = EstadoReserva.Expirada;
 
-                    // 3. Mudar veículo para Ativo
+                    // 3. Mudar veÃ­culo para Ativo
                     reserva.Veiculo.Estado = EstadoVeiculo.Ativo;
 
                     // 4. Cancelar visitas relacionadas
@@ -200,7 +200,7 @@ namespace AutoMarket.Services.Implementations
                 _context.Reservas.UpdateRange(reservasExpiradas);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Limpeza de reservas expiradas concluída. Total: {Count}", reservasExpiradas.Count);
+                _logger.LogInformation("Limpeza de reservas expiradas concluida. Total: {Count}", reservasExpiradas.Count);
             }
             catch (Exception ex)
             {
@@ -225,17 +225,17 @@ namespace AutoMarket.Services.Implementations
                     .FirstOrDefaultAsync(r => r.Id == reservaId && r.CompradorId == compradorId);
 
                 if (reserva == null)
-                    return (false, null, "Reserva não encontrada.");
+                    return (false, null, "Reserva nÃ£o encontrada.");
 
-                // 2. Validar se ainda é válida
-                if (!reserva.EstáVálida)
-                    return (false, null, "Esta reserva não é mais válida. Está expirada ou cancelada.");
+                // 2. Validar se ainda Ã© valida
+                if (!reserva.Valida)
+                    return (false, null, "Esta reserva nÃ£o Ã© mais valida. EstÃ¡ expirada ou cancelada.");
 
                 // 3. Validar se o comprador existe
                 var comprador = await _context.Compradores
                     .FirstOrDefaultAsync(c => c.Id == compradorId);
                 if (comprador == null)
-                    return (false, null, "Comprador não encontrado.");
+                    return (false, null, "Comprador nÃ£o encontrado.");
 
                 // 4. Criar Transacao
                 var transacao = new Transacao
@@ -243,7 +243,7 @@ namespace AutoMarket.Services.Implementations
                     VeiculoId = reserva.VeiculoId,
                     CompradorId = compradorId,
                     ValorPago = reserva.Veiculo.Preco,
-                    Metodo = MetodoPagamento.CartaoCredito,  // Será confirmado no checkout
+                    Metodo = MetodoPagamento.CartaoCredito,  // SerÃ¡ confirmado no checkout
                     Estado = EstadoTransacao.Pendente,
                     DataTransacao = DateTime.UtcNow
                 };
@@ -287,7 +287,7 @@ namespace AutoMarket.Services.Implementations
         }
 
         /// <summary>
-        /// Obter uma reserva específica.
+        /// Obter uma reserva especï¿½fica.
         /// </summary>
         public async Task<Reserva?> ObterReservaAsync(int reservaId)
         {

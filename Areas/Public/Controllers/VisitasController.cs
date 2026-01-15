@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AutoMarket.Areas.Public.Controllers
 {
     /// <summary>
-    /// Controller para gestão de visitas agendadas.
+    /// Controller para gestao de visitas agendadas.
     /// Apenas para utilizadores autenticados.
     /// </summary>
     [Area("Public")]
@@ -36,7 +36,7 @@ namespace AutoMarket.Areas.Public.Controllers
 
         /// <summary>
         /// GET: /Visitas/Agendar/5
-        /// Mostrar formulário para agendar visita.
+        /// Mostrar formulario para agendar visita.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Agendar(int veiculoId)
@@ -50,10 +50,10 @@ namespace AutoMarket.Areas.Public.Controllers
             if (veiculo == null)
                 return NotFound();
 
-            // Verificar se veículo foi vendido
+            // Verificar se veiculo foi vendido
             if (await _visitaService.ValidarVeiculoVendidoAsync(veiculoId))
             {
-                TempData["Erro"] = "Este veículo já foi vendido.";
+                TempData["Erro"] = "Este veiculo ja foi vendido.";
                 return RedirectToAction("Detalhe", "Veiculos", new { id = veiculoId });
             }
 
@@ -79,7 +79,7 @@ namespace AutoMarket.Areas.Public.Controllers
 
             if (comprador == null)
             {
-                TempData["Erro"] = "Perfil de comprador não encontrado.";
+                TempData["Erro"] = "Perfil de comprador nao encontrado.";
                 return RedirectToAction("Index", "Veiculos");
             }
 
@@ -115,7 +115,7 @@ namespace AutoMarket.Areas.Public.Controllers
 
             if (comprador == null)
             {
-                TempData["Erro"] = "Perfil de comprador não encontrado.";
+                TempData["Erro"] = "Perfil de comprador nï¿½o encontrado.";
                 return RedirectToAction("Index", "Veiculos");
             }
 
@@ -135,20 +135,20 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Validar permissão
+            // Validar permissï¿½o
             var visita = await _context.Visitas
                 .Include(v => v.Comprador)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (visita == null)
             {
-                TempData["Erro"] = "Visita não encontrada.";
+                TempData["Erro"] = "Visita nï¿½o encontrada.";
                 return RedirectToAction("MinhasVisitas");
             }
 
             if (visita.Comprador.UserId != user.Id)
             {
-                TempData["Erro"] = "Não tem permissão para cancelar esta visita.";
+                TempData["Erro"] = "Nï¿½o tem permissï¿½o para cancelar esta visita.";
                 return RedirectToAction("MinhasVisitas");
             }
 
@@ -177,7 +177,7 @@ namespace AutoMarket.Areas.Public.Controllers
 
             if (vendedor == null)
             {
-                TempData["Erro"] = "Perfil de vendedor não encontrado.";
+                TempData["Erro"] = "Perfil de vendedor nï¿½o encontrado.";
                 return RedirectToAction("Index", "Home");
             }
 
@@ -188,7 +188,7 @@ namespace AutoMarket.Areas.Public.Controllers
 
         /// <summary>
         /// POST: /Visitas/ConfirmarVisita/5
-        /// Confirmar uma visita agendada (ação do vendedor).
+        /// Confirmar uma visita agendada (aï¿½ï¿½o do vendedor).
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -198,20 +198,20 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Validar permissão
+            // Validar permissï¿½o
             var visita = await _context.Visitas
                 .Include(v => v.Vendedor)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (visita == null)
             {
-                TempData["Erro"] = "Visita não encontrada.";
+                TempData["Erro"] = "Visita nï¿½o encontrada.";
                 return RedirectToAction("VendedorDashboard");
             }
 
             if (visita.Vendedor.UserId != user.Id)
             {
-                TempData["Erro"] = "Não tem permissão.";
+                TempData["Erro"] = "Nï¿½o tem permissï¿½o.";
                 return RedirectToAction("VendedorDashboard");
             }
 
@@ -224,7 +224,7 @@ namespace AutoMarket.Areas.Public.Controllers
 
         /// <summary>
         /// POST: /Visitas/MarcarRealizada/5
-        /// Marcar visita como realizada (ação do vendedor).
+        /// Marcar visita como realizada (aï¿½ï¿½o do vendedor).
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -234,14 +234,14 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Validar permissão
+            // Validar permissï¿½o
             var visita = await _context.Visitas
                 .Include(v => v.Vendedor)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (visita == null || visita.Vendedor.UserId != user.Id)
             {
-                TempData["Erro"] = "Não tem permissão.";
+                TempData["Erro"] = "Nï¿½o tem permissï¿½o.";
                 return RedirectToAction("VendedorDashboard");
             }
 

@@ -29,22 +29,22 @@
     @if (Model == null || Model.Count == 0)
     {
         <div class="alert alert-info" role="alert">
-            <i class="bi bi-info-circle"></i> Ainda n„o agendou nenhuma visita.
-            <a href="@Url.Action("Index", "Veiculos")" class="alert-link">Procurar veÌculos e agendar</a>
+            <i class="bi bi-info-circle"></i> Ainda n√£o agendou nenhuma visita.
+            <a href="@Url.Action("Index", "Veiculos")" class="alert-link">Procurar ve√≠culos e agendar</a>
         </div>
         return;
     }
 
     <!-- Separar visitas por status -->
     @{
-        var visitasProximas = Model.Where(v => v.Est·Agendada).OrderBy(v => v.DataHora).ToList();
-        var visitasPassadas = Model.Where(v => !v.Est·Agendada).OrderByDescending(v => v.DataHora).ToList();
+        var visitasProximas = Model.Where(v => v.Agendada).OrderBy(v => v.DataHora).ToList();
+        var visitasPassadas = Model.Where(v => !v.Agendada).OrderByDescending(v => v.DataHora).ToList();
     }
 
     @if (visitasProximas.Any())
     {
         <h4 class="mb-3 mt-4">
-            <i class="bi bi-hourglass-split"></i> PrÛximas Visitas
+            <i class="bi bi-hourglass-split"></i> Pr√≥ximas Visitas
         </h4>
 
         <div class="row g-4 mb-5">
@@ -73,7 +73,7 @@
                                 @if (visita.Estado == EstadoVisita.Pendente)
                                 {
                                     <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-hourglass-split"></i> Aguardando ConfirmaÁ„o
+                                        <i class="bi bi-hourglass-split"></i> Aguardando Confirma√ß√£o
                                     </span>
                                 }
                                 else if (visita.Estado == EstadoVisita.Confirmada)
@@ -86,7 +86,7 @@
                         </div>
 
                         <div class="card-body">
-                            <!-- VeÌculo -->
+                            <!-- Ve√≠culo -->
                             <h5 class="card-title">
                                 @visita.Veiculo.Marca <strong>@visita.Veiculo.Modelo</strong>
                             </h5>
@@ -94,7 +94,7 @@
                             <!-- Data/Hora -->
                             <div class="alert alert-light border-primary mb-3">
                                 <i class="bi bi-calendar-event"></i>
-                                <strong>@visita.DataHora.ToString("dddd, dd/MM/yyyy '‡s' HH:mm")</strong><br>
+                                <strong>@visita.DataHora.ToString("dddd, dd/MM/yyyy '√†s' HH:mm")</strong><br>
                                 <small class="text-muted">Agendada em @visita.DataAgendamento.ToShortDateString()</small>
                             </div>
 
@@ -130,11 +130,11 @@
                             <div class="d-grid gap-2">
                                 <a href="@Url.Action("Detalhe", "Reservas", new { id = visita.VeiculoId })"
                                    class="btn btn-info btn-sm">
-                                    <i class="bi bi-eye"></i> Ver VeÌculo
+                                    <i class="bi bi-eye"></i> Ver Ve√≠culo
                                 </a>
                             </div>
 
-                            @if (visita.Est·Agendada)
+                            @if (visita.Agendada)
                             {
                                 <form asp-action="CancelarVisita" asp-controller="Visitas" method="post" class="mt-2">
                                     <input type="hidden" name="id" value="@visita.Id" />
@@ -155,14 +155,14 @@
     @if (visitasPassadas.Any())
     {
         <h4 class="mb-3 mt-4">
-            <i class="bi bi-clock-history"></i> HistÛrico de Visitas
+            <i class="bi bi-clock-history"></i> Hist√≥rico de Visitas
         </h4>
 
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead class="table-light">
                     <tr>
-                        <th>VeÌculo</th>
+                        <th>Ve√≠culo</th>
                         <th>Data</th>
                         <th>Vendedor</th>
                         <th>Estado</th>
@@ -192,7 +192,7 @@
                                 }
                                 else if (visita.Estado == EstadoVisita.NaoRealizada)
                                 {
-                                    <span class="badge bg-warning">N„o Realizada</span>
+                                    <span class="badge bg-warning">N√£o Realizada</span>
                                 }
                                 else
                                 {

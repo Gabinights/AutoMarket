@@ -1,22 +1,21 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using AutoMarket.Models.Enums;
 
 namespace AutoMarket.Models.Entities
 {
     /// <summary>
-    /// Modelo genérico para Veículos (Carros, Motas, etc.)
-    /// Representa um veículo listado para venda no catálogo.
+    /// Modelo genÃ©rico para VeÃ­culos (Carros, Motas, etc.)
+    /// Representa um veiculo listado para venda no catÃ¡logo.
     /// </summary>
     public class Veiculo
     {
         [Key]
         public int Id { get; set; }
 
-        // --- Dados do veículo ---
-        [Required(ErrorMessage = "O título é obrigatório")]
-        [StringLength(100, ErrorMessage = "Máximo de 100 caracteres.")]
-        [Display(Name = "Título do Anúncio")]
+        // --- Dados do veiculo ---
+        [Required(ErrorMessage = "O titulo e obrigatorio")]
+        [StringLength(100, ErrorMessage = "Maximo de 100 caracteres.")]
+        [Display(Name = "Titulo do Anuncio")]
         public string Titulo { get; set; } // Ex: "McLaren MP4-4 do Senna"
 
         [Required]
@@ -36,22 +35,22 @@ namespace AutoMarket.Models.Entities
 
         [Required]
         [Display(Name = "Ano")]
-        [Range(1900, 2100, ErrorMessage = "Ano inválido.")]
+        [Range(1900, 2100, ErrorMessage = "Ano invalido.")]
         public int Ano { get; set; }
 
         [Required]
         [DataType(DataType.Currency)]
-        [Display(Name = "Preço")]
-        [Range(0, 99999999, ErrorMessage = "Valor inválido.")]
+        [Display(Name = "Preco")]
+        [Range(0, 99999999, ErrorMessage = "Valor invalido.")]
         public decimal Preco { get; set; }
 
-        [Display(Name = "Quilómetros")]
-        [Range(0, int.MaxValue, ErrorMessage = "Valor não pode ser negativo.")]
+        [Display(Name = "Quilometros")]
+        [Range(0, int.MaxValue, ErrorMessage = "Valor nao pode ser negativo.")]
         public int Km { get; set; }
 
         [Required]
         [StringLength(20)]
-        [Display(Name = "Combustível")]
+        [Display(Name = "Combustivel")]
         public string Combustivel { get; set; }
 
         [Required]
@@ -61,17 +60,17 @@ namespace AutoMarket.Models.Entities
 
         [Required]
         [StringLength(100)]
-        [Display(Name = "Localização")]
+        [Display(Name = "Localizacao")]
         public string Localizacao { get; set; }
 
         [StringLength(50)]
-        [Display(Name = "Condição")]
+        [Display(Name = "Condicao")]
         public string? Condicao { get; set; }
 
         [Required]
         [DataType(DataType.MultilineText)]
-        [StringLength(2000, ErrorMessage = "A descrição é demasiado longa.")]
-        [Display(Name = "Descrição Detalhada")]
+        [StringLength(2000, ErrorMessage = "A descricao e demasiado longa.")]
+        [Display(Name = "Descricao Detalhada")]
         public string Descricao { get; set; }
 
         // --- Estado e Controlo ---
@@ -81,14 +80,14 @@ namespace AutoMarket.Models.Entities
         [Display(Name = "Publicado em")]
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
 
-        // --- Relação com Vendedor (1 Vendedor -> N Veículos) ---
+        // --- Relacao com Vendedor (1 Vendedor -> N Veiculos) ---
         [Required]
         public int VendedorId { get; set; }
 
         [ForeignKey("VendedorId")]
         public Vendedor Vendedor { get; set; }
 
-        // --- Relação com Imagens (1 Veículo -> N Imagens) ---
+        // --- Relacao com Imagens (1 Veiculo -> N Imagens) ---
         public ICollection<VeiculoImagem> Imagens { get; set; } = [];
     }
 }

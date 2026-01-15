@@ -29,8 +29,8 @@
     @if (Model == null || Model.Count == 0)
     {
         <div class="alert alert-info" role="alert">
-            <i class="bi bi-info-circle"></i> N„o tem reservas criadas ainda.
-            <a href="@Url.Action("Index", "Veiculos")" class="alert-link">ComeÁar a pesquisar veÌculos</a>
+            <i class="bi bi-info-circle"></i> Nao tem reservas criadas ainda.
+            <a href="@Url.Action("Index", "Veiculos")" class="alert-link">Come√ßar a pesquisar ve√≠culos</a>
         </div>
         return;
     }
@@ -40,7 +40,7 @@
         {
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
-                    <!-- Imagem do VeÌculo -->
+                    <!-- Imagem do Ve√≠culo -->
                     <div class="position-relative" style="height: 200px; overflow: hidden;">
                         @if (reserva.Veiculo.Imagens.Any())
                         {
@@ -86,14 +86,14 @@
                             else if (reserva.Estado == EstadoReserva.Concluida)
                             {
                                 <span class="badge bg-success">
-                                    <i class="bi bi-check-all"></i> ConcluÌda
+                                    <i class="bi bi-check-all"></i> Concluida
                                 </span>
                             }
                         </span>
                     </div>
 
                     <div class="card-body">
-                        <!-- TÌtulo e Detalhes -->
+                        <!-- Titulo e Detalhes -->
                         <h5 class="card-title">
                             @reserva.Veiculo.Marca <strong>@reserva.Veiculo.Modelo</strong>
                         </h5>
@@ -103,12 +103,12 @@
                             <i class="bi bi-speedometer2"></i> @reserva.Veiculo.Km km
                         </p>
 
-                        <!-- PreÁo -->
+                        <!-- Pre√ßo -->
                         <h6 class="text-success fw-bold">
-                            Ä@reserva.Veiculo.Preco.ToString("N2")
+                            @reserva.Veiculo.Preco.ToString("N2")
                         </h6>
 
-                        <!-- InformaÁıes de Reserva -->
+                        <!-- Informa√ß√µes de Reserva -->
                         <div class="small text-muted mb-3">
                             <p class="mb-1">
                                 <i class="bi bi-calendar-event"></i>
@@ -116,7 +116,7 @@
                             </p>
                             <p class="mb-1">
                                 <i class="bi bi-calendar-x"></i>
-                                V·lida atÈ: <strong>@reserva.DataExpiracao.ToShortDateString()</strong>
+                                V√°lida at√©: <strong>@reserva.DataExpiracao.ToShortDateString()</strong>
                             </p>
                             @if (reserva.MotivoCancel != null)
                             {
@@ -135,10 +135,10 @@
                     </div>
 
                     <div class="card-footer bg-white border-top">
-                        <!-- Botıes de AÁ„o -->
-                        @if (reserva.Est·V·lida)
+                        <!-- Bot√µes de A√ß√£o -->
+                        @if (reserva.Valida)
                         {
-                            <!-- Reserva ainda È v·lida -->
+                            <!-- Reserva ainda √© v√°lida -->
                             <div class="d-grid gap-2">
                                 <a href="@Url.Action("Agendar", "Visitas", new { veiculoId = reserva.VeiculoId })"
                                    class="btn btn-primary btn-sm">
@@ -167,11 +167,11 @@
                             <!-- Reserva expirada ou cancelada -->
                             <div class="alert alert-warning small mb-0">
                                 <i class="bi bi-exclamation-triangle"></i>
-                                Esta reserva n„o È mais v·lida.
+                                Esta reserva n√£o √© mais v√°lida.
                             </div>
                             <a href="@Url.Action("Detalhe", "Veiculos", new { id = reserva.VeiculoId })"
                                class="btn btn-outline-secondary btn-sm w-100 mt-2">
-                                <i class="bi bi-eye"></i> Ver VeÌculo
+                                <i class="bi bi-eye"></i> Ver Ve√≠culo
                             </a>
                         }
                     </div>

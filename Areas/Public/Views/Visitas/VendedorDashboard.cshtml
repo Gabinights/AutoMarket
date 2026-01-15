@@ -11,7 +11,7 @@
             <h1>
                 <i class="bi bi-calendar2-check"></i> Painel de Visitas Agendadas
             </h1>
-            <p class="text-muted">Gerencie as visitas que os compradores agendaram para seus veículos</p>
+            <p class="text-muted">Gerencie as visitas que os compradores agendaram para seus veï¿½culos</p>
         </div>
     </div>
 
@@ -39,7 +39,7 @@
         return;
     }
 
-    <!-- Estatísticas -->
+    <!-- Estatï¿½sticas -->
     @{
         var pendentes = Model.Count(v => v.Estado == EstadoVisita.Pendente);
         var confirmadas = Model.Count(v => v.Estado == EstadoVisita.Confirmada);
@@ -55,7 +55,7 @@
                         <i class="bi bi-hourglass-split"></i>
                     </h5>
                     <h3 class="card-text">@pendentes</h3>
-                    <small class="text-muted">Aguardando Confirmação</small>
+                    <small class="text-muted">Aguardando Confirmaï¿½ï¿½o</small>
                 </div>
             </div>
         </div>
@@ -104,19 +104,19 @@
     @if (visitasPendentes.Any())
     {
         <h4 class="mb-3 text-warning">
-            <i class="bi bi-hourglass-split"></i> Aguardando Confirmação (@visitasPendentes.Count)
+            <i class="bi bi-hourglass-split"></i> Aguardando Confirmaï¿½ï¿½o (@visitasPendentes.Count)
         </h4>
 
         <div class="table-responsive mb-5">
             <table class="table table-hover border">
                 <thead class="table-warning">
                     <tr>
-                        <th>Veículo</th>
+                        <th>Veï¿½culo</th>
                         <th>Comprador</th>
                         <th>Data/Hora</th>
                         <th>Contato</th>
                         <th>Notas</th>
-                        <th>Ações</th>
+                        <th>Aï¿½ï¿½es</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,7 +137,7 @@
                                         var diasFalta = (visita.DataHora - DateTime.UtcNow).TotalDays;
                                         if (diasFalta < 1)
                                         {
-                                            <span class="badge bg-danger">Hoje/Amanhã</span>
+                                            <span class="badge bg-danger">Hoje/Amanhï¿½</span>
                                         }
                                         else
                                         {
@@ -193,12 +193,12 @@
             <table class="table table-hover border">
                 <thead class="table-success">
                     <tr>
-                        <th>Veículo</th>
+                        <th>VeÃ­culo</th>
                         <th>Comprador</th>
                         <th>Data/Hora</th>
                         <th>Contato</th>
                         <th>Notas Comprador</th>
-                        <th>Ações</th>
+                        <th>AÃ§Ãµes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -207,7 +207,7 @@
                         <tr>
                             <td>
                                 <strong>@visita.Veiculo.Marca @visita.Veiculo.Modelo</strong><br>
-                                <small class="text-muted">€@visita.Veiculo.Preco.ToString("N2")</small>
+                                <small class="text-muted">@visita.Veiculo.Preco.ToString("N2")</small>
                             </td>
                             <td>
                                 @visita.Comprador.User.Nome
@@ -215,7 +215,7 @@
                             <td>
                                 <strong>@visita.DataHora.ToString("dd/MM/yyyy HH:mm")</strong>
 
-                                @if (visita.DataJáPassou)
+                                @if (visita.DataJaPassou)
                                 {
                                     <br>
                                     <small class="badge bg-danger">Data Passou</small>
@@ -242,7 +242,7 @@
                                 }
                             </td>
                             <td>
-                                @if (visita.DataJáPassou)
+                                @if (visita.DataJaPassou)
                                 {
                                     <form asp-action="MarcarRealizada" asp-controller="Visitas" method="post" style="display:inline;">
                                         <input type="hidden" name="id" value="@visita.Id" />
@@ -262,14 +262,14 @@
     @if (outrasVisitas.Any())
     {
         <h4 class="mb-3">
-            <i class="bi bi-clock-history"></i> Histórico
+            <i class="bi bi-clock-history"></i> HistÃ³rico
         </h4>
 
         <div class="table-responsive">
             <table class="table table-sm table-striped">
                 <thead class="table-light">
                     <tr>
-                        <th>Veículo</th>
+                        <th>VeÃ­culo</th>
                         <th>Comprador</th>
                         <th>Data/Hora</th>
                         <th>Estado</th>
@@ -299,7 +299,7 @@
                                 }
                                 else if (visita.Estado == EstadoVisita.NaoRealizada)
                                 {
-                                    <span class="badge bg-warning">Não Realizada</span>
+                                    <span class="badge bg-warning">NÃ£o Realizada</span>
                                 }
                             </td>
                         </tr>

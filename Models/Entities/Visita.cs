@@ -5,25 +5,25 @@ using AutoMarket.Models.Enums;
 namespace AutoMarket.Models.Entities
 {
     /// <summary>
-    /// Representa uma visita agendada a um veículo.
+    /// Representa uma visita agendada a um veiculo.
     /// 
     /// Workflow:
     /// 1. Comprador agenda visita ? Visita criada (Pendente)
     /// 2. Vendedor pode confirmar ? Estado = Confirmada
-    /// 3. Após data/hora ? Estado = Realizada ou NaoRealizada
+    /// 3. Apos data/hora ? Estado = Realizada ou NaoRealizada
     /// 4. Pode ser cancelada ? Estado = Cancelada
     /// 
-    /// Validações:
-    /// - Data/hora não pode ser no passado
-    /// - Não é possível agendar visita para veículo vendido
-    /// - Não é possível agendar múltiplas visitas no mesmo horário (opcional)
+    /// ValidaÃ§Ãµes:
+    /// - Data/hora nÃ£o pode ser no passado
+    /// - NÃ£o Ã© possivel agendar visita para veiculo vendido
+    /// - NÃ£o Ã© possivel agendar miltiplas visitas no mesmo horÃ¡rio (opcional)
     /// </summary>
     public class Visita
     {
         [Key]
         public int Id { get; set; }
 
-        /// <summary>Veículo que está a ser visitado</summary>
+        /// <summary>Veiculo que esta a ser visitado</summary>
         [Required]
         public int VeiculoId { get; set; }
 
@@ -37,7 +37,7 @@ namespace AutoMarket.Models.Entities
         [ForeignKey("CompradorId")]
         public Comprador Comprador { get; set; } = null!;
 
-        /// <summary>Vendedor do veículo (desnormalizado para facilitar queries)</summary>
+        /// <summary>Vendedor do veiculo (desnormalizado para facilitar queries)</summary>
         [Required]
         public int VendedorId { get; set; }
 
@@ -57,7 +57,7 @@ namespace AutoMarket.Models.Entities
         [Display(Name = "Estado")]
         public EstadoVisita Estado { get; set; } = EstadoVisita.Pendente;
 
-        /// <summary>Motivo de cancelamento (se aplicável)</summary>
+        /// <summary>Motivo de cancelamento (se aplicÃ¡vel)</summary>
         [StringLength(500)]
         public string? MotivoCancel { get; set; }
 
@@ -70,13 +70,13 @@ namespace AutoMarket.Models.Entities
         public string? NotasVendedor { get; set; }
 
         /// <summary>
-        /// Verifica se a data/hora da visita já passou.
+        /// Verifica se a data/hora da visita jÃ¡ passou.
         /// </summary>
-        public bool DataJáPassou => DateTime.UtcNow > DataHora;
+        public bool DataJaPassou => DateTime.UtcNow > DataHora;
 
         /// <summary>
-        /// Verifica se a visita está agendada para o futuro (válida).
+        /// Verifica se a visita estÃ¡ agendada para o futuro (vÃ¡lida).
         /// </summary>
-        public bool EstáAgendada => DataHora > DateTime.UtcNow && Estado != EstadoVisita.Cancelada;
+        public bool Agendada => DataHora > DateTime.UtcNow && Estado != EstadoVisita.Cancelada;
     }
 }
