@@ -1,10 +1,4 @@
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers
 {
@@ -15,25 +9,25 @@ namespace AutoMarket.Areas.Public.Controllers
     public class DenunciasApiController : ControllerBase
     {
         private readonly UserManager<Utilizador> _userManager;
+        private readonly IVeiculoService _veiculoService;
         private readonly IDenunciaService _denunciaService;
-        private readonly ApplicationDbContext _context;
         private readonly ILogger<DenunciasApiController> _logger;
 
         public DenunciasApiController(
             UserManager<Utilizador> userManager,
+            IVeiculoService veiculoService,
             IDenunciaService denunciaService,
-            ApplicationDbContext context,
             ILogger<DenunciasApiController> logger)
         {
             _userManager = userManager;
+            _veiculoService = veiculoService;
             _denunciaService = denunciaService;
-            _context = context;
             _logger = logger;
         }
 
         /// <summary>
         /// POST: api/denuncias/criar
-        /// Criar uma denúncia.
+        /// Criar uma denuncia.
         /// </summary>
         [HttpPost("criar")]
         public async Task<IActionResult> Criar([FromBody] CreateDenunciaDto dto)
@@ -43,26 +37,26 @@ namespace AutoMarket.Areas.Public.Controllers
                 return Unauthorized();
 
             if (string.IsNullOrWhiteSpace(dto.Motivo))
-                return BadRequest(new { message = "Motivo é obrigatório." });
+                return BadRequest(new { message = "Motivo obrigatÃ³rio." });
 
             if (!dto.VeiculoId.HasValue && string.IsNullOrEmpty(dto.TargetUserId))
-                return BadRequest(new { message = "Forneça um veículo ou utilizador para denunciar." });
+                return BadRequest(new { message = "ForneÃ§a um veÃ­culo ou utilizador para denunciar." });
 
             string? targetUserId = null;
 
-            // Se denunciar veículo, validar que existe
+            // Se denunciar veÃ­culo, validar que existe
             if (dto.VeiculoId.HasValue)
             {
-                var veiculo = await _context.Veiculos.FindAsync(dto.VeiculoId.Value);
+                var veiculo = await _veiculoService.GetVeiculoEntityAsync(dto.VeiculoId.Value);
                 if (veiculo == null)
-                    return BadRequest(new { message = "Veículo não encontrado." });
+                    return BadRequest(new { message = "VeÃ­culo nÃ£o encontrado." });
             }
             // Se denunciar utilizador, converter email para ID
             else if (!string.IsNullOrEmpty(dto.TargetUserId))
             {
                 var targetUser = await _userManager.FindByEmailAsync(dto.TargetUserId);
                 if (targetUser == null)
-                    return BadRequest(new { message = "Utilizador não encontrado." });
+                    return BadRequest(new { message = "Utilizador nÃ£o encontrado." });
                 targetUserId = targetUser.Id;
             }
 
@@ -72,7 +66,7 @@ namespace AutoMarket.Areas.Public.Controllers
                 targetUserId,
                 dto.Motivo);
 
-            return Ok(new { message = "Denúncia criada com sucesso!", denunciaId = denuncia.Id });
+            return Ok(new { message = "DenÃºncia criada com sucesso!", denunciaId = denuncia.Id });
         }
     }
 

@@ -1,12 +1,5 @@
-﻿using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Constants;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.Enums;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
+﻿using AutoMarket.Models.Constants;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Admin.Controllers
 {
@@ -14,18 +7,21 @@ namespace AutoMarket.Areas.Admin.Controllers
     [Area("Admin")]
     public class AdminController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVendedorService _vendedorService;
+        private readonly ITransacaoService _transacaoService;
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
         private readonly IEstatisticasService _estatisticasService;
 
         public AdminController(
-            ApplicationDbContext context, 
+            IVendedorService vendedorService,
+            ITransacaoService transacaoService,
             UserManager<Utilizador> userManager,
             SignInManager<Utilizador> signInManager,
             IEstatisticasService estatisticasService)
         {
-            _context = context;
+            _vendedorService = vendedorService;
+            _transacaoService = transacaoService;
             _userManager = userManager;
             _signInManager = signInManager;
             _estatisticasService = estatisticasService;
@@ -43,21 +39,13 @@ namespace AutoMarket.Areas.Admin.Controllers
         // GET: Admin/Index (Lista de Pendentes)
         public async Task<IActionResult> Index(int page = 1)
         {
-            int pageSize = 10;
-            var query = _context.Vendedores
-                .Include(v => v.User)
-                .Where(v => v.Status == StatusAprovacao.Pendente)
-                .OrderBy(v => v.User.DataRegisto);
-
-            var model = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            const int pageSize = 10;
+            var (vendedores, totalCount) = await _vendedorService.GetVendedoresPendentesAsync(page, pageSize);
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize);
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            return View(model);
+            return View(vendedores);
         }
 
         // POST: Admin/Aprovar/5
@@ -65,18 +53,14 @@ namespace AutoMarket.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Aprovar(int id)
         {
-            var vendedor = await _context.Vendedores.FindAsync(id);
-            if (vendedor == null) return NotFound();
+            var adminId = _userManager.GetUserId(User);
+            if (adminId == null) return Unauthorized();
 
-            vendedor.Aprovar(_userManager.GetUserId(User));
-            await _context.SaveChangesAsync();
+            var userId = await _vendedorService.AprovarVendedorAsync(id, adminId);
+            if (userId == null) return NotFound();
 
             // Refresh do cookie para atualizar as claims (StatusVendedor)
-            var user = await _userManager.FindByIdAsync(vendedor.UserId);
-            if (user != null)
-            {
-                await _signInManager.RefreshSignInAsync(user);
-            }
+            await RefreshUserClaims(userId);
 
             TempData["MensagemStatus"] = "Vendedor aprovado com sucesso!";
             return RedirectToAction(nameof(Index));
@@ -87,23 +71,18 @@ namespace AutoMarket.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Rejeitar(int id, string motivo)
         {
-            var vendedor = await _context.Vendedores.FindAsync(id);
-            if (vendedor == null) return NotFound();
+            var adminId = _userManager.GetUserId(User);
+            if (adminId == null) return Unauthorized();
 
             if (string.IsNullOrWhiteSpace(motivo))
             {
                 motivo = "Documentação insuficiente ou dados incorretos.";
             }
 
-            vendedor.Rejeitar(_userManager.GetUserId(User), motivo);
-            await _context.SaveChangesAsync();
+            var userId = await _vendedorService.RejeitarVendedorAsync(id, adminId, motivo);
+            if (userId == null) return NotFound();
 
-            // Refresh do cookie para atualizar as claims (StatusVendedor)
-            var user = await _userManager.FindByIdAsync(vendedor.UserId);
-            if (user != null)
-            {
-                await _signInManager.RefreshSignInAsync(user);
-            }
+            await RefreshUserClaims(userId);
 
             TempData["MensagemStatus"] = "Vendedor rejeitado.";
             return RedirectToAction(nameof(Index));
@@ -112,26 +91,23 @@ namespace AutoMarket.Areas.Admin.Controllers
         // GET: Admin/HistoricoTransacoes
         public async Task<IActionResult> HistoricoTransacoes(int page = 1)
         {
-            int pageSize = 20;
+            const int pageSize = 20;
 
-            var query = _context.Transacoes
-                .IgnoreQueryFilters()
-                .Include(t => t.Veiculo)
-                    .ThenInclude(c => c.Vendedor)
-                        .ThenInclude(v => v.User)
-                .Include(t => t.Comprador)
-                    .ThenInclude(c => c.User)
-                .OrderByDescending(t => t.DataTransacao);
+            var (transacoes, totalCount) = await _transacaoService.GetHistoricoTransacoesAsync(page, pageSize);
 
-            var model = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-            
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize);
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            return View(model);
+            return View(transacoes);
+        }
+
+        private async Task RefreshUserClaims(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+            }
         }
     }
 }

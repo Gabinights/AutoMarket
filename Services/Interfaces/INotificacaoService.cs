@@ -3,12 +3,12 @@ using AutoMarket.Models.Entities;
 namespace AutoMarket.Services.Interfaces
 {
     /// <summary>
-    /// Interface para serviço de notificações (in-app + email).
+    /// Interface para serviÃ§o de notificaÃ§Ãµes (in-app + email).
     /// </summary>
     public interface INotificacaoService
     {
         /// <summary>
-        /// Criar notificação para um utilizador específico.
+        /// Criar notificaÃ§Ã£o para um utilizador especÃ­fico.
         /// </summary>
         Task NotificarUtilizadorAsync(
             string utilizadorId,
@@ -31,18 +31,23 @@ namespace AutoMarket.Services.Interfaces
             string? tipoEntidadeRelacionada = null);
 
         /// <summary>
-        /// Marcar notificação como lida.
+        /// Marcar notificaÃ§Ã£o como lida.
         /// </summary>
         Task<bool> MarcarComolida(int notificacaoId);
 
         /// <summary>
-        /// Obter notificações não lidas de um utilizador.
+        /// Obter notificaÃ§Ãµes nao lidas de um utilizador.  
         /// </summary>
         Task<List<Notificacao>> ObterNaolidasAsync(string utilizadorId);
 
         /// <summary>
-        /// Obter todas as notificações de um utilizador com paginação.
+        /// Obter todas as notificaÃ§Ãµes de um utilizador com paginaÃ§Ã£o.
         /// </summary>
         Task<List<Notificacao>> ListarNotificacoesAsync(string utilizadorId, int page = 1, int pageSize = 20);
+
+        /// <summary>
+        /// Obter o nÃºmero total de notificaÃ§Ãµes de um utilizador.
+        /// </summary>
+        Task<int> ContarNotificacoesAsync(string utilizadorId);
     }
 }

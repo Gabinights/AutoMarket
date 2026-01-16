@@ -12,7 +12,7 @@ Problemas identificados:
 ---
 
 Refatorizações/Implementações:
-1. (Working - Gemini) O requisito de "sign out immediately" exige um Middleware que intersete cada pedido HTTP. Criar UserBlockingMiddleware em Infrastructure/Security. Este middleware deve verificar uma cache rápida (IMemoryCache) ou a Claim do utilizador. Como as Claims só atualizam no login/refresh, a melhor abordagem é verificar o SecurityStamp ou consultar uma cache de "Blacklisted Users". Registar este middleware no Program.cs antes de app.MapControllerRoute
+1. (DONE) O requisito de "sign out immediately" exige um Middleware que intersete cada pedido HTTP. Criar UserBlockingMiddleware em Infrastructure/Security. Este middleware deve verificar uma cache rápida (IMemoryCache) ou a Claim do utilizador. Como as Claims só atualizam no login/refresh, a melhor abordagem é verificar o SecurityStamp ou consultar uma cache de "Blacklisted Users". Registar este middleware no Program.cs antes de app.MapControllerRoute
 
 2. Separation of Concerns (Remover DbContext dos Controllers)
 Vários controllers na área de Admin e Public estão a aceder à base de dados diretamente. Isto cria "Leakage" da camada de dados para a camada de apresentação.

@@ -1,11 +1,6 @@
 using AutoMarket.Infrastructure.Data;
 using AutoMarket.Models.Constants;
-using AutoMarket.Models.Entities;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Admin.Controllers
 {
@@ -13,20 +8,17 @@ namespace AutoMarket.Areas.Admin.Controllers
     [Area("Admin")]
     public class DenunciasController : Controller
     {
-        private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
         private readonly IDenunciaService _denunciaService;
         private readonly IAuditoriaService _auditoriaService;
         private readonly ILogger<DenunciasController> _logger;
 
         public DenunciasController(
-            ApplicationDbContext context,
             UserManager<Utilizador> userManager,
             IDenunciaService denunciaService,
             IAuditoriaService auditoriaService,
             ILogger<DenunciasController> logger)
         {
-            _context = context;
             _userManager = userManager;
             _denunciaService = denunciaService;
             _auditoriaService = auditoriaService;
@@ -35,7 +27,7 @@ namespace AutoMarket.Areas.Admin.Controllers
 
         /// <summary>
         /// GET: Admin/Denuncias/Index
-        /// Lista todas as denúncias com filtro por estado.
+        /// Lista todas as denuncias com filtro por estado.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index(string? estado = null, int page = 1)
@@ -53,15 +45,15 @@ namespace AutoMarket.Areas.Admin.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao listar denúncias");
-                TempData["Erro"] = "Erro ao carregar denúncias.";
+                _logger.LogError(ex, "Erro ao listar denuncias");
+                TempData["Erro"] = "Erro ao carregar denuncias.";
                 return View(new List<Denuncia>());
             }
         }
 
         /// <summary>
         /// GET: Admin/Denuncias/Detalhe/5
-        /// Exibe detalhes completos de uma denúncia.
+        /// Exibe detalhes completos de uma denuncia.
         /// </summary>
         [HttpGet("{id}")]
         [Route("Admin/Denuncias/{id}")]
@@ -76,7 +68,7 @@ namespace AutoMarket.Areas.Admin.Controllers
 
         /// <summary>
         /// POST: Admin/Denuncias/IniciarAnalise/5
-        /// Muda denúncia de "Aberta" para "Em Análise".
+        /// Muda denuncia de "Aberta" para "Em AnÃ¡lise".
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -89,17 +81,17 @@ namespace AutoMarket.Areas.Admin.Controllers
             var sucesso = await _denunciaService.IniciarAnaliseAsync(id, adminId);
             if (!sucesso)
             {
-                TempData["Erro"] = "Não foi possível iniciar a análise.";
+                TempData["Erro"] = "Nao foi possivel iniciar a analise.";
                 return RedirectToAction(nameof(Detalhe), new { id });
             }
 
-            TempData["Sucesso"] = "Análise iniciada.";
+            TempData["Sucesso"] = "Analise iniciada.";
             return RedirectToAction(nameof(Detalhe), new { id });
         }
 
         /// <summary>
         /// POST: Admin/Denuncias/Encerrar/5
-        /// Encerra denúncia com decisão (Procedente/Não Procedente).
+        /// Encerra denuncia com decisao (Procedente/Nao Procedente).
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -111,18 +103,18 @@ namespace AutoMarket.Areas.Admin.Controllers
 
             if (string.IsNullOrWhiteSpace(decisao))
             {
-                TempData["Erro"] = "Decisão não pode estar vazia.";
+                TempData["Erro"] = "Decisao nao pode estar vazia.";
                 return RedirectToAction(nameof(Detalhe), new { id });
             }
 
             var sucesso = await _denunciaService.EncerrarDenunciaAsync(id, adminId, procedente, decisao);
             if (!sucesso)
             {
-                TempData["Erro"] = "Não foi possível encerrar a denúncia.";
+                TempData["Erro"] = "Nao foi possivel encerrar a denuncia.";
                 return RedirectToAction(nameof(Detalhe), new { id });
             }
 
-            TempData["Sucesso"] = $"Denúncia encerrada como {(procedente ? "PROCEDENTE" : "NÃO PROCEDENTE")}.";
+            TempData["Sucesso"] = $"Denuncia encerrada como {(procedente ? "PROCEDENTE" : "NAO PROCEDENTE")}.";
             return RedirectToAction(nameof(Index));
         }
     }

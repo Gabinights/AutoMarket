@@ -1,6 +1,4 @@
-﻿using AutoMarket.Infrastructure.Data;
-using AutoMarket.Services;
-using Microsoft.EntityFrameworkCore;
+﻿using AutoMarket.Services;
 
 namespace AutoMarket.Areas.Public.Controllers
 {
@@ -8,12 +6,12 @@ namespace AutoMarket.Areas.Public.Controllers
     public class CarrinhoController : Controller
     {
         private readonly ICarrinhoService _carrinhoService;
-        private readonly ApplicationDbContext _context;
+        private readonly IVeiculoService _veiculoService;
 
-        public CarrinhoController(ICarrinhoService carrinhoService, ApplicationDbContext context)
+        public CarrinhoController(ICarrinhoService carrinhoService, IVeiculoService veiculoService)
         {
             _carrinhoService = carrinhoService;
-            _context = context;
+            _veiculoService = veiculoService;
         }
 
         public IActionResult Index()
@@ -25,22 +23,19 @@ namespace AutoMarket.Areas.Public.Controllers
 
         public async Task<IActionResult> Adicionar(int id)
         {
-            var veiculo = await _context.Veiculos
-                .Include(v => v.Imagens)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            var veiculo = await _veiculoService.GetVeiculoEntityAsync(id);
 
             if (veiculo == null) return NotFound();
 
-            if (veiculo.Estado != Models.Enums.EstadoVeiculo.Ativo)
+            if (veiculo.Estado != EstadoVeiculo.Ativo)
             {
-                TempData["Erro"] = "Este veículo não está disponível para compra.";
-                return RedirectToAction("Index", "Veiculos"); // Ou volta para onde estava
+                TempData["Erro"] = "Veículo indisponível.";
+                return RedirectToAction("Index", "Veiculos");
             }
 
             _carrinhoService.AdicionarItem(veiculo);
-
-            TempData["Sucesso"] = "Veículo adicionado ao carrinho!";
-            return RedirectToAction("Index"); // Ou volta para a lista de veículos
+            TempData["Sucesso"] = "Adicionado ao carrinho!";
+            return RedirectToAction("Index");
         }
 
         public IActionResult Remover(int id)

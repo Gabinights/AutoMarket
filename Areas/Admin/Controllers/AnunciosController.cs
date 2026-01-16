@@ -1,5 +1,7 @@
 using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
+using AutoMarket.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Admin.Controllers
@@ -8,106 +10,68 @@ namespace AutoMarket.Areas.Admin.Controllers
     [Authorize(Roles = "Admin")]
     public class AnunciosController : Controller
     {
-        private readonly ApplicationDbContext _context;
+
+        private readonly IVeiculoService _veiculoService;
         private readonly ILogger<AnunciosController> _logger;
 
-        public AnunciosController(ApplicationDbContext context, ILogger<AnunciosController> logger)
+        public AnunciosController(IVeiculoService veiculoService, ILogger<AnunciosController> logger)
         {
-            _context = context;
+            _veiculoService = veiculoService;
             _logger = logger;
         }
 
         /// <summary>
         /// GET: Admin/Anuncios
-        /// Listar todos os anúncios para moderar
+        /// Listar todos os anuncios para moderar
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index(string? estado = null, int page = 1)
         {
             try
             {
-                var query = _context.Veiculos
-                    .Include(v => v.Vendedor)
-                    .ThenInclude(v => v.User)
-                    .Include(v => v.Imagens)
-                    .AsQueryable();
-
-                // Filtro por estado
-                if (!string.IsNullOrEmpty(estado))
-                    query = query.Where(v => v.Estado.ToString() == estado);
-
-                var total = await query.CountAsync();
                 const int pageSize = 10;
-
-                var anuncios = await query
-                    .OrderByDescending(v => v.DataCriacao)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
+                var (veiculos, totalCount) = await _veiculoService.GetVeiculosParaModeracaoAsync(estado, page, pageSize);
 
                 ViewData["CurrentPage"] = page;
-                ViewData["TotalPages"] = (int)Math.Ceiling(total / (decimal)pageSize);
-                ViewData["TotalAnuncios"] = total;
+                ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (decimal)pageSize);
+                ViewData["TotalAnuncios"] = totalCount;
                 ViewData["EstadoFiltro"] = estado;
 
-                return View(anuncios);
+                return View(veiculos);
+
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao listar anúncios");
+                _logger.LogError(ex, "Erro ao listar anuncios");
                 return RedirectToAction("Index", "Admin");
             }
         }
 
         /// <summary>
-        /// GET: Admin/Anuncios/Pausar/5
-        /// Pausar um anúncio
+        /// POST: Admin/Anuncios/Pausar/5
+        /// Pausar um anuncio
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> Pausar(int id)
         {
-            try
-            {
-                var veiculo = await _context.Veiculos.FindAsync(id);
-                if (veiculo == null) return NotFound();
+            var result = await _veiculoService.PausarVeiculoAdminAsync(id);
+            if (!result) return NotFound();
 
-                veiculo.Estado = Models.Enums.EstadoVeiculo.Pausado;
-                _context.Update(veiculo);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Anúncio {VeiculoId} pausado pelo admin", id);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao pausar anúncio");
-                return RedirectToAction(nameof(Index));
-            }
+            _logger.LogInformation("Anuncio {VeiculoId} pausado pelo admin", id);
+            return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
-        /// GET: Admin/Anuncios/Remover/5
-        /// Remover um anúncio
+        /// POST: Admin/Anuncios/Remover/5
+        /// Remover um anÃºncio
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> Remover(int id)
         {
-            try
-            {
-                var veiculo = await _context.Veiculos.FindAsync(id);
-                if (veiculo == null) return NotFound();
+            var result = await _veiculoService.RemoverVeiculoAdminAsync(id);
+            if (!result) return NotFound();
 
-                _context.Remove(veiculo);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Anúncio {VeiculoId} removido pelo admin", id);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao remover anúncio");
-                return RedirectToAction(nameof(Index));
-            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }

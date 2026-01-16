@@ -121,8 +121,6 @@ Areas/Vendedores/Views/Veiculos/Edit.cshtml
 Areas/Vendedores/Views/Veiculos/Index.cshtml
 AutoMarket.csproj
 AutoMarket.sln
-Controllers/CheckoutController.cs
-Controllers/ContaController.cs
 Docs/Diagnóstico Arquitetural.txt
 GlobalUsings.cs
 Infrastructure/Data/ApplicationDbContext.cs
@@ -130,6 +128,7 @@ Infrastructure/Data/CustomUserStore.cs
 Infrastructure/Data/DbInitializer.cs
 Infrastructure/Security/CustomClaimsPrincipalFactory.cs
 Infrastructure/Security/NifEncryptionHelper.cs
+Infrastructure/Security/UserBlockingMiddleware.cs
 Infrastructure/Security/VendedorAprovadoHandler.cs
 Infrastructure/Security/VendedorAprovadoRequirement.cs
 Infrastructure/Utils/NifValidator.cs
@@ -195,7 +194,11 @@ Services/Implementations/GestaoUtilizadoresService.cs
 Services/Implementations/LimparReservasHostedService.cs
 Services/Implementations/MensagensService.cs
 Services/Implementations/NotificacaoService.cs
+Services/Implementations/ProfileService.cs
 Services/Implementations/ReservaService.cs
+Services/Implementations/TransacaoService.cs
+Services/Implementations/VeiculoService.cs
+Services/Implementations/VendedorService.cs
 Services/Implementations/ViewRenderService.cs
 Services/Implementations/VisitaService.cs
 Services/Interfaces/IAuditoriaService.cs
@@ -213,8 +216,11 @@ Services/Interfaces/IFileService.cs
 Services/Interfaces/IGestaoUtilizadoresService.cs
 Services/Interfaces/IMensagensService.cs
 Services/Interfaces/INotificacaoService.cs
+Services/Interfaces/IProfileService.cs
 Services/Interfaces/IReservaService.cs
+Services/Interfaces/ITransacaoService.cs
 Services/Interfaces/IVeiculoService.cs
+Services/Interfaces/IVendedorService.cs
 Services/Interfaces/IVisitaService.cs
 Views/Checkout/Sucesso.cshtml
 Views/Shared/_Header.cshtml
@@ -1246,7 +1252,344 @@ This section contains the contents of the repository's files.
 </file>
 
 <file path="Docs/Diagnóstico Arquitetural.txt">
+Problemas identificados:
+1. Controllers como AdminController e AnunciosController injetam ApplicationDbContext diretamente, ignorando a lógica de negócio encapsulada nos serviços. Duplicação de lógica de negócio e dificuldade em testar unitariamente. Viollação do SoC.
 
+2. Não existe middleware para invalidar sessões ativas se um utilizador for bloqueado (IsBlocked = true). O bloqueio só funciona no próximo login. Um utilizador malicioso bloqueado pode continuar a navegar até a cookie expirar.
+
+3. A construção da query de pesquisa está "hardcoded" no VeiculosController (BuildVeiculosQuery). Dificulta a extensão para novos filtros e torna o Controller "gordo".
+
+4. O LimparReservasHostedService usa um loop While com Task.Delay. Sem gestão de retries, sem dashboard de monitorização e corre na memória da app (perde-se se a app reiniciar).
+
+5. O DenunciaService gere bem os estados, mas a lógica de transição de estados deve ser reforçada para impedir saltos inválidos. Funcional, precisa apenas de refinamento.
+
+---
+
+Refatorizações/Implementações:
+1. (DONE) O requisito de "sign out immediately" exige um Middleware que intersete cada pedido HTTP. Criar UserBlockingMiddleware em Infrastructure/Security. Este middleware deve verificar uma cache rápida (IMemoryCache) ou a Claim do utilizador. Como as Claims só atualizam no login/refresh, a melhor abordagem é verificar o SecurityStamp ou consultar uma cache de "Blacklisted Users". Registar este middleware no Program.cs antes de app.MapControllerRoute
+
+2. Separation of Concerns (Remover DbContext dos Controllers)
+Vários controllers na área de Admin e Public estão a aceder à base de dados diretamente. Isto cria "Leakage" da camada de dados para a camada de apresentação.
+	- Refatorizar AdminController: Mover a lógica de aprovação/rejeição de vendedores para o IGestaoUtilizadoresService ou um novo IVendedorService.
+	- Refatorizar AnunciosController: Mover a lógica de listagem e pausa de anúncios para o IVeiculoService.
+Regra de Ouro: O ApplicationDbContext nunca deve ser injetado num Controller. Apenas Services e Repositories devem tocá-lo.
+
+3. Motor de Busca Dinâmico (Specification Pattern Lite)
+Para limpar o VeiculosController, vamos usar Extension Methods em IQueryable para construir a query dinamicamente. Criar Infrastructure/Extensions/VeiculoQueryExtensions.cs. Isto permite que o Controller fique limpo.
+
+4. Background Jobs (Hangfire vs HostedService)
+O código atual usa LimparReservasHostedService. Para um MVP robusto que "runs every minute", o Timer nativo é frágil.
+Recomendação: Implementar Hangfire (pacote NuGet). Permite persistência dos Jobs (se o servidor reiniciar, o job não desaparece). Dashboard visual para o Admin ver se as reservas estão a ser limpas. Evita problemas de concorrência com o DbContext (o Hangfire gere os Scopes). Alteração: Substituir LimparReservasHostedService por uma configuração no Program.cs
+
+5. Workflow de Denúncias
+O requisito pede um fluxo específico: Analyze -> HandledBy -> Close. O código atual em DenunciaService tem IniciarAnaliseAsync e EncerrarDenunciaAsync, o que é bom.
+
+O que falta (Melhoria): Adicionar uma validação de Transição de Estado e automatismo no encerramento "Procedente". No método EncerrarDenunciaAsync, se procedente == true:
+Se o alvo for um Veículo: Chamar IVeiculoService.PausarVeiculo(id).
+Se o alvo for um User: Incrementar um contador de "strikes" no user ou sinalizá-lo para revisão.
+
+---
+
+Estrutura de Ficheiros:
+Para cumprir o SoC, a estrutura deve evoluir para:
+/AutoMarket
+  /Areas
+     /Admin (Controllers apenas chamam Services)
+  /Core (Nova pasta para Domain Logic pura)
+     /Interfaces
+     /Entities
+     /Enums
+     /Specifications (Para a pesquisa avançada)
+  /Infrastructure
+     /Data
+     /Security (Middleware, Policies)
+     /Jobs (Hangfire Jobs)
+     /Services (Implementações concretas)
+  /Web (Apenas Views e ViewModels)
+</file>
+
+<file path="Services/Implementations/ProfileService.cs">
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Models.Entities;
+using AutoMarket.Models.ViewModels;
+using AutoMarket.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace AutoMarket.Services.Implementations
+{
+    public class ProfileService : IProfileService
+    {
+        private readonly ApplicationDbContext _context;
+
+        public ProfileService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<Comprador?> GetCompradorByUserIdAsync(string userId)
+        {
+            return await _context.Compradores.FirstOrDefaultAsync(c => c.UserId == userId);
+        }
+
+        public async Task<Vendedor?> GetVendedorByUserIdAsync(string userId)
+        {
+            return await _context.Vendedores
+                .Include(v => v.User)
+                .FirstOrDefaultAsync(v => v.UserId == userId);
+        }
+
+        public async Task<PerfilStatsViewModel> GetUserStatsAsync(string userId)
+        {
+            var stats = new PerfilStatsViewModel();
+
+            var comprador = await GetCompradorByUserIdAsync(userId);
+            if (comprador != null)
+            {
+                stats.TotalCompras = await _context.Transacoes.CountAsync(t => t.CompradorId == comprador.Id);
+                stats.IsComprador = true;
+            }
+
+            var vendedor = await GetVendedorByUserIdAsync(userId);
+            if (vendedor != null)
+            {
+                stats.TotalVendas = await _context.Transacoes.CountAsync(t => t.VendedorId == vendedor.Id);
+                stats.TotalVeiculos = await _context.Veiculos.CountAsync(v => v.VendedorId == vendedor.Id);
+                stats.StatusVendedor = vendedor.Status.ToString();
+                stats.IsVendedor = true;
+            }
+
+            return stats;
+        }
+    }
+}
+</file>
+
+<file path="Services/Implementations/TransacaoService.cs">
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Models.Entities;
+using AutoMarket.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace AutoMarket.Services.Implementations
+{
+    public class TransacaoService : ITransacaoService
+    {
+        private readonly ApplicationDbContext _context;
+
+        public TransacaoService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<(List<Transacao> Transacoes, int TotalCount)> GetHistoricoTransacoesAsync(int page, int pageSize)
+        {
+            var query = _context.Transacoes
+                .IgnoreQueryFilters()
+                .Include(t => t.Veiculo)
+                    .ThenInclude(c => c.Vendedor)
+                        .ThenInclude(v => v.User)
+                .Include(t => t.Comprador)
+                    .ThenInclude(c => c.User)
+                .OrderByDescending(t => t.DataTransacao);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return (items, total);
+        }
+    }
+}
+</file>
+
+<file path="Services/Implementations/VeiculoService.cs">
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Models.DTOs;
+using AutoMarket.Models.Entities;
+using AutoMarket.Models.Enums;
+using AutoMarket.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace AutoMarket.Services.Implementations
+{
+    public class VeiculoService : IVeiculoService
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<VeiculoService> _logger;
+
+        public VeiculoService(ApplicationDbContext context, ILogger<VeiculoService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+
+        public Task<VeiculoDto?> GetAsync(int id) => throw new NotImplementedException();
+        public Task<IReadOnlyList<VeiculoDto>> ListAsync(VeiculoFiltroDto filtro) => throw new NotImplementedException();
+        public Task<CommandResultDto> CreateAsync(VeiculoCreateDto dto) => throw new NotImplementedException();
+        public Task<CommandResultDto> UpdateAsync(int id, VeiculoUpdateDto dto) => throw new NotImplementedException();
+        public Task<CommandResultDto> SoftDeleteAsync(int id) => throw new NotImplementedException();
+        public ValidationResultDto Validate(VeiculoCreateDto dto) => throw new NotImplementedException();
+
+        // --- ADMIN IMPLEMENTATION ---
+
+        public async Task<(List<Veiculo> Veiculos, int TotalCount)> GetVeiculosParaModeracaoAsync(string? estado, int page, int pageSize)
+        {
+            var query = _context.Veiculos
+                .Include(v => v.Vendedor)
+                .ThenInclude(v => v.User)
+                .Include(v => v.Imagens)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(estado))
+            {
+                query = query.Where(v => v.Estado.ToString() == estado);
+            }
+
+            var total = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(v => v.DataCriacao)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+        public async Task<bool> PausarVeiculoAdminAsync(int id)
+        {
+            var veiculo = await _context.Veiculos.FindAsync(id);
+            if (veiculo == null) return false;
+
+            veiculo.Estado = EstadoVeiculo.Pausado;
+            _context.Update(veiculo);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Anúncio {VeiculoId} pausado pelo admin", id);
+            return true;
+        }
+
+        public async Task<bool> RemoverVeiculoAdminAsync(int id)
+        {
+            var veiculo = await _context.Veiculos.FindAsync(id);
+            if (veiculo == null) return false;
+
+            _context.Remove(veiculo); // Hard delete??
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Anúncio {VeiculoId} removido pelo admin", id);
+            return true;
+        }
+    }
+}
+</file>
+
+<file path="Services/Implementations/VendedorService.cs">
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Models.Entities;
+using AutoMarket.Models.Enums;
+using AutoMarket.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace AutoMarket.Services.Implementations
+{
+    public class VendedorService : IVendedorService
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<VendedorService> _logger;
+
+        public VendedorService(ApplicationDbContext context, ILogger<VendedorService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+        public async Task<(List<Vendedor> Vendedores, int TotalCount)> GetVendedoresPendentesAsync(int page, int pageSize)
+        {
+            var query = _context.Vendedores
+                .Include(v => v.User)
+                .Where(v => v.Status == StatusAprovacao.Pendente)
+                .OrderBy(v => v.User.DataRegisto);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return (items, total);
+        }
+
+        public async Task<Vendedor?> GetVendedorByIdAsync(int id)
+        {
+            return await _context.Vendedores.Include(v => v.User).FirstOrDefaultAsync(v => v.Id == id);
+        }
+
+        public async Task<string?> AprovarVendedorAsync(int id, string adminId)
+        {
+            var vendedor = await _context.Vendedores.FindAsync(id);
+            if (vendedor == null) return null;
+
+            vendedor.Aprovar(adminId);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Vendedor {Id} aprovado pelo admin {AdminId}", id, adminId);
+            return vendedor.UserId;
+        }
+
+        public async Task<string?> RejeitarVendedorAsync(int id, string adminId, string motivo)
+        {
+            var vendedor = await _context.Vendedores.FindAsync(id);
+            if (vendedor == null) return null;
+
+            vendedor.Rejeitar(adminId, motivo);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Vendedor {Id} rejeitado pelo admin {AdminId}. Motivo: {Motivo}", id, adminId, motivo);
+            return vendedor.UserId;
+        }
+    }
+}
+</file>
+
+<file path="Services/Interfaces/IProfileService.cs">
+using AutoMarket.Models.Entities;
+using AutoMarket.Models.ViewModels;
+
+namespace AutoMarket.Services.Interfaces
+{
+    public interface IProfileService
+    {
+        Task<Comprador?> GetCompradorByUserIdAsync(string userId);
+        Task<Vendedor?> GetVendedorByUserIdAsync(string userId);
+        Task<PerfilStatsViewModel> GetUserStatsAsync(string userId);
+    }
+}
+</file>
+
+<file path="Services/Interfaces/ITransacaoService.cs">
+using AutoMarket.Models.Entities;
+
+namespace AutoMarket.Services.Interfaces
+{
+    public interface ITransacaoService
+    {
+        Task<List<TransacaoListViewModel>> GetMinhasComprasAsync(int compradorId);
+        Task<List<TransacaoListViewModel>> GetMinhasVendasAsync(int vendedorId);
+        Task<(List<Transacao> Transacoes, int TotalCount)> GetHistoricoTransacoesAsync(int page, int pageSize);
+    }
+}
+</file>
+
+<file path="Services/Interfaces/IVendedorService.cs">
+using AutoMarket.Models.Entities;
+
+namespace AutoMarket.Services.Interfaces
+{
+    public interface IVendedorService
+    {
+        Task<(List<Vendedor> Vendedores, int TotalCount)> GetVendedoresPendentesAsync(int page, int pageSize);
+        Task<Vendedor?> GetVendedorByIdAsync(int id);
+        Task<string?> AprovarVendedorAsync(int id, string adminId);
+        Task<string?> RejeitarVendedorAsync(int id, string adminId, string motivo);
+    }
+}
 </file>
 
 <file path=".repomixignore">
@@ -1307,7 +1650,9 @@ Properties/launchSettings.json
 
 <file path="Areas/Admin/Controllers/AnunciosController.cs">
 using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
+using AutoMarket.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Admin.Controllers
@@ -1316,106 +1661,68 @@ namespace AutoMarket.Areas.Admin.Controllers
     [Authorize(Roles = "Admin")]
     public class AnunciosController : Controller
     {
-        private readonly ApplicationDbContext _context;
+
+        private readonly IVeiculoService _veiculoService;
         private readonly ILogger<AnunciosController> _logger;
 
-        public AnunciosController(ApplicationDbContext context, ILogger<AnunciosController> logger)
+        public AnunciosController(IVeiculoService veiculoService, ILogger<AnunciosController> logger)
         {
-            _context = context;
+            _veiculoService = veiculoService;
             _logger = logger;
         }
 
         /// <summary>
         /// GET: Admin/Anuncios
-        /// Listar todos os anúncios para moderar
+        /// Listar todos os anuncios para moderar
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index(string? estado = null, int page = 1)
         {
             try
             {
-                var query = _context.Veiculos
-                    .Include(v => v.Vendedor)
-                    .ThenInclude(v => v.User)
-                    .Include(v => v.Imagens)
-                    .AsQueryable();
-
-                // Filtro por estado
-                if (!string.IsNullOrEmpty(estado))
-                    query = query.Where(v => v.Estado.ToString() == estado);
-
-                var total = await query.CountAsync();
                 const int pageSize = 10;
-
-                var anuncios = await query
-                    .OrderByDescending(v => v.DataCriacao)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
+                var (veiculos, totalCount) = await _veiculoService.GetVeiculosParaModeracaoAsync(estado, page, pageSize);
 
                 ViewData["CurrentPage"] = page;
-                ViewData["TotalPages"] = (int)Math.Ceiling(total / (decimal)pageSize);
-                ViewData["TotalAnuncios"] = total;
+                ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (decimal)pageSize);
+                ViewData["TotalAnuncios"] = totalCount;
                 ViewData["EstadoFiltro"] = estado;
 
-                return View(anuncios);
+                return View(veiculos);
+
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao listar anúncios");
+                _logger.LogError(ex, "Erro ao listar anuncios");
                 return RedirectToAction("Index", "Admin");
             }
         }
 
         /// <summary>
-        /// GET: Admin/Anuncios/Pausar/5
-        /// Pausar um anúncio
+        /// POST: Admin/Anuncios/Pausar/5
+        /// Pausar um anuncio
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> Pausar(int id)
         {
-            try
-            {
-                var veiculo = await _context.Veiculos.FindAsync(id);
-                if (veiculo == null) return NotFound();
+            var result = await _veiculoService.PausarVeiculoAdminAsync(id);
+            if (!result) return NotFound();
 
-                veiculo.Estado = Models.Enums.EstadoVeiculo.Pausado;
-                _context.Update(veiculo);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Anúncio {VeiculoId} pausado pelo admin", id);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao pausar anúncio");
-                return RedirectToAction(nameof(Index));
-            }
+            _logger.LogInformation("Anuncio {VeiculoId} pausado pelo admin", id);
+            return RedirectToAction(nameof(Index));
         }
 
         /// <summary>
-        /// GET: Admin/Anuncios/Remover/5
+        /// POST: Admin/Anuncios/Remover/5
         /// Remover um anúncio
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> Remover(int id)
         {
-            try
-            {
-                var veiculo = await _context.Veiculos.FindAsync(id);
-                if (veiculo == null) return NotFound();
+            var result = await _veiculoService.RemoverVeiculoAdminAsync(id);
+            if (!result) return NotFound();
 
-                _context.Remove(veiculo);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Anúncio {VeiculoId} removido pelo admin", id);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao remover anúncio");
-                return RedirectToAction(nameof(Index));
-            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }
@@ -1424,12 +1731,7 @@ namespace AutoMarket.Areas.Admin.Controllers
 <file path="Areas/Admin/Controllers/DenunciasController.cs">
 using AutoMarket.Infrastructure.Data;
 using AutoMarket.Models.Constants;
-using AutoMarket.Models.Entities;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Admin.Controllers
 {
@@ -1437,20 +1739,17 @@ namespace AutoMarket.Areas.Admin.Controllers
     [Area("Admin")]
     public class DenunciasController : Controller
     {
-        private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
         private readonly IDenunciaService _denunciaService;
         private readonly IAuditoriaService _auditoriaService;
         private readonly ILogger<DenunciasController> _logger;
 
         public DenunciasController(
-            ApplicationDbContext context,
             UserManager<Utilizador> userManager,
             IDenunciaService denunciaService,
             IAuditoriaService auditoriaService,
             ILogger<DenunciasController> logger)
         {
-            _context = context;
             _userManager = userManager;
             _denunciaService = denunciaService;
             _auditoriaService = auditoriaService;
@@ -1459,7 +1758,7 @@ namespace AutoMarket.Areas.Admin.Controllers
 
         /// <summary>
         /// GET: Admin/Denuncias/Index
-        /// Lista todas as denúncias com filtro por estado.
+        /// Lista todas as denuncias com filtro por estado.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index(string? estado = null, int page = 1)
@@ -1477,15 +1776,15 @@ namespace AutoMarket.Areas.Admin.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao listar denúncias");
-                TempData["Erro"] = "Erro ao carregar denúncias.";
+                _logger.LogError(ex, "Erro ao listar denuncias");
+                TempData["Erro"] = "Erro ao carregar denuncias.";
                 return View(new List<Denuncia>());
             }
         }
 
         /// <summary>
         /// GET: Admin/Denuncias/Detalhe/5
-        /// Exibe detalhes completos de uma denúncia.
+        /// Exibe detalhes completos de uma denuncia.
         /// </summary>
         [HttpGet("{id}")]
         [Route("Admin/Denuncias/{id}")]
@@ -1500,7 +1799,7 @@ namespace AutoMarket.Areas.Admin.Controllers
 
         /// <summary>
         /// POST: Admin/Denuncias/IniciarAnalise/5
-        /// Muda denúncia de "Aberta" para "Em Análise".
+        /// Muda denuncia de "Aberta" para "Em Análise".
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -1513,17 +1812,17 @@ namespace AutoMarket.Areas.Admin.Controllers
             var sucesso = await _denunciaService.IniciarAnaliseAsync(id, adminId);
             if (!sucesso)
             {
-                TempData["Erro"] = "Não foi possível iniciar a análise.";
+                TempData["Erro"] = "Nao foi possivel iniciar a analise.";
                 return RedirectToAction(nameof(Detalhe), new { id });
             }
 
-            TempData["Sucesso"] = "Análise iniciada.";
+            TempData["Sucesso"] = "Analise iniciada.";
             return RedirectToAction(nameof(Detalhe), new { id });
         }
 
         /// <summary>
         /// POST: Admin/Denuncias/Encerrar/5
-        /// Encerra denúncia com decisão (Procedente/Não Procedente).
+        /// Encerra denuncia com decisao (Procedente/Nao Procedente).
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -1535,18 +1834,18 @@ namespace AutoMarket.Areas.Admin.Controllers
 
             if (string.IsNullOrWhiteSpace(decisao))
             {
-                TempData["Erro"] = "Decisão não pode estar vazia.";
+                TempData["Erro"] = "Decisao nao pode estar vazia.";
                 return RedirectToAction(nameof(Detalhe), new { id });
             }
 
             var sucesso = await _denunciaService.EncerrarDenunciaAsync(id, adminId, procedente, decisao);
             if (!sucesso)
             {
-                TempData["Erro"] = "Não foi possível encerrar a denúncia.";
+                TempData["Erro"] = "Nao foi possivel encerrar a denuncia.";
                 return RedirectToAction(nameof(Detalhe), new { id });
             }
 
-            TempData["Sucesso"] = $"Denúncia encerrada como {(procedente ? "PROCEDENTE" : "NÃO PROCEDENTE")}.";
+            TempData["Sucesso"] = $"Denuncia encerrada como {(procedente ? "PROCEDENTE" : "NAO PROCEDENTE")}.";
             return RedirectToAction(nameof(Index));
         }
     }
@@ -2438,9 +2737,7 @@ namespace AutoMarket.Areas.Admin.Controllers
 </file>
 
 <file path="Areas/Public/Controllers/CarrinhoController.cs">
-using AutoMarket.Infrastructure.Data;
 using AutoMarket.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers
 {
@@ -2448,12 +2745,12 @@ namespace AutoMarket.Areas.Public.Controllers
     public class CarrinhoController : Controller
     {
         private readonly ICarrinhoService _carrinhoService;
-        private readonly ApplicationDbContext _context;
+        private readonly IVeiculoService _veiculoService;
 
-        public CarrinhoController(ICarrinhoService carrinhoService, ApplicationDbContext context)
+        public CarrinhoController(ICarrinhoService carrinhoService, IVeiculoService veiculoService)
         {
             _carrinhoService = carrinhoService;
-            _context = context;
+            _veiculoService = veiculoService;
         }
 
         public IActionResult Index()
@@ -2465,22 +2762,19 @@ namespace AutoMarket.Areas.Public.Controllers
 
         public async Task<IActionResult> Adicionar(int id)
         {
-            var veiculo = await _context.Veiculos
-                .Include(v => v.Imagens)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            var veiculo = await _veiculoService.GetVeiculoEntityAsync(id);
 
             if (veiculo == null) return NotFound();
 
-            if (veiculo.Estado != Models.Enums.EstadoVeiculo.Ativo)
+            if (veiculo.Estado != EstadoVeiculo.Ativo)
             {
-                TempData["Erro"] = "Este veículo não está disponível para compra.";
-                return RedirectToAction("Index", "Veiculos"); // Ou volta para onde estava
+                TempData["Erro"] = "Veículo indisponível.";
+                return RedirectToAction("Index", "Veiculos");
             }
 
             _carrinhoService.AdicionarItem(veiculo);
-
-            TempData["Sucesso"] = "Veículo adicionado ao carrinho!";
-            return RedirectToAction("Index"); // Ou volta para a lista de veículos
+            TempData["Sucesso"] = "Adicionado ao carrinho!";
+            return RedirectToAction("Index");
         }
 
         public IActionResult Remover(int id)
@@ -2493,13 +2787,7 @@ namespace AutoMarket.Areas.Public.Controllers
 </file>
 
 <file path="Areas/Public/Controllers/DenunciasApiController.cs">
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers
 {
@@ -2510,25 +2798,25 @@ namespace AutoMarket.Areas.Public.Controllers
     public class DenunciasApiController : ControllerBase
     {
         private readonly UserManager<Utilizador> _userManager;
+        private readonly IVeiculoService _veiculoService;
         private readonly IDenunciaService _denunciaService;
-        private readonly ApplicationDbContext _context;
         private readonly ILogger<DenunciasApiController> _logger;
 
         public DenunciasApiController(
             UserManager<Utilizador> userManager,
+            IVeiculoService veiculoService,
             IDenunciaService denunciaService,
-            ApplicationDbContext context,
             ILogger<DenunciasApiController> logger)
         {
             _userManager = userManager;
+            _veiculoService = veiculoService;
             _denunciaService = denunciaService;
-            _context = context;
             _logger = logger;
         }
 
         /// <summary>
         /// POST: api/denuncias/criar
-        /// Criar uma denúncia.
+        /// Criar uma denuncia.
         /// </summary>
         [HttpPost("criar")]
         public async Task<IActionResult> Criar([FromBody] CreateDenunciaDto dto)
@@ -2538,7 +2826,7 @@ namespace AutoMarket.Areas.Public.Controllers
                 return Unauthorized();
 
             if (string.IsNullOrWhiteSpace(dto.Motivo))
-                return BadRequest(new { message = "Motivo é obrigatório." });
+                return BadRequest(new { message = "Motivo obrigatório." });
 
             if (!dto.VeiculoId.HasValue && string.IsNullOrEmpty(dto.TargetUserId))
                 return BadRequest(new { message = "Forneça um veículo ou utilizador para denunciar." });
@@ -2548,7 +2836,7 @@ namespace AutoMarket.Areas.Public.Controllers
             // Se denunciar veículo, validar que existe
             if (dto.VeiculoId.HasValue)
             {
-                var veiculo = await _context.Veiculos.FindAsync(dto.VeiculoId.Value);
+                var veiculo = await _veiculoService.GetVeiculoEntityAsync(dto.VeiculoId.Value);
                 if (veiculo == null)
                     return BadRequest(new { message = "Veículo não encontrado." });
             }
@@ -2582,11 +2870,7 @@ namespace AutoMarket.Areas.Public.Controllers
 
 <file path="Areas/Public/Controllers/FavoritosApiController.cs">
 using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers
@@ -2597,26 +2881,26 @@ namespace AutoMarket.Areas.Public.Controllers
     [ApiController]
     public class FavoritosApiController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly UserManager<Utilizador> _userManager;
+        private readonly IProfileService _profileService;
         private readonly IFavoritoService _favoritoService;
         private readonly ILogger<FavoritosApiController> _logger;
 
         public FavoritosApiController(
-            ApplicationDbContext context,
             UserManager<Utilizador> userManager,
+            IProfileService profileService,
             IFavoritoService favoritoService,
             ILogger<FavoritosApiController> logger)
         {
-            _context = context;
             _userManager = userManager;
+            _profileService = profileService;
             _favoritoService = favoritoService;
             _logger = logger;
         }
 
         /// <summary>
         /// POST: api/favoritos/adicionar/{veiculoId}
-        /// Adiciona um veículo aos favoritos.
+        /// Adiciona um veiculo aos favoritos.
         /// </summary>
         [HttpPost("adicionar/{veiculoId}")]
         public async Task<IActionResult> Adicionar(int veiculoId)
@@ -2626,22 +2910,21 @@ namespace AutoMarket.Areas.Public.Controllers
                 return Unauthorized();
 
             // Obter ID do comprador
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
+            var comprador = await _profileService.GetCompradorByUserIdAsync(user.Id);
 
             if (comprador == null)
-                return BadRequest(new { message = "Utilizador não é comprador registado." });
+                return BadRequest(new { message = "Utilizador n�o � comprador registado." });
 
             var sucesso = await _favoritoService.AdicionarFavoritoAsync(comprador.Id, veiculoId);
             if (!sucesso)
-                return BadRequest(new { message = "Não foi possível adicionar o favorito." });
+                return BadRequest(new { message = "N�o foi poss�vel adicionar o favorito." });
 
             return Ok(new { message = "Favorito adicionado com sucesso." });
         }
 
         /// <summary>
         /// DELETE: api/favoritos/remover/{veiculoId}
-        /// Remove um veículo dos favoritos.
+        /// Remove um ve�culo dos favoritos.
         /// </summary>
         [HttpDelete("remover/{veiculoId}")]
         public async Task<IActionResult> Remover(int veiculoId)
@@ -2650,22 +2933,21 @@ namespace AutoMarket.Areas.Public.Controllers
             if (user == null)
                 return Unauthorized();
 
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
+            var comprador = await _profileService.GetCompradorByUserIdAsync(user.Id);
 
             if (comprador == null)
-                return BadRequest(new { message = "Utilizador não é comprador registado." });
+                return BadRequest(new { message = "Utilizador n�o � comprador registado." });
 
             var sucesso = await _favoritoService.RemoverFavoritoAsync(comprador.Id, veiculoId);
             if (!sucesso)
-                return BadRequest(new { message = "Não foi possível remover o favorito." });
+                return BadRequest(new { message = "N�o foi poss�vel remover o favorito." });
 
             return Ok(new { message = "Favorito removido com sucesso." });
         }
 
         /// <summary>
         /// GET: api/favoritos/verificar/{veiculoId}
-        /// Verifica se um veículo está nos favoritos.
+        /// Verifica se um ve�culo est� nos favoritos.
         /// </summary>
         [HttpGet("verificar/{veiculoId}")]
         public async Task<IActionResult> Verificar(int veiculoId)
@@ -2674,8 +2956,7 @@ namespace AutoMarket.Areas.Public.Controllers
             if (user == null)
                 return Unauthorized();
 
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
+            var comprador = await _profileService.GetCompradorByUserIdAsync(user.Id);
 
             if (comprador == null)
                 return Ok(new { estaNosFavoritos = false });
@@ -2695,11 +2976,10 @@ namespace AutoMarket.Areas.Public.Controllers
             if (user == null)
                 return Unauthorized();
 
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
+            var comprador = await _profileService.GetCompradorByUserIdAsync(user.Id);
 
             if (comprador == null)
-                return BadRequest(new { message = "Utilizador não é comprador registado." });
+                return BadRequest(new { message = "Utilizador n�o � comprador registado." });
 
             var favoritos = await _favoritoService.ListarFavoritosAsync(comprador.Id, page, 20);
             var total = await _favoritoService.ContarFavoritosAsync(comprador.Id);
@@ -2993,13 +3273,17 @@ namespace AutoMarket.Areas.Public.Controllers
     [Area("Public")]
     public class TransacoesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ITransacaoService _transacaoService;
+        private readonly IProfileService _profileService;
+        private readonly IVeiculoService _veiculoService;
         private readonly UserManager<Utilizador> _userManager;
         private readonly ILogger<TransacoesController> _logger;
 
-        public TransacoesController(ApplicationDbContext context, UserManager<Utilizador> userManager, ILogger<TransacoesController> logger)
+        public TransacoesController(ITransacaoService transacaoService, IProfileService profileService, IVeiculoService veiculoService, UserManager<Utilizador> userManager, ILogger<TransacoesController> logger)
         {
-            _context = context;
+            _transacaoService = transacaoService;
+            _profileService = profileService;
+            _veiculoService = veiculoService;
             _userManager = userManager;
             _logger = logger;
         }
@@ -3020,11 +3304,7 @@ namespace AutoMarket.Areas.Public.Controllers
                 return RedirectToAction("PreencherDadosFiscais", "Conta");
             }
 
-            var veiculo = await _context.Veiculos
-                .Include(v => v.Vendedor)
-                .ThenInclude(v => v.User)
-                .FirstOrDefaultAsync(v => v.Id == id);
-
+            var veiculo = await _veiculoService.GetVeiculoEntityAsync(id);
             if (veiculo == null)
                 return NotFound();
 
@@ -3041,44 +3321,11 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Obter perfil de Comprador
-            var comprador = await _context.Compradores
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
+            var comprador = await _profileService.GetCompradorByUserIdAsync(user.Id);
 
-            if (comprador == null)
-            {
-                // Utilizador não tem perfil de comprador ainda
-                return View(new List<TransacaoListViewModel>());
-            }
+            if (comprador == null) return View(new List<TransacaoListViewModel>());
 
-            // Buscar transações onde é comprador
-            var transacoes = await _context.Transacoes
-                .AsNoTracking()
-                .Include(t => t.Veiculo)
-                    .ThenInclude(v => v.Imagens)
-                .Include(t => t.Vendedor)
-                    .ThenInclude(v => v.User)
-                .Where(t => t.CompradorId == comprador.Id)
-                .OrderByDescending(t => t.DataTransacao)
-                .Select(t => new TransacaoListViewModel
-                {
-                    TransacaoId = t.Id,
-                    DataTransacao = t.DataTransacao,
-                    ValorPago = t.ValorPago,
-                    Estado = t.Estado,
-                    Metodo = t.Metodo,
-                    VeiculoId = t.VeiculoId,
-                    VeiculoTitulo = t.Veiculo.Titulo,
-                    VeiculoMarca = t.Veiculo.Marca,
-                    VeiculoModelo = t.Veiculo.Modelo,
-                    VeiculoImagemCapa = t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa) != null ? t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa)!.CaminhoFicheiro : null,
-                    VendedorNome = t.Vendedor.User.Nome,
-                    MoradaEnvioSnapshot = t.MoradaEnvioSnapshot,
-                    NifFaturacaoSnapshot = t.NifFaturacaoSnapshot
-                })
-                .ToListAsync();
-
+            var transacoes = await _transacaoService.GetMinhasComprasAsync(comprador.Id);
             return View(transacoes);
         }
 
@@ -3094,44 +3341,11 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Obter perfil de Vendedor
-            var vendedor = await _context.Vendedores
-                .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.UserId == user.Id);
+            var vendedor = await _profileService.GetVendedorByUserIdAsync(user.Id);
 
-            if (vendedor == null)
-            {
-                // Utilizador não tem perfil de vendedor
-                return View(new List<TransacaoListViewModel>());
-            }
+            if (vendedor == null) return View(new List<TransacaoListViewModel>());
 
-            // Buscar transações onde é vendedor
-            var transacoes = await _context.Transacoes
-                .AsNoTracking()
-                .Include(t => t.Veiculo)
-                    .ThenInclude(v => v.Imagens)
-                .Include(t => t.Comprador)
-                    .ThenInclude(c => c.User)
-                .Where(t => t.VendedorId == vendedor.Id)
-                .OrderByDescending(t => t.DataTransacao)
-                .Select(t => new TransacaoListViewModel
-                {
-                    TransacaoId = t.Id,
-                    DataTransacao = t.DataTransacao,
-                    ValorPago = t.ValorPago,
-                    Estado = t.Estado,
-                    Metodo = t.Metodo,
-                    VeiculoId = t.VeiculoId,
-                    VeiculoTitulo = t.Veiculo.Titulo,
-                    VeiculoMarca = t.Veiculo.Marca,
-                    VeiculoModelo = t.Veiculo.Modelo,
-                    VeiculoImagemCapa = t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa) != null ? t.Veiculo.Imagens.FirstOrDefault(i => i.IsCapa)!.CaminhoFicheiro : null,
-                    CompradorNome = t.Comprador.User.Nome,
-                    MoradaEnvioSnapshot = t.MoradaEnvioSnapshot,
-                    NifFaturacaoSnapshot = t.NifFaturacaoSnapshot
-                })
-                .ToListAsync();
-
+            var transacoes = await _transacaoService.GetMinhasVendasAsync(vendedor.Id);
             return View(transacoes);
         }
     }
@@ -3151,12 +3365,12 @@ namespace AutoMarket.Areas.Public.Controllers
     [Area("Public")]
     public class VeiculosController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVeiculoService _veiculoService;
         private readonly ILogger<VeiculosController> _logger;
 
-        public VeiculosController(ApplicationDbContext context, ILogger<VeiculosController> logger)
+        public VeiculosController(IVeiculoService veiculoService, ILogger<VeiculosController> logger)
         {
-            _context = context;
+            _veiculoService = veiculoService;
             _logger = logger;
         }
 
@@ -3165,23 +3379,11 @@ namespace AutoMarket.Areas.Public.Controllers
         /// Lista todos os veículos ativos com filtros, ordenação e paginação.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(
-            string? marca = null,
-            string? modelo = null,
-            string? combustivel = null,
-            int? ano = null,
-            string? categoria = null,
-            decimal? precoMin = null,
-            decimal? precoMax = null,
-            int? kmMin = null,
-            int? kmMax = null,
-            string? ordenacao = "recente",
-            int page = 1)
+        public async Task<IActionResult> Index(VeiculoSearchFiltersDto filters)
         {
             try
             {
                 // Encapsular parâmetros no DTO
-                var filters = new VeiculoSearchFiltersDto
                 {
                     Marca = marca,
                     Modelo = modelo,
@@ -3197,7 +3399,7 @@ namespace AutoMarket.Areas.Public.Controllers
                 };
 
                 // Construir query filtrada e ordenada
-                var query = BuildVeiculosQuery(filters);
+                var query = _veiculoService.BuildVeiculosQuery(filters);
 
                 // Contar total ANTES de paginar
                 var totalVeiculos = await query.CountAsync();
@@ -6679,137 +6881,6 @@ namespace AutoMarket.Infrastructure.Data
 }
 </file>
 
-<file path="Infrastructure/Data/DbInitializer.cs">
-using AutoMarket.Models.Constants;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-
-namespace AutoMarket.Infrastructure.Data
-{
-    public static class DbInitializer
-    {
-        public static async Task InitializeAsync(IServiceProvider serviceProvider)
-        {
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = serviceProvider.GetRequiredService<UserManager<Utilizador>>();
-            var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
-            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var environment = serviceProvider.GetRequiredService<IHostEnvironment>();
-
-            // 1. Roles
-            string[] roles = { Roles.Admin, Roles.Vendedor, Roles.Comprador };
-            foreach (var role in roles)
-            {
-                if (!await roleManager.RoleExistsAsync(role))
-                {
-                    await roleManager.CreateAsync(new IdentityRole(role));
-                }
-            }
-
-            // 2. Default Admin
-            var adminEmail = configuration["DefaultAdmin:Email"] ?? "admin@automarket.com";
-            var adminPwd = configuration["DefaultAdmin:Password"];
-
-            if (string.IsNullOrWhiteSpace(adminPwd))
-            {
-                // Em produção, falha para obrigar a usar secrets
-                if (environment.IsProduction())
-                {
-                    throw new InvalidOperationException("A password do Admin não está configurada (DefaultAdmin:Password).");
-                }
-                adminPwd = "Password1231"; // Apenas para dev/local
-            }
-
-            var adminUser = await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
-
-            if (environment.IsDevelopment())
-            {
-                // 3. Comprador Teste
-                var compradorUser = await EnsureUserAsync(userManager, "comprador@automarket.com", "Password123!", "Comprador Exemplo", Roles.Comprador);
-                if (compradorUser != null)
-                {
-                    if (!await context.Compradores.AnyAsync(c => c.UserId == compradorUser.Id))
-                    {
-                        context.Compradores.Add(new Comprador
-                        {
-                            UserId = compradorUser.Id,
-                            ReceberNotificacoes = true
-                        });
-                        await context.SaveChangesAsync();
-                    }
-                }
-
-                // 4. Vendedor Particular (Aprovado)
-                var vendedorPartUser = await EnsureUserAsync(userManager, "vendedor_part@automarket.com", "Password123!", "Vendedor Particular", Roles.Vendedor);
-                if (vendedorPartUser != null)
-                {
-                    if (!await context.Vendedores.AnyAsync(v => v.UserId == vendedorPartUser.Id))
-                    {
-                        context.Vendedores.Add(new Vendedor
-                        {
-                            UserId = vendedorPartUser.Id,
-                            TipoConta = TipoConta.Vendedor,
-                            Status = StatusAprovacao.Aprovado,
-                            ApprovedByAdminId = adminUser?.Id 
-                        });
-                        await context.SaveChangesAsync();
-                    }
-                }
-
-                // 5. Vendedor Empresa (Aprovado)
-                var vendedorEmpUser = await EnsureUserAsync(userManager, "vendedor_emp@automarket.com", "Password123!", "Stand AutoMarket Lda", Roles.Vendedor);
-                if (vendedorEmpUser != null)
-                {
-                    if (!await context.Vendedores.AnyAsync(v => v.UserId == vendedorEmpUser.Id))
-                    {
-                        context.Vendedores.Add(new Vendedor
-                        {
-                            UserId = vendedorEmpUser.Id,
-                            TipoConta = TipoConta.Empresa,
-                            Status = StatusAprovacao.Aprovado,
-                            ApprovedByAdminId = adminUser?.Id
-                        });
-                        await context.SaveChangesAsync();
-                    }
-                }
-            }
-        }
-
-        private static async Task<Utilizador?> EnsureUserAsync(UserManager<Utilizador> userManager, string email, string password, string nome, string role)
-        {
-            var user = await userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                user = new Utilizador
-                {
-                    UserName = email,
-                    Email = email,
-                    Nome = nome,
-                    Contacto = "N/A", 
-                    EmailConfirmed = true,
-                    DataRegisto = DateTime.UtcNow
-                };
-
-                var result = await userManager.CreateAsync(user, password);
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(user, role);
-                }
-                else
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        Console.WriteLine($"[DBInitializer] Erro ao criar utilizador {email}: {error.Description}");
-                    }
-                    return null;
-                }
-            }
-            return user;
-        }
-    }
-}
-</file>
-
 <file path="Infrastructure/Security/CustomClaimsPrincipalFactory.cs">
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
@@ -6945,6 +7016,91 @@ namespace AutoMarket.Infrastructure.Security
                 // Se falhar a desencriptação, retornar como está (pode ser dado antigo)
                 return encryptedNif;
             }
+        }
+    }
+}
+</file>
+
+<file path="Infrastructure/Security/UserBlockingMiddleware.cs">
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Memory;
+
+namespace AutoMarket.Infrastructure.Security
+{
+    public class UserBlockingMiddleware
+    {
+        private readonly RequestDelegate _next; private readonly IMemoryCache _cache; private readonly ILogger<UserBlockingMiddleware> _logger;
+
+        public UserBlockingMiddleware(
+            RequestDelegate next,
+            IMemoryCache cache,
+            ILogger<UserBlockingMiddleware> logger)
+        {
+            _next = next;
+            _cache = cache;
+            _logger = logger;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
+        {
+            if (context.User.Identity?.IsAuthenticated == true)
+            {
+                var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    // Chave de cache única para o estado do utilizador
+                    var cacheKey = $"User_Status_{userId}";
+
+                    // Tenta obter do cache. Se não existir, vai à BD.
+                    if (!_cache.TryGetValue(cacheKey, out bool isAllowed))
+                    {
+                        // Scope necessário para injetar UserManager (que é Scoped) dentro do Middleware (que é Singleton)
+                        // Isto é crucial para evitar memory leaks e erros de concorrência
+                        using (var scope = context.RequestServices.CreateScope())
+                        {
+                            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Utilizador>>();
+                            var user = await userManager.FindByIdAsync(userId);
+
+                            // Regras de bloqueio:
+                            // 1. User não existe (foi hard deleted ou soft deleted e o UserStore filtrou)
+                            // 2. User tem flag IsBlocked
+                            // 3. User tem flag IsDeleted (caso o UserStore não tenha filtrado)
+                            if (user == null || user.IsBlocked || user.IsDeleted)
+                            {
+                                isAllowed = false;
+                            }
+                            else
+                            {
+                                isAllowed = true;
+                            }
+
+                            // Guardar em cache por 10 minutos (reduz load na BD)
+                            // Se o admin bloquear, o serviço deve invalidar/atualizar esta entrada manualmente
+                            var cacheOptions = new MemoryCacheEntryOptions()
+                                .SetAbsoluteExpiration(TimeSpan.FromMinutes(10))
+                                .SetPriority(CacheItemPriority.High);
+
+                            _cache.Set(cacheKey, isAllowed, cacheOptions);
+                        }
+                    }
+
+                    if (!isAllowed)
+                    {
+                        _logger.LogWarning("Utilizador {UserId} tentou aceder mas está bloqueado/eliminado. Efetuando logout forçado.", userId);
+
+                        // Forçar Logout imediato
+                        await context.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+                        // Redirecionar para página de bloqueio ou login
+                        context.Response.Redirect("/Public/Conta/Login");
+                        return; // Interrompe o pipeline aqui
+                    }
+                }
+            }
+
+            await _next(context);
         }
     }
 }
@@ -8377,7 +8533,7 @@ namespace AutoMarket.Services.Implementations
 
         public void AdicionarItem(Veiculo veiculo)
         {
-            if (veiculo == null) { throw new ArgumentNullException(nameof(veiculo)); }
+            ArgumentNullException.ThrowIfNull(veiculo);
 
             var itens = GetItens();
 
@@ -9593,162 +9749,6 @@ namespace AutoMarket.Services.Implementations
 }
 </file>
 
-<file path="Services/Implementations/GestaoUtilizadoresService.cs">
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-
-namespace AutoMarket.Services.Implementations
-{
-    /// <summary>
-    /// Implementaзгo do serviзo de gestгo de utilizadores.
-    /// </summary>
-    public class GestaoUtilizadoresService : IGestaoUtilizadoresService
-    {
-        private readonly UserManager<Utilizador> _userManager;
-        private readonly IAuditoriaService _auditoriaService;
-        private readonly INotificacaoService _notificacaoService;
-        private readonly ILogger<GestaoUtilizadoresService> _logger;
-
-        public GestaoUtilizadoresService(
-            UserManager<Utilizador> userManager,
-            IAuditoriaService auditoriaService,
-            INotificacaoService notificacaoService,
-            ILogger<GestaoUtilizadoresService> logger)
-        {
-            _userManager = userManager;
-            _auditoriaService = auditoriaService;
-            _notificacaoService = notificacaoService;
-            _logger = logger;
-        }
-
-        public async Task<bool> BloquearUtilizadorAsync(string utilizadorId, string motivo, string adminId)
-        {
-            var utilizador = await _userManager.FindByIdAsync(utilizadorId);
-            if (utilizador == null)
-            {
-                _logger.LogWarning("Tentativa de bloquear utilizador inexistente: {UtilizadorId}", utilizadorId);
-                return false;
-            }
-
-            if (utilizador.IsBlocked)
-            {
-                _logger.LogWarning("Utilizador {UtilizadorId} jб estб bloqueado", utilizadorId);
-                return false;
-            }
-
-            var estadoAnterior = utilizador.IsBlocked;
-            utilizador.IsBlocked = true;
-            utilizador.BlockReason = motivo;
-
-            var result = await _userManager.UpdateAsync(utilizador);
-            if (!result.Succeeded)
-            {
-                _logger.LogError("Erro ao bloquear utilizador {UtilizadorId}", utilizadorId);
-                return false;
-            }
-
-            // Registar auditoria
-            await _auditoriaService.RegistarAcaoAsync(
-                adminId,
-                "USUARIO_BLOQUEADO",
-                $"Utilizador {utilizador.Nome} ({utilizador.Email}) bloqueado. Motivo: {motivo}",
-                entidadeAfetadaId: utilizadorId,
-                tipoEntidade: "Utilizador",
-                dadosAntigos: JsonSerializer.Serialize(new { IsBlocked = estadoAnterior, BlockReason = (string?)null }),
-                dadosNovos: JsonSerializer.Serialize(new { IsBlocked = true, BlockReason = motivo }));
-
-            // Notificar o utilizador
-            await _notificacaoService.NotificarUtilizadorAsync(
-                utilizadorId,
-                tipo: "USUARIO_BLOQUEADO",
-                assunto: "A sua conta foi bloqueada",
-                corpo: $"A sua conta foi bloqueada pela administraзгo. Motivo: {motivo}. Contacte o suporte se julgar que isto й um erro.");
-
-            _logger.LogInformation(
-                "Admin {AdminId} bloqueou utilizador {UtilizadorId}. Motivo: {Motivo}",
-                adminId, utilizadorId, motivo);
-
-            return true;
-        }
-
-        public async Task<bool> DesbloquearUtilizadorAsync(string utilizadorId, string adminId)
-        {
-            var utilizador = await _userManager.FindByIdAsync(utilizadorId);
-            if (utilizador == null)
-            {
-                _logger.LogWarning("Tentativa de desbloquear utilizador inexistente: {UtilizadorId}", utilizadorId);
-                return false;
-            }
-
-            if (!utilizador.IsBlocked)
-            {
-                _logger.LogWarning("Utilizador {UtilizadorId} nгo estб bloqueado", utilizadorId);
-                return false;
-            }
-
-            var motivoAnterior = utilizador.BlockReason;
-            utilizador.IsBlocked = false;
-            utilizador.BlockReason = null;
-
-            var result = await _userManager.UpdateAsync(utilizador);
-            if (!result.Succeeded)
-            {
-                _logger.LogError("Erro ao desbloquear utilizador {UtilizadorId}", utilizadorId);
-                return false;
-            }
-
-            // Registar auditoria
-            await _auditoriaService.RegistarAcaoAsync(
-                adminId,
-                "USUARIO_DESBLOQUEADO",
-                $"Utilizador {utilizador.Nome} ({utilizador.Email}) desbloqueado",
-                entidadeAfetadaId: utilizadorId,
-                tipoEntidade: "Utilizador",
-                dadosAntigos: JsonSerializer.Serialize(new { IsBlocked = true, BlockReason = motivoAnterior }),
-                dadosNovos: JsonSerializer.Serialize(new { IsBlocked = false, BlockReason = (string?)null }));
-
-            // Notificar o utilizador
-            await _notificacaoService.NotificarUtilizadorAsync(
-                utilizadorId,
-                tipo: "USUARIO_DESBLOQUEADO",
-                assunto: "A sua conta foi desbloqueada",
-                corpo: "A sua conta foi desbloqueada pela administraзгo. Pode agora aceder normalmente.");
-
-            _logger.LogInformation(
-                "Admin {AdminId} desbloqueou utilizador {UtilizadorId}",
-                adminId, utilizadorId);
-
-            return true;
-        }
-
-        public async Task<string?> ObterMotivoBloquoAsync(string utilizadorId)
-        {
-            var utilizador = await _userManager.FindByIdAsync(utilizadorId);
-            if (utilizador == null || !utilizador.IsBlocked)
-                return null;
-
-            return utilizador.BlockReason;
-        }
-
-        public async Task<List<Utilizador>> ListarUtilizadoresBloqueadosAsync(int page = 1, int pageSize = 20)
-        {
-            var users = await _userManager.Users
-                .Where(u => u.IsBlocked && !u.IsDeleted)
-                .OrderByDescending(u => u.DataRegisto)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return users;
-        }
-    }
-}
-</file>
-
 <file path="Services/Implementations/LimparReservasHostedService.cs">
 namespace AutoMarket.Services.Implementations
 {
@@ -10409,39 +10409,6 @@ namespace AutoMarket.Services.Interfaces
 }
 </file>
 
-<file path="Services/Interfaces/IGestaoUtilizadoresService.cs">
-using AutoMarket.Models.Entities;
-
-namespace AutoMarket.Services.Interfaces
-{
-    /// <summary>
-    /// Interface para serviço de gestão de utilizadores (bloqueio, desbloqueio, etc).
-    /// </summary>
-    public interface IGestaoUtilizadoresService
-    {
-        /// <summary>
-        /// Bloquear um utilizador com motivo.
-        /// </summary>
-        Task<bool> BloquearUtilizadorAsync(string utilizadorId, string motivo, string adminId);
-
-        /// <summary>
-        /// Desbloquear um utilizador.
-        /// </summary>
-        Task<bool> DesbloquearUtilizadorAsync(string utilizadorId, string adminId);
-
-        /// <summary>
-        /// Obter histórico de bloqueios de um utilizador.
-        /// </summary>
-        Task<string?> ObterMotivoBloquoAsync(string utilizadorId);
-
-        /// <summary>
-        /// Listar utilizadores bloqueados.
-        /// </summary>
-        Task<List<Utilizador>> ListarUtilizadoresBloqueadosAsync(int page = 1, int pageSize = 20);
-    }
-}
-</file>
-
 <file path="Services/Interfaces/IMensagensService.cs">
 using AutoMarket.Models.Entities;
 
@@ -10509,16 +10476,27 @@ namespace AutoMarket.Services.Interfaces
 </file>
 
 <file path="Services/Interfaces/IVeiculoService.cs">
+using AutoMarket.Areas.Public.Controllers;
+
 namespace AutoMarket.Services.Interfaces
 {
     public interface IVeiculoService
     {
+        Task<Veiculo?> GetVeiculoEntityAsync(int id);
+        Task<VeiculoFilterOptionsDto> GetFilterOptionsAsync();
+        Task<List<Veiculo>> GetVeiculosByVendedorAsync(int vendedorId);
+        Task<List<Categoria>> GetCategoriasAsync();
+        Task<bool> ExistsAsync(int id);
         Task<VeiculoDto?> GetAsync(int id);
         Task<IReadOnlyList<VeiculoDto>> ListAsync(VeiculoFiltroDto filtro);
         Task<CommandResultDto> CreateAsync(VeiculoCreateDto dto);
         Task<CommandResultDto> UpdateAsync(int id, VeiculoUpdateDto dto);
         Task<CommandResultDto> SoftDeleteAsync(int id);
         ValidationResultDto Validate(VeiculoCreateDto dto);
+        Task<(List<Veiculo> Veiculos, int TotalCount)> GetVeiculosParaModeracaoAsync(string? estado, int page, int pageSize);
+        Task<bool> PausarVeiculoAdminAsync(int id);
+        Task<bool> RemoverVeiculoAdminAsync(int id);
+        Task<VeiculoDto?> GetVeiculoByIdAsync(int id);
     }
 }
 </file>
@@ -10763,15 +10741,8 @@ namespace AutoMarket.Services.Interfaces
 </file>
 
 <file path="Areas/Admin/Controllers/AdminController.cs">
-using AutoMarket.Infrastructure.Data;
 using AutoMarket.Models.Constants;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.Enums;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Admin.Controllers
 {
@@ -10779,18 +10750,21 @@ namespace AutoMarket.Areas.Admin.Controllers
     [Area("Admin")]
     public class AdminController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVendedorService _vendedorService;
+        private readonly ITransacaoService _transacaoService;
         private readonly UserManager<Utilizador> _userManager;
         private readonly SignInManager<Utilizador> _signInManager;
         private readonly IEstatisticasService _estatisticasService;
 
         public AdminController(
-            ApplicationDbContext context, 
+            IVendedorService vendedorService,
+            ITransacaoService transacaoService,
             UserManager<Utilizador> userManager,
             SignInManager<Utilizador> signInManager,
             IEstatisticasService estatisticasService)
         {
-            _context = context;
+            _vendedorService = vendedorService;
+            _transacaoService = transacaoService;
             _userManager = userManager;
             _signInManager = signInManager;
             _estatisticasService = estatisticasService;
@@ -10808,21 +10782,13 @@ namespace AutoMarket.Areas.Admin.Controllers
         // GET: Admin/Index (Lista de Pendentes)
         public async Task<IActionResult> Index(int page = 1)
         {
-            int pageSize = 10;
-            var query = _context.Vendedores
-                .Include(v => v.User)
-                .Where(v => v.Status == StatusAprovacao.Pendente)
-                .OrderBy(v => v.User.DataRegisto);
-
-            var model = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            const int pageSize = 10;
+            var (vendedores, totalCount) = await _vendedorService.GetVendedoresPendentesAsync(page, pageSize);
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize);
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            return View(model);
+            return View(vendedores);
         }
 
         // POST: Admin/Aprovar/5
@@ -10830,18 +10796,14 @@ namespace AutoMarket.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Aprovar(int id)
         {
-            var vendedor = await _context.Vendedores.FindAsync(id);
-            if (vendedor == null) return NotFound();
+            var adminId = _userManager.GetUserId(User);
+            if (adminId == null) return Unauthorized();
 
-            vendedor.Aprovar(_userManager.GetUserId(User));
-            await _context.SaveChangesAsync();
+            var userId = await _vendedorService.AprovarVendedorAsync(id, adminId);
+            if (userId == null) return NotFound();
 
             // Refresh do cookie para atualizar as claims (StatusVendedor)
-            var user = await _userManager.FindByIdAsync(vendedor.UserId);
-            if (user != null)
-            {
-                await _signInManager.RefreshSignInAsync(user);
-            }
+            await RefreshUserClaims(userId);
 
             TempData["MensagemStatus"] = "Vendedor aprovado com sucesso!";
             return RedirectToAction(nameof(Index));
@@ -10852,23 +10814,18 @@ namespace AutoMarket.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Rejeitar(int id, string motivo)
         {
-            var vendedor = await _context.Vendedores.FindAsync(id);
-            if (vendedor == null) return NotFound();
+            var adminId = _userManager.GetUserId(User);
+            if (adminId == null) return Unauthorized();
 
             if (string.IsNullOrWhiteSpace(motivo))
             {
                 motivo = "Documentação insuficiente ou dados incorretos.";
             }
 
-            vendedor.Rejeitar(_userManager.GetUserId(User), motivo);
-            await _context.SaveChangesAsync();
+            var userId = await _vendedorService.RejeitarVendedorAsync(id, adminId, motivo);
+            if (userId == null) return NotFound();
 
-            // Refresh do cookie para atualizar as claims (StatusVendedor)
-            var user = await _userManager.FindByIdAsync(vendedor.UserId);
-            if (user != null)
-            {
-                await _signInManager.RefreshSignInAsync(user);
-            }
+            await RefreshUserClaims(userId);
 
             TempData["MensagemStatus"] = "Vendedor rejeitado.";
             return RedirectToAction(nameof(Index));
@@ -10877,26 +10834,23 @@ namespace AutoMarket.Areas.Admin.Controllers
         // GET: Admin/HistoricoTransacoes
         public async Task<IActionResult> HistoricoTransacoes(int page = 1)
         {
-            int pageSize = 20;
+            const int pageSize = 20;
 
-            var query = _context.Transacoes
-                .IgnoreQueryFilters()
-                .Include(t => t.Veiculo)
-                    .ThenInclude(c => c.Vendedor)
-                        .ThenInclude(v => v.User)
-                .Include(t => t.Comprador)
-                    .ThenInclude(c => c.User)
-                .OrderByDescending(t => t.DataTransacao);
+            var (transacoes, totalCount) = await _transacaoService.GetHistoricoTransacoesAsync(page, pageSize);
 
-            var model = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-            
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize);
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            return View(model);
+            return View(transacoes);
+        }
+
+        private async Task RefreshUserClaims(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+            }
         }
     }
 }
@@ -11043,6 +10997,7 @@ using AutoMarket.Infrastructure.Data;
 using AutoMarket.Models.Constants;
 using AutoMarket.Models.ViewModels;
 using AutoMarket.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers
@@ -11050,21 +11005,27 @@ namespace AutoMarket.Areas.Public.Controllers
     [Area("Public")]
     public class ContaController : Controller
     {
+        private readonly UserManager<Utilizador> _userManager;
         private readonly IAuthService _authService;
-        private readonly ILogger<ContaController> _logger;
-        private readonly ApplicationDbContext _context;
+        private readonly IProfileService _profileService;
         private readonly IFavoritoService _favoritoService;
+        private readonly INotificacaoService _notificacaoService;
+        private readonly ILogger<ContaController> _logger;
 
         public ContaController(
+            UserManager<Utilizador> userManager,
             IAuthService authService,
-            ILogger<ContaController> logger,
-            ApplicationDbContext context,
-            IFavoritoService favoritoService)
+            IProfileService profileService,
+            IFavoritoService favoritoService,
+            INotificacaoService notificacaoService,
+            ILogger<ContaController> logger)
         {
+            _userManager = userManager;
             _authService = authService;
-            _logger = logger;
-            _context = context;
+            _profileService = profileService;
             _favoritoService = favoritoService;
+            _notificacaoService = notificacaoService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -11075,12 +11036,8 @@ namespace AutoMarket.Areas.Public.Controllers
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null) return NotFound();
-
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login");
             return View(user);
         }
 
@@ -11243,8 +11200,7 @@ namespace AutoMarket.Areas.Public.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var comprador = await _profileService.GetProfileAsync(userId);
 
             if (comprador == null)
                 return RedirectToAction("Index", "Home");
@@ -11270,21 +11226,42 @@ namespace AutoMarket.Areas.Public.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var notificacoes = await _context.Notificacoes
-                .Where(n => n.DestinatarioId == userId)
-                .OrderByDescending(n => n.DataCriacao)
-                .Skip((page - 1) * 20)
-                .Take(20)
-                .ToListAsync();
+            var notificacoes = await _notificacaoService.ListarNotificacoesAsync(userId, page, 20);
 
-            var total = await _context.Notificacoes
-                .CountAsync(n => n.DestinatarioId == userId);
+            var total = await _notificacaoService.ContarNotificacoesAsync(userId);
 
             ViewData["TotalNotificacoes"] = total;
             ViewData["CurrentPage"] = page;
             ViewData["TotalPages"] = (int)Math.Ceiling(total / 20.0);
 
             return View(notificacoes);
+        }
+
+
+
+
+        public async Task<IActionResult> Perfil()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            // Usar o novo ProfileService para obter stats sem context direto
+            var stats = await _profileService.GetUserStatsAsync(user.Id);
+
+            ViewBag.IsVendedor = stats.IsVendedor;
+            ViewBag.IsComprador = stats.IsComprador;
+            ViewBag.TotalCompras = stats.TotalCompras;
+            ViewBag.TotalVendas = stats.TotalVendas;
+            ViewBag.TotalVeiculos = stats.TotalVeiculos;
+            ViewBag.StatusVendedor = stats.StatusVendedor;
+
+            var model = new EditarPerfilViewModel
+            {
+                Nome = user.Nome,
+                Email = user.Email,
+                NIF = user.NIF
+            };
+            return View(model);
         }
     }
 }
@@ -13947,23 +13924,29 @@ using Microsoft.EntityFrameworkCore;
 namespace AutoMarket.Areas.Vendedores.Controllers
 {
     /// <summary>
-    /// Controller para gerenciar ve�culos da �rea de Vendedores.
+    /// Controller para gerenciar veículos da área de Vendedores.
     /// Requer autenticação e email confirmado.
     /// </summary>
     [Area("Vendedores")]
     [Authorize(Policy = "VendedorAprovado")]
     public class VeiculosController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVeiculoService _veiculoService;
+        private readonly IProfileService _profileService;
+        private readonly Microsoft.AspNetCore.Identity.UserManager<Utilizador> _userManager;
         private readonly IFileService _fileService;
         private readonly ILogger<VeiculosController> _logger;
 
         public VeiculosController(
-            ApplicationDbContext context,
+            IVeiculoService veiculoService,
+            IProfileService profileService,
+            Microsoft.AspNetCore.Identity.UserManager<Utilizador> userManager,
             IFileService fileService,
             ILogger<VeiculosController> logger)
         {
-            _context = context;
+            _veiculoService = veiculoService;
+            _profileService = profileService;
+            _userManager = userManager;
             _fileService = fileService;
             _logger = logger;
         }
@@ -13973,71 +13956,54 @@ namespace AutoMarket.Areas.Vendedores.Controllers
         /// </summary>
         private async Task<Vendedor?> GetVendedorLogado()
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return null;
-
-            return await _context.Vendedores.FirstOrDefaultAsync(v => v.UserId == userId);
+            var userId = _userManager.GetUserId(User);
+            return await _profileService.GetVendedorByUserIdAsync(userId);
         }
 
         /// <summary>
         /// GET: Vendedores/Veiculos/Index
-        /// Lista todos os ve�culos do vendedor logado (excluindo removidos).
+        /// Lista todos os veiculos do vendedor logado (excluindo removidos).
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var vendedor = await GetVendedorLogado();
-            if (vendedor == null)
-            {
-                _logger.LogWarning("Tentativa de acesso a Index sem vendedor logado");
-                return Unauthorized();
-            }
+            if (vendedor == null) return Unauthorized();
 
-            var veiculos = await _context.Veiculos
-                .Where(v => v.VendedorId == vendedor.Id && v.Estado != EstadoVeiculo.Pausado)
-                .OrderByDescending(v => v.DataCriacao)
-                .Include(v => v.Imagens)
-                .Include(v => v.Categoria)
-                .ToListAsync();
-
-            var viewModel = veiculos.Select(v => ListVeiculoViewModel.FromVeiculo(v)).ToList();
-            return View(viewModel);
+            var veiculos = await _veiculoService.GetVeiculosByVendedorAsync(vendedor.Id);
+            // mapear para ViewModel
+            return View(veiculos.Select(ListVeiculoViewModel.FromVeiculo).ToList());
         }
 
         /// <summary>
         /// GET: Vendedores/Veiculos/Create
-        /// Exibe formul�rio para criar novo ve�culo.
+        /// Exibe formulario para criar novo veiculo.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var viewModel = new CreateVeiculoViewModel
+            var model = new CreateVeiculoViewModel
             {
-                CategoriesDropdown = await _context.Categorias.ToListAsync()
+                CategoriesDropdown = await _veiculoService.GetCategoriasAsync()
             };
-            return View(viewModel);
+            return View(model);
         }
 
         /// <summary>
         /// POST: Vendedores/Veiculos/Create
-        /// Cria um novo ve�culo no sistema com upload de imagens.
+        /// Cria um novo veiculo no sistema com upload de imagens.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateVeiculoViewModel viewModel)
+        public async Task<IActionResult> Create(CreateVeiculoViewModel model)
         {
             var vendedor = await GetVendedorLogado();
-            if (vendedor == null)
-            {
-                _logger.LogWarning("Tentativa de cria��o de ve�culo sem vendedor logado");
-                return Unauthorized();
-            }
+            if (vendedor == null) return Unauthorized();
 
             if (!ModelState.IsValid)
             {
-                viewModel.CategoriesDropdown = await _context.Categorias.ToListAsync();
-                return View(viewModel);
+                model.CategoriesDropdown = await _veiculoService.GetCategoriasAsync();
+                return View(model);
             }
 
             try
@@ -14045,10 +14011,10 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 // Fazer upload das imagens se fornecidas
                 List<VeiculoImagem> imagens = new();
 
-                if (viewModel.Fotos?.Any() == true)
+                if (model.Fotos?.Any() == true)
                 {
                     var uploadedFiles = await _fileService.UploadMultipleFilesAsync(
-                        viewModel.Fotos.ToList(),
+                        model.Fotos.ToList(),
                         "images/veiculos"
                     );
 
@@ -14418,6 +14384,149 @@ namespace AutoMarket.Areas.Vendedores.Controllers
                 ".gif" => "image/gif",
                 _ => "image/jpeg"
             };
+        }
+    }
+}
+</file>
+
+<file path="Infrastructure/Data/DbInitializer.cs">
+using AutoMarket.Models.Constants;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+namespace AutoMarket.Infrastructure.Data
+{
+    public static class DbInitializer
+    {
+        public static async Task InitializeAsync(IServiceProvider serviceProvider)
+        {
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<Utilizador>>();
+            var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            var environment = serviceProvider.GetRequiredService<IHostEnvironment>();
+
+            // 1. Roles
+            string[] roles = { Roles.Admin, Roles.Vendedor, Roles.Comprador };
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+
+            // 2. Default Admin
+            var adminEmail = configuration["DefaultAdmin:Email"];
+            if (string.IsNullOrEmpty(adminEmail))
+            {
+                if (environment.IsProduction())
+                {
+                    throw new InvalidOperationException("O email do Admin não está configurado (DefaultAdmin:Email).");
+                }
+                adminEmail = "admin@automarket.com";
+            }
+            var adminPwd = configuration["DefaultAdmin:Password"];
+
+            if (string.IsNullOrEmpty(adminPwd))
+            {
+                if (environment.IsProduction())
+                {
+                    throw new InvalidOperationException("A password do Admin não está configurada (DefaultAdmin:Password).");
+                }
+                adminPwd = "Password1231";
+            }
+
+            if (!string.IsNullOrWhiteSpace(adminEmail))
+            {
+                var adminUser = await EnsureUserAsync(userManager, adminEmail, adminPwd, "Administrador Sistema", Roles.Admin);
+
+                if (environment.IsDevelopment())
+                {
+                    // 3. Comprador Teste
+                    var compradorUser = await EnsureUserAsync(userManager, "comprador@automarket.com", "Password123!", "Comprador Exemplo", Roles.Comprador);
+                    if (compradorUser != null)
+                    {
+                        if (!await context.Compradores.AnyAsync(c => c.UserId == compradorUser.Id))
+                        {
+                            context.Compradores.Add(new Comprador
+                            {
+                                UserId = compradorUser.Id,
+                                ReceberNotificacoes = true
+                            });
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                }
+
+                // 4. Vendedor Particular (Aprovado)
+                var vendedorPartUser = await EnsureUserAsync(userManager, "vendedor_part@automarket.com", "Password123!", "Vendedor Particular", Roles.Vendedor);
+                if (vendedorPartUser != null)
+                {
+                    if (!await context.Vendedores.AnyAsync(v => v.UserId == vendedorPartUser.Id))
+                    {
+                        context.Vendedores.Add(new Vendedor
+                        {
+                            UserId = vendedorPartUser.Id,
+                            TipoConta = TipoConta.Vendedor,
+                            Status = StatusAprovacao.Aprovado,
+                            ApprovedByAdminId = adminUser?.Id 
+                        });
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // 5. Vendedor Empresa (Aprovado)
+                var vendedorEmpUser = await EnsureUserAsync(userManager, "vendedor_emp@automarket.com", "Password123!", "Stand AutoMarket Lda", Roles.Vendedor);
+                if (vendedorEmpUser != null)
+                {
+                    if (!await context.Vendedores.AnyAsync(v => v.UserId == vendedorEmpUser.Id))
+                    {
+                        context.Vendedores.Add(new Vendedor
+                        {
+                            UserId = vendedorEmpUser.Id,
+                            TipoConta = TipoConta.Empresa,
+                            Status = StatusAprovacao.Aprovado,
+                            ApprovedByAdminId = adminUser?.Id
+                        });
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
+        }
+
+        private static async Task<Utilizador?> EnsureUserAsync(UserManager<Utilizador> userManager, string email, string password, string nome, string role)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                user = new Utilizador
+                {
+                    UserName = email,
+                    Email = email,
+                    Nome = nome,
+                    Contacto = "N/A", 
+                    EmailConfirmed = true,
+                    DataRegisto = DateTime.UtcNow
+                };
+
+                var result = await userManager.CreateAsync(user, password);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, role);
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        Console.WriteLine($"[DBInitializer] Erro ao criar utilizador {email}: {error.Description}");
+                    }
+                    return null;
+                }
+            }
+            return user;
         }
     }
 }
@@ -15092,277 +15201,6 @@ namespace AutoMarket.Models.ViewModels.Veiculos
 }
 </file>
 
-<file path="Services/Implementations/AuthService.cs">
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Infrastructure.Utils;
-using AutoMarket.Models.Constants;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.EntityFrameworkCore;
-
-namespace AutoMarket.Services.Implementations
-{
-	public class AuthService : IAuthService
-	{
-	private readonly UserManager<Utilizador> _userManager;
-	private readonly SignInManager<Utilizador> _signInManager;
-	private readonly ApplicationDbContext _context;
-	private readonly IEmailAuthService _emailAuthService;
-	private readonly ILogger<AuthService> _logger;
-	private readonly IHostEnvironment _environment;
-
-	public AuthService(
-		UserManager<Utilizador> userManager,
-		SignInManager<Utilizador> signInManager,
-		ApplicationDbContext context,
-		IEmailAuthService emailAuthService,
-		ILogger<AuthService> logger,
-		IHostEnvironment environment)
-	{
-		_userManager = userManager;
-		_signInManager = signInManager;
-		_context = context;
-		_emailAuthService = emailAuthService;
-		_logger = logger;
-		_environment = environment;
-	}
-
-		public async Task<RegisterResultDto> RegisterAsync(RegisterDto dto, string confirmationBaseUrl)
-		{
-			var errors = new List<string>();
-
-			if (!string.IsNullOrEmpty(dto.Nif) && !NifValidator.IsValid(dto.Nif))
-			{
-				errors.Add("NIF invбlido. Por favor, verifique o nъmero introduzido.");
-				return new RegisterResultDto(false, errors, null);
-			}
-
-			await using var transaction = await _context.Database.BeginTransactionAsync();
-
-			try
-			{
-			var user = new Utilizador
-			{
-				UserName = dto.Email,
-				Email = dto.Email,
-				Nome = dto.Nome,
-				Morada = dto.Morada,
-				PhoneNumber = dto.Contacto,
-				NIF = dto.Nif,
-				DataRegisto = DateTime.UtcNow
-				// EmailConfirmed removido - nгo й necessбrio
-			};
-
-				var identityResult = await _userManager.CreateAsync(user, dto.Password);
-				if (!identityResult.Succeeded)
-				{
-					errors.AddRange(identityResult.Errors.Select(e => e.Description));
-					return new RegisterResultDto(false, errors, null);
-				}
-
-			if (dto.TipoConta == TipoConta.Vendedor || dto.TipoConta == TipoConta.Empresa)
-			{
-				var vendedor = new Vendedor
-				{
-					UserId = user.Id,
-					TipoConta = dto.TipoConta,
-					Status = _environment.IsDevelopment() ? StatusAprovacao.Aprovado : StatusAprovacao.Pendente,
-					ApprovedByAdminId = _environment.IsDevelopment() ? user.Id : null // Auto-aprovar em dev
-				};
-				_context.Vendedores.Add(vendedor);
-				await _userManager.AddToRoleAsync(user, Roles.Vendedor);
-			}
-				else
-				{
-					var comprador = new Comprador
-					{
-						UserId = user.Id,
-						ReceberNotificacoes = false
-					};
-					_context.Compradores.Add(comprador);
-					await _userManager.AddToRoleAsync(user, Roles.Comprador);
-				}
-
-				await _context.SaveChangesAsync();
-				await transaction.CommitAsync();
-
-				// Auto-login apуs registo
-				await _signInManager.SignInAsync(user, isPersistent: false);
-
-				_logger.LogInformation("Utilizador {Email} registado e auto-logado com sucesso", user.Email);
-
-				return new RegisterResultDto(true, Enumerable.Empty<string>(), null);
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Erro ao registar utilizador {Email}", dto.Email);
-				errors.Add("Ocorreu um erro interno. Tente novamente.");
-				return new RegisterResultDto(false, errors, null);
-			}
-		}
-
-		public async Task<LoginResultDto> LoginAsync(LoginDto dto)
-		{
-			var errors = new List<string>();
-
-			var signInResult = await _signInManager.PasswordSignInAsync(dto.Email, dto.Password, dto.RememberMe, false);
-			if (!signInResult.Succeeded)
-			{
-				errors.Add("Email ou password invбlidos.");
-				return new LoginResultDto(false, null, errors);
-			}
-
-			var user = await _userManager.FindByEmailAsync(dto.Email);
-			if (user == null)
-			{
-				await _signInManager.SignOutAsync();
-				errors.Add("Erro inesperado ao obter dados do utilizador.");
-				return new LoginResultDto(false, null, errors);
-			}
-
-			if (user.IsBlocked || user.IsDeleted)
-			{
-				await _signInManager.SignOutAsync();
-				errors.Add("Conta bloqueada ou eliminada.");
-				return new LoginResultDto(false, null, errors);
-			}
-
-			if (await _userManager.IsInRoleAsync(user, Roles.Vendedor))
-			{
-				var vendedor = await _context.Vendedores
-					.Select(v => new { v.UserId, v.Status })
-					.FirstOrDefaultAsync(v => v.UserId == user.Id);
-
-				if (vendedor != null && vendedor.Status != StatusAprovacao.Aprovado)
-				{
-					_logger.LogWarning("Vendedor {Email} tentou entrar mas estб com status {Status}", user.Email, vendedor.Status);
-					await _signInManager.SignOutAsync();
-					return new LoginResultDto(false, nameof(StatusAprovacao.Pendente), errors);
-				}
-			}
-
-			return new LoginResultDto(true, null, Enumerable.Empty<string>());
-		}
-
-		public Task LogoutAsync()
-		{
-			return _signInManager.SignOutAsync();
-		}
-
-		public async Task<ConfirmEmailResultDto> ConfirmEmailAsync(string userId, string token)
-		{
-			var errors = new List<string>();
-
-			if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
-			{
-				errors.Add("Link de confirmaзгo invбlido ou incompleto.");
-				return new ConfirmEmailResultDto(false, errors);
-			}
-
-			var user = await _userManager.FindByIdAsync(userId);
-			if (user == null)
-			{
-				errors.Add("Utilizador nгo encontrado no sistema.");
-				return new ConfirmEmailResultDto(false, errors);
-			}
-
-			var result = await _userManager.ConfirmEmailAsync(user, token);
-			if (!result.Succeeded)
-			{
-				errors.AddRange(result.Errors.Select(e => e.Description));
-				_logger.LogWarning("Falha na confirmaзгo de email para {UserId}: {Errors}", userId, string.Join(", ", errors));
-				return new ConfirmEmailResultDto(false, errors);
-			}
-
-			return new ConfirmEmailResultDto(true, Enumerable.Empty<string>());
-		}
-
-		public async Task<UpdateNifResultDto> UpdateNifAsync(string userId, string nif)
-		{
-			var errors = new List<string>();
-
-			if (string.IsNullOrEmpty(nif))
-			{
-				errors.Add("O NIF й obrigatуrio.");
-				return new UpdateNifResultDto(false, errors);
-			}
-
-			if (!NifValidator.IsValid(nif))
-			{
-				errors.Add("NIF invбlido. Por favor, verifique o nъmero introduzido.");
-				return new UpdateNifResultDto(false, errors);
-			}
-
-			var user = await _userManager.FindByIdAsync(userId);
-			if (user == null)
-			{
-				errors.Add("Utilizador nгo encontrado.");
-				return new UpdateNifResultDto(false, errors);
-			}
-
-			user.NIF = nif;
-			var result = await _userManager.UpdateAsync(user);
-			if (!result.Succeeded)
-			{
-				errors.AddRange(result.Errors.Select(e => e.Description));
-				return new UpdateNifResultDto(false, errors);
-			}
-
-			return new UpdateNifResultDto(true, Enumerable.Empty<string>());
-		}
-
-		public async Task<SoftDeleteResultDto> SoftDeleteAsync(string userId)
-		{
-			var errors = new List<string>();
-			var user = await _userManager.FindByIdAsync(userId);
-
-			if (user == null)
-			{
-				errors.Add("Utilizador nгo encontrado.");
-				return new SoftDeleteResultDto(false, errors);
-			}
-
-			try
-			{
-				await _signInManager.SignOutAsync();
-
-				user.IsDeleted = true;
-
-				var deletedEmailSuffix = $"deleted_{Guid.NewGuid():N}@automarket.invalid";
-				user.Email = deletedEmailSuffix;
-				user.UserName = deletedEmailSuffix;
-				user.NormalizedEmail = deletedEmailSuffix.ToUpperInvariant();
-				user.NormalizedUserName = deletedEmailSuffix.ToUpperInvariant();
-				user.Nome = "Utilizador Eliminado";
-				user.NIF = null;
-				user.Morada = string.Empty;
-				user.Contacto = string.Empty;
-
-				var result = await _userManager.UpdateAsync(user);
-				if (!result.Succeeded)
-				{
-					errors.AddRange(result.Errors.Select(e => e.Description));
-					foreach (var error in result.Errors)
-					{
-						_logger.LogError("Erro ao atualizar utilizador {Id} apуs soft delete: {Error}", user.Id, error.Description);
-					}
-					return new SoftDeleteResultDto(false, errors);
-				}
-
-				_logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete). Sessгo invalidada.", user.Id);
-				return new SoftDeleteResultDto(true, Enumerable.Empty<string>());
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Erro crнtico ao apagar conta do utilizador {Id}", user.Id);
-				errors.Add("Erro crнtico ao apagar conta.");
-				return new SoftDeleteResultDto(false, errors);
-			}
-		}
-	}
-}
-</file>
-
 <file path="Services/Implementations/CheckoutService.cs">
 using AutoMarket.Infrastructure.Data;
 using AutoMarket.Models.Entities;
@@ -15541,6 +15379,169 @@ namespace AutoMarket.Services.Implementations
                     </div>
                 </body>
                 </html>";
+        }
+    }
+}
+</file>
+
+<file path="Services/Implementations/GestaoUtilizadoresService.cs">
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System.Text.Json;
+
+namespace AutoMarket.Services.Implementations
+{
+    /// <summary>
+    /// Implementacao do serviço de gestao de utilizadores.
+    /// </summary>
+    public class GestaoUtilizadoresService : IGestaoUtilizadoresService
+    {
+        private readonly UserManager<Utilizador> _userManager;
+        private readonly IAuditoriaService _auditoriaService;
+        private readonly INotificacaoService _notificacaoService;
+        private readonly IMemoryCache _cache;
+        private readonly ILogger<GestaoUtilizadoresService> _logger;
+
+        public GestaoUtilizadoresService(
+            UserManager<Utilizador> userManager,
+            IAuditoriaService auditoriaService,
+            INotificacaoService notificacaoService,
+            IMemoryCache cache,
+            ILogger<GestaoUtilizadoresService> logger)
+        {
+            _userManager = userManager;
+            _auditoriaService = auditoriaService;
+            _notificacaoService = notificacaoService;
+            _cache = cache;
+            _logger = logger;
+        }
+
+        public async Task<bool> BloquearUtilizadorAsync(string utilizadorId, string motivo, string adminId)
+        {
+            var utilizador = await _userManager.FindByIdAsync(utilizadorId);
+            if (utilizador == null)
+            {
+                _logger.LogWarning("Tentativa de bloquear utilizador inexistente: {UtilizadorId}", utilizadorId);
+                return false;
+            }
+
+            if (utilizador.IsBlocked)
+            {
+                _logger.LogWarning("Utilizador {UtilizadorId} ja esta bloqueado", utilizadorId);
+                return false;
+            }
+
+            var estadoAnterior = utilizador.IsBlocked;
+            utilizador.IsBlocked = true;
+            utilizador.BlockReason = motivo;
+
+            await _userManager.UpdateSecurityStampAsync(utilizador);
+
+            var result = await _userManager.UpdateAsync(utilizador);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Erro ao bloquear utilizador {UtilizadorId}", utilizadorId);
+                return false;
+            }
+
+            // -- Cache Invalidation
+            var cacheKey = $"User_Status_{utilizadorId}";
+            _cache.Set(cacheKey, false, TimeSpan.FromMinutes(30));
+
+            // Registar auditoria
+            await _auditoriaService.RegistarAcaoAsync(
+                adminId,
+                "USUARIO_BLOQUEADO",
+                $"Utilizador {utilizador.Nome} ({utilizador.Email}) bloqueado. Motivo: {motivo}",
+                entidadeAfetadaId: utilizadorId,
+                tipoEntidade: "Utilizador",
+                dadosAntigos: JsonSerializer.Serialize(new { IsBlocked = estadoAnterior, BlockReason = (string?)null }),
+                dadosNovos: JsonSerializer.Serialize(new { IsBlocked = true, BlockReason = motivo }));
+
+            // Notificar o utilizador
+            await _notificacaoService.NotificarUtilizadorAsync(
+                utilizadorId,
+                tipo: "USUARIO_BLOQUEADO",
+                assunto: "A sua conta foi bloqueada",
+                corpo: $"A sua conta foi bloqueada pela administracao. Motivo: {motivo}. Contacte o suporte se julgar que isto e um erro.");
+
+            _logger.LogInformation(
+                "Admin {AdminId} bloqueou utilizador {UtilizadorId}. Motivo: {Motivo}",
+                adminId, utilizadorId, motivo);
+
+            return true;
+        }
+
+        public async Task<bool> DesbloquearUtilizadorAsync(string utilizadorId, string adminId)
+        {
+            var utilizador = await _userManager.FindByIdAsync(utilizadorId);
+            if (utilizador == null)
+            {
+                _logger.LogWarning("Tentativa de desbloquear utilizador inexistente: {UtilizadorId}", utilizadorId);
+                return false;
+            }
+
+            if (!utilizador.IsBlocked)
+            {
+                _logger.LogWarning("Utilizador {UtilizadorId} nao esta bloqueado", utilizadorId);
+                return false;
+            }
+
+            var motivoAnterior = utilizador.BlockReason;
+            utilizador.IsBlocked = false;
+            utilizador.BlockReason = null;
+
+            var result = await _userManager.UpdateAsync(utilizador);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Erro ao desbloquear utilizador {UtilizadorId}", utilizadorId);
+                return false;
+            }
+
+            // Registar auditoria
+            await _auditoriaService.RegistarAcaoAsync(
+                adminId,
+                "USUARIO_DESBLOQUEADO",
+                $"Utilizador {utilizador.Nome} ({utilizador.Email}) desbloqueado",
+                entidadeAfetadaId: utilizadorId,
+                tipoEntidade: "Utilizador",
+                dadosAntigos: JsonSerializer.Serialize(new { IsBlocked = true, BlockReason = motivoAnterior }),
+                dadosNovos: JsonSerializer.Serialize(new { IsBlocked = false, BlockReason = (string?)null }));
+
+            // Notificar o utilizador
+            await _notificacaoService.NotificarUtilizadorAsync(
+                utilizadorId,
+                tipo: "USUARIO_DESBLOQUEADO",
+                assunto: "A sua conta foi desbloqueada",
+                corpo: "A sua conta foi desbloqueada pela administracao. Pode agora aceder normalmente.");
+
+            _logger.LogInformation(
+                "Admin {AdminId} desbloqueou utilizador {UtilizadorId}",
+                adminId, utilizadorId);
+
+            return true;
+        }
+
+        public async Task<string?> ObterMotivoBloqueioAsync(string utilizadorId)
+        {
+            var utilizador = await _userManager.FindByIdAsync(utilizadorId);
+            if (utilizador == null || !utilizador.IsBlocked)
+                return null;
+
+            return utilizador.BlockReason;
+        }
+
+        public async Task<List<Utilizador>> ListarUtilizadoresBloqueadosAsync(int page = 1, int pageSize = 20)
+        {
+            var users = await _userManager.Users
+                .Where(u => u.IsBlocked && !u.IsDeleted)
+                .OrderByDescending(u => u.DataRegisto)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return users;
         }
     }
 }
@@ -16151,6 +16152,39 @@ namespace AutoMarket.Services.Interfaces
 }
 </file>
 
+<file path="Services/Interfaces/IGestaoUtilizadoresService.cs">
+using AutoMarket.Models.Entities;
+
+namespace AutoMarket.Services.Interfaces
+{
+    /// <summary>
+    /// Interface para serviço de gestão de utilizadores (bloqueio, desbloqueio, etc).
+    /// </summary>
+    public interface IGestaoUtilizadoresService
+    {
+        /// <summary>
+        /// Bloquear um utilizador com motivo.
+        /// </summary>
+        Task<bool> BloquearUtilizadorAsync(string utilizadorId, string motivo, string adminId);
+
+        /// <summary>
+        /// Desbloquear um utilizador.
+        /// </summary>
+        Task<bool> DesbloquearUtilizadorAsync(string utilizadorId, string adminId);
+
+        /// <summary>
+        /// Obter motivo de bloqueio de um utilizador.
+        /// </summary>
+        Task<string?> ObterMotivoBloqueioAsync(string utilizadorId);
+
+        /// <summary>
+        /// Listar utilizadores bloqueados.
+        /// </summary>
+        Task<List<Utilizador>> ListarUtilizadoresBloqueadosAsync(int page = 1, int pageSize = 20);
+    }
+}
+</file>
+
 <file path="Services/Interfaces/IReservaService.cs">
 using AutoMarket.Models.Entities;
 
@@ -16192,328 +16226,6 @@ namespace AutoMarket.Services.Interfaces
 }
 </file>
 
-<file path="Infrastructure/Data/ApplicationDbContext.cs">
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System.Linq;
-using AutoMarket.Models.Entities;
-using AutoMarket.Infrastructure.Security;
-
-namespace AutoMarket.Infrastructure.Data
-{
-    public class ApplicationDbContext : IdentityDbContext<Utilizador>
-    {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
-
-        // =========================================================
-        // DbSets (Tabelas)
-        // =========================================================
-        public DbSet<Veiculo> Veiculos { get; set; } = null!;
-        public DbSet<VeiculoImagem> VeiculoImagens { get; set; } = null!;
-        public DbSet<Utilizador> Utilizadores { get; set; }
-        public DbSet<Vendedor> Vendedores { get; set; }
-        public DbSet<Comprador> Compradores { get; set; }
-        public DbSet<Denuncia> Denuncias { get; set; }
-        public DbSet<Mensagem> Mensagens { get; set; }
-        public DbSet<Transacao> Transacoes { get; set; }
-        public DbSet<Categoria> Categorias { get; set; }
-        public DbSet<Reserva> Reservas { get; set; } = null!;
-        public DbSet<Visita> Visitas { get; set; } = null!;
-        public DbSet<AuditoriaLog> AuditoriaLogs { get; set; } = null!;
-        public DbSet<Favorito> Favoritos { get; set; } = null!;
-        public DbSet<Notificacao> Notificacoes { get; set; } = null!;
-
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            base.OnModelCreating(builder);
-
-            // #region 1. Configuracao de Propriedades (Enums & Tipos SQL)
-
-            // Conversao de Enums para String (Legibilidade na BD)
-            builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Vendedor>().Property(v => v.TipoConta).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Veiculo>().Property(v => v.Estado).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Reserva>().Property(r => r.Estado).HasConversion<string>().HasMaxLength(50);
-            builder.Entity<Visita>().Property(v => v.Estado).HasConversion<string>().HasMaxLength(50);
-
-            // Tipos SQL Especificos (Money)
-            builder.Entity<Veiculo>().Property(v => v.Preco).HasColumnType("decimal(18,2)");
-            builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("decimal(18,2)");
-
-            // #endregion
-
-            // #region 2. Indices e Restricoes (Unicidade)
-
-            // Garante relacao 1:1 estrita (Um User so pode ter 1 perfil de cada tipo)
-            builder.Entity<Comprador>()
-                .HasIndex(c => c.UserId)
-                .IsUnique();
-
-            builder.Entity<Vendedor>()
-                .HasIndex(v => v.UserId)
-                .IsUnique();
-
-            // Indices para performance
-            builder.Entity<Veiculo>()
-                .HasIndex(v => v.VendedorId)
-                .HasDatabaseName("IX_Veiculo_VendedorId");
-
-            builder.Entity<Veiculo>()
-                .HasIndex(v => v.Estado)
-                .HasDatabaseName("IX_Veiculo_Estado");
-
-            builder.Entity<Veiculo>()
-                .HasIndex(v => v.Marca)
-                .HasDatabaseName("IX_Veiculo_Marca");
-
-            // Índices para Reservas
-            builder.Entity<Reserva>()
-                .HasIndex(r => r.VeiculoId)
-                .HasDatabaseName("IX_Reserva_VeiculoId");
-
-            builder.Entity<Reserva>()
-                .HasIndex(r => r.CompradorId)
-                .HasDatabaseName("IX_Reserva_CompradorId");
-
-            builder.Entity<Reserva>()
-                .HasIndex(r => r.DataExpiracao)
-                .HasDatabaseName("IX_Reserva_DataExpiracao");
-
-            // Índices para Visitas
-            builder.Entity<Visita>()
-                .HasIndex(v => v.VeiculoId)
-                .HasDatabaseName("IX_Visita_VeiculoId");
-
-            builder.Entity<Visita>()
-                .HasIndex(v => v.CompradorId)
-                .HasDatabaseName("IX_Visita_CompradorId");
-
-            builder.Entity<Visita>()
-                .HasIndex(v => v.VendedorId)
-                .HasDatabaseName("IX_Visita_VendedorId");
-
-            builder.Entity<Visita>()
-                .HasIndex(v => v.DataHora)
-                .HasDatabaseName("IX_Visita_DataHora");
-
-            // Soft Delete Global Query Filter
-            builder.Entity<Utilizador>().HasQueryFilter(u => !u.IsDeleted);
-
-            // Encriptação do NIF (RGPD compliance) usando helper estático
-            var nifConverter = new ValueConverter<string?, string?>(
-                v => string.IsNullOrEmpty(v) ? v : NifEncryptionHelper.EncryptNif(v),
-                v => string.IsNullOrEmpty(v) ? v : NifEncryptionHelper.DecryptNif(v),
-                convertsNulls: true);
-
-            builder.Entity<Utilizador>()
-                .Property(u => u.NIF)
-                .HasConversion(nifConverter);
-
-            // #endregion
-
-            // #region 3. Relacoes: Delete CASCADE (Pai morre -> Filhos morrem)
-
-            // Se apagar Vendedor -> Apaga os seus Veículos
-            builder.Entity<Veiculo>()
-                .HasOne(v => v.Vendedor)
-                .WithMany()
-                .HasForeignKey(v => v.VendedorId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Se apagar Veículo -> Apaga as suas Imagens
-            builder.Entity<VeiculoImagem>()
-                .HasOne(i => i.Veiculo)
-                .WithMany(v => v.Imagens)
-                .HasForeignKey(i => i.VeiculoId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Se apagar Veículo -> Apaga as suas Reservas (NoAction para evitar ciclos)
-            builder.Entity<Reserva>()
-                .HasOne(r => r.Veiculo)
-                .WithMany()
-                .HasForeignKey(r => r.VeiculoId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            // Se apagar Vendedor -> Apaga as suas Visitas (NoAction para evitar ciclos)
-            builder.Entity<Visita>()
-                .HasOne(v => v.Vendedor)
-                .WithMany()
-                .HasForeignKey(v => v.VendedorId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            // Se apagar Veículo -> Apaga as suas Visitas (NoAction para evitar ciclos)
-            builder.Entity<Visita>()
-                .HasOne(v => v.Veiculo)
-                .WithMany()
-                .HasForeignKey(v => v.VeiculoId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            // #endregion
-
-            // #region 4. Relacoes: Delete RESTRICT (Seguranca & Historico)
-
-            // --- Transacoes (Financeiro) ---
-            builder.Entity<Transacao>()
-                .HasOne(t => t.Comprador)
-                .WithMany()
-                .HasForeignKey(t => t.CompradorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Transacao>()
-                .HasOne(t => t.Veiculo)
-                .WithMany()
-                .HasForeignKey(t => t.VeiculoId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Transacao>()
-                .HasOne(t => t.Vendedor)
-                .WithMany()
-                .HasForeignKey(t => t.VendedorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- Denuncias (Auditoria) ---
-            builder.Entity<Denuncia>()
-                .HasOne(d => d.Denunciante)
-                .WithMany()
-                .HasForeignKey(d => d.DenuncianteId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Denuncia>()
-                .HasOne(d => d.AnalisadoPorAdmin)
-                .WithMany()
-                .HasForeignKey(d => d.AnalisadoPorAdminId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- Vendedores (Aprovacoes) ---
-            builder.Entity<Vendedor>()
-                .HasOne(v => v.ApprovedByAdmin)
-                .WithMany()
-                .HasForeignKey(v => v.ApprovedByAdminId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- Mensagens (Chat) ---
-            builder.Entity<Mensagem>()
-                .HasOne(m => m.Remetente)
-                .WithMany()
-                .HasForeignKey(m => m.RemetenteId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Mensagem>()
-                .HasOne(m => m.Destinatario)
-                .WithMany()
-                .HasForeignKey(m => m.DestinatarioId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- Categoria ---
-            builder.Entity<Veiculo>()
-                .HasOne(v => v.Categoria)
-                .WithMany()
-                .HasForeignKey(v => v.CategoriaId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- AuditoriaLog (Imutável) ---
-            builder.Entity<AuditoriaLog>()
-                .HasOne(a => a.Admin)
-                .WithMany()
-                .HasForeignKey(a => a.AdminId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- Favoritos (Bookmarks) ---
-            builder.Entity<Favorito>()
-                .HasOne(f => f.Comprador)
-                .WithMany()
-                .HasForeignKey(f => f.CompradorId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<Favorito>()
-                .HasOne(f => f.Veiculo)
-                .WithMany()
-                .HasForeignKey(f => f.VeiculoId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Índice único para evitar favoritos duplicados
-            builder.Entity<Favorito>()
-                .HasIndex(f => new { f.CompradorId, f.VeiculoId })
-                .IsUnique();
-
-            // --- Notificações ---
-            builder.Entity<Notificacao>()
-                .HasOne(n => n.Destinatario)
-                .WithMany()
-                .HasForeignKey(n => n.DestinatarioId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Índice para consultas de notificações não lidas
-            builder.Entity<Notificacao>()
-                .HasIndex(n => new { n.DestinatarioId, n.Lida, n.DataCriacao });
-
-            // #endregion
-        }
-
-        /// <summary>
-        /// Intercepta tentativas de delete físico em entidades ISoftDelete
-        /// e converte-as automaticamente em soft delete (IsDeleted = true).
-        /// </summary>
-        /// <remarks>
-        /// Mesmo que um developer use _context.Utilizadores.Remove(user),
-        /// o sistema converte automaticamente para soft delete.
-        /// </remarks>
-        public override int SaveChanges(bool acceptAllChangesOnSuccess)
-        {
-            InterceptSoftDeletes();
-            return base.SaveChanges(acceptAllChangesOnSuccess);
-        }
-
-        /// <summary>
-        /// Intercepta tentativas de delete físico em entidades ISoftDelete
-        /// e converte-as automaticamente em soft delete (IsDeleted = true).
-        /// </summary>
-        /// <remarks>
-        /// Mesmo que um developer use _context.Utilizadores.Remove(user),
-        /// o sistema converte automaticamente para soft delete.
-        /// </remarks>
-        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
-        {
-            InterceptSoftDeletes();
-            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        }
-
-        /// <summary>
-        /// Intercepta entidades marcadas para delete físico e converte-as em soft delete.
-        /// </summary>
-        private void InterceptSoftDeletes()
-        {
-            // Intercetar entradas marcadas para Deleted que implementam ISoftDelete
-            var entries = ChangeTracker.Entries<ISoftDelete>()
-                .Where(e => e.State == EntityState.Deleted)
-                .ToList();
-
-            foreach (var entry in entries)
-            {
-                // Cancelar o delete físico
-                entry.State = EntityState.Modified;
-
-                // Aplicar o soft delete
-                entry.Entity.IsDeleted = true;
-
-                // Opcional: Se a entidade tiver DataRemocao, pode ser adicionado aqui
-                // if (entry.Entity is Utilizador utilizador && utilizador.GetType().GetProperty("DataRemocao") != null)
-                // {
-                //     utilizador.DataRemocao = DateTime.UtcNow;
-                // }
-            }
-        }
-    }
-}
-</file>
-
 <file path="Models/Enums/TipoConta.cs">
 namespace AutoMarket.Models.Enums
 {
@@ -16541,6 +16253,254 @@ namespace AutoMarket.Models.ViewModels
         public string Password { get; set; } = string.Empty;
         public bool RememberMe { get; set; }
     }
+}
+</file>
+
+<file path="Services/Implementations/AuthService.cs">
+using AutoMarket.Infrastructure.Data;
+using AutoMarket.Infrastructure.Utils;
+using AutoMarket.Models.Constants;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+
+namespace AutoMarket.Services.Implementations
+{
+	public class AuthService : IAuthService
+	{
+	private readonly UserManager<Utilizador> _userManager;
+	private readonly SignInManager<Utilizador> _signInManager;
+	private readonly ApplicationDbContext _context;
+	private readonly IEmailAuthService _emailAuthService;
+	private readonly ILogger<AuthService> _logger;
+	private readonly IHostEnvironment _environment;
+        private readonly IMemoryCache _cache;
+
+	public AuthService(
+		UserManager<Utilizador> userManager,
+		SignInManager<Utilizador> signInManager,
+		ApplicationDbContext context,
+		IEmailAuthService emailAuthService,
+		ILogger<AuthService> logger,
+        IHostEnvironment environment,
+        IMemoryCache cache)
+	{
+		_userManager = userManager;
+		_signInManager = signInManager;
+		_context = context;
+		_emailAuthService = emailAuthService;
+		_logger = logger;
+		_environment = environment;
+            _cache = cache;
+	}
+
+		public async Task<RegisterResultDto> RegisterAsync(RegisterDto dto, string confirmationBaseUrl)
+		{
+			var errors = new List<string>();
+
+			if (!string.IsNullOrEmpty(dto.Nif) && !NifValidator.IsValid(dto.Nif))
+			{
+                errors.Add("NIF inválido. Por favor, verifique o número introduzido.");
+				return new RegisterResultDto(false, errors, null);
+			}
+
+			await using var transaction = await _context.Database.BeginTransactionAsync();
+
+			try
+			{
+			var user = new Utilizador
+			{
+				UserName = dto.Email,
+				Email = dto.Email,
+				Nome = dto.Nome,
+				Morada = dto.Morada,
+				PhoneNumber = dto.Contacto,
+				NIF = dto.Nif,
+                DataRegisto = DateTime.UtcNow
+			};
+
+				var identityResult = await _userManager.CreateAsync(user, dto.Password);
+				if (!identityResult.Succeeded)
+				{
+					errors.AddRange(identityResult.Errors.Select(e => e.Description));
+					return new RegisterResultDto(false, errors, null);
+				}
+
+			if (dto.TipoConta == TipoConta.Vendedor || dto.TipoConta == TipoConta.Empresa)
+			{
+				var vendedor = new Vendedor
+				{
+					UserId = user.Id,
+					TipoConta = dto.TipoConta,
+					Status = _environment.IsDevelopment() ? StatusAprovacao.Aprovado : StatusAprovacao.Pendente,
+					ApprovedByAdminId = _environment.IsDevelopment() ? user.Id : null // Auto-aprovar em dev
+				};
+				_context.Vendedores.Add(vendedor);
+				await _userManager.AddToRoleAsync(user, Roles.Vendedor);
+			}
+				else
+				{
+					var comprador = new Comprador
+					{
+						UserId = user.Id,
+						ReceberNotificacoes = false
+					};
+					_context.Compradores.Add(comprador);
+					await _userManager.AddToRoleAsync(user, Roles.Comprador);
+				}
+
+				await _context.SaveChangesAsync();
+				await transaction.CommitAsync();
+
+                // Auto-login apos registo
+                await _signInManager.SignInAsync(user, isPersistent: false);
+
+				_logger.LogInformation("Utilizador {Email} registado e auto-logado com sucesso", user.Email);
+
+				return new RegisterResultDto(true, Enumerable.Empty<string>(), null);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Erro ao registar utilizador {Email}", dto.Email);
+				errors.Add("Ocorreu um erro interno. Tente novamente.");
+				return new RegisterResultDto(false, errors, null);
+			}
+		}
+
+		public async Task<LoginResultDto> LoginAsync(LoginDto dto)
+		{
+			var errors = new List<string>();
+
+			var signInResult = await _signInManager.PasswordSignInAsync(dto.Email, dto.Password, dto.RememberMe, false);
+			if (!signInResult.Succeeded)
+			{
+                errors.Add("Email ou password inválidos.");
+				return new LoginResultDto(false, null, errors);
+			}
+
+			var user = await _userManager.FindByEmailAsync(dto.Email);
+			if (user == null)
+			{
+				await _signInManager.SignOutAsync();
+				errors.Add("Erro inesperado ao obter dados do utilizador.");
+				return new LoginResultDto(false, null, errors);
+			}
+
+			if (user.IsBlocked || user.IsDeleted)
+			{
+				await _signInManager.SignOutAsync();
+				errors.Add("Conta bloqueada ou eliminada.");
+				return new LoginResultDto(false, null, errors);
+			}
+
+			if (await _userManager.IsInRoleAsync(user, Roles.Vendedor))
+			{
+				var vendedor = await _context.Vendedores
+					.Select(v => new { v.UserId, v.Status })
+					.FirstOrDefaultAsync(v => v.UserId == user.Id);
+
+				if (vendedor != null && vendedor.Status != StatusAprovacao.Aprovado)
+				{
+					_logger.LogWarning("Vendedor {Email} tentou entrar mas est� com status {Status}", user.Email, vendedor.Status);
+					await _signInManager.SignOutAsync();
+					return new LoginResultDto(false, nameof(StatusAprovacao.Pendente), errors);
+				}
+			}
+
+			return new LoginResultDto(true, null, Enumerable.Empty<string>());
+		}
+
+		public Task LogoutAsync()
+		{
+			return _signInManager.SignOutAsync();
+		}
+
+		public async Task<ConfirmEmailResultDto> ConfirmEmailAsync(string userId, string token)
+		{
+			var errors = new List<string>();
+
+			if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+			{
+				errors.Add("Link de confirma��o inv�lido ou incompleto.");
+				return new ConfirmEmailResultDto(false, errors);
+			}
+
+			var user = await _userManager.FindByIdAsync(userId);
+			if (user == null)
+			{
+				errors.Add("Utilizador n�o encontrado no sistema.");
+				return new ConfirmEmailResultDto(false, errors);
+			}
+
+			var result = await _userManager.ConfirmEmailAsync(user, token);
+			if (!result.Succeeded)
+			{
+				errors.AddRange(result.Errors.Select(e => e.Description));
+				_logger.LogWarning("Falha na confirma��o de email para {UserId}: {Errors}", userId, string.Join(", ", errors));
+				return new ConfirmEmailResultDto(false, errors);
+			}
+
+			return new ConfirmEmailResultDto(true, Enumerable.Empty<string>());
+		}
+
+		public async Task<UpdateNifResultDto> UpdateNifAsync(string userId, string nif)
+		{
+            var errors = new List<string>();
+			var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return new UpdateNifResultDto(false, new[] { "User not found" });
+			user.NIF = nif;
+			var result = await _userManager.UpdateAsync(user);
+            return new UpdateNifResultDto(result.Succeeded, result.Errors.Select(e => e.Description));
+		}
+
+		public async Task<SoftDeleteResultDto> SoftDeleteAsync(string userId)
+		{
+			var errors = new List<string>();
+			var user = await _userManager.FindByIdAsync(userId);
+
+			if (user == null)
+			{
+                errors.Add("Utilizador não encontrado.");
+				return new SoftDeleteResultDto(false, errors);
+			}
+
+			try
+			{
+				await _signInManager.SignOutAsync();
+
+				user.IsDeleted = true;
+
+				var deletedEmailSuffix = $"deleted_{Guid.NewGuid():N}@automarket.invalid";
+				user.Email = deletedEmailSuffix;
+				user.UserName = deletedEmailSuffix;
+				user.NormalizedEmail = deletedEmailSuffix.ToUpperInvariant();
+				user.NormalizedUserName = deletedEmailSuffix.ToUpperInvariant();
+				user.Nome = "Utilizador Eliminado";
+				user.NIF = null;
+				user.Morada = string.Empty;
+				user.Contacto = string.Empty;
+
+				var result = await _userManager.UpdateAsync(user);
+				if (!result.Succeeded)
+				{
+                    errors.AddRange(result.Errors.Select(e => e.Description));
+					return new SoftDeleteResultDto(false, errors);
+				}
+
+                var cacheKey = $"user_{userId}";
+                _cache.Set(cacheKey, false, TimeSpan.FromMinutes(30));
+
+                _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete). Sessão invalidada.", user.Id);
+				return new SoftDeleteResultDto(true, Enumerable.Empty<string>());
+			}
+			catch (Exception ex)
+			{
+                _logger.LogError(ex, "Erro crítico ao apagar conta do utilizador {Id}", user.Id);
+                errors.Add("Erro crítico ao apagar conta.");
+				return new SoftDeleteResultDto(false, errors);
+			}
+		}
+	}
 }
 </file>
 
@@ -16769,167 +16729,362 @@ obj/
 }
 </file>
 
-<file path="Controllers/CheckoutController.cs">
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.Enums;
-using AutoMarket.Models.ViewModels;
-using AutoMarket.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+<file path="Infrastructure/Data/ApplicationDbContext.cs">
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Linq;
+using AutoMarket.Models.Entities;
+using AutoMarket.Infrastructure.Security;
 
-namespace AutoMarket.Controllers
+namespace AutoMarket.Infrastructure.Data
 {
-    [Authorize]
-    public class CheckoutController : Controller
+    public class ApplicationDbContext : IdentityDbContext<Utilizador>
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<Utilizador> _userManager;
-        private readonly ICarrinhoService _carrinhoService;
-        private readonly ILogger<CheckoutController> _logger;
-
-        public CheckoutController(
-            ApplicationDbContext context,
-            UserManager<Utilizador> userManager,
-            ICarrinhoService carrinhoService,
-            ILogger<CheckoutController> logger)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
         {
-            _context = context;
-            _userManager = userManager;
-            _carrinhoService = carrinhoService;
-            _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Index()
+        // =========================================================
+        // DbSets
+        // =========================================================
+        public DbSet<Veiculo> Veiculos { get; set; } = null!;
+        public DbSet<VeiculoImagem> VeiculoImagens { get; set; } = null!;
+        public DbSet<Utilizador> Utilizadores { get; set; }
+        public DbSet<Vendedor> Vendedores { get; set; }
+        public DbSet<Comprador> Compradores { get; set; }
+        public DbSet<Denuncia> Denuncias { get; set; }
+        public DbSet<Mensagem> Mensagens { get; set; }
+        public DbSet<Transacao> Transacoes { get; set; }
+        public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<Reserva> Reservas { get; set; } = null!;
+        public DbSet<Visita> Visitas { get; set; } = null!;
+        public DbSet<AuditoriaLog> AuditoriaLogs { get; set; } = null!;
+        public DbSet<Favorito> Favoritos { get; set; } = null!;
+        public DbSet<Notificacao> Notificacoes { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder builder)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Conta");
+            base.OnModelCreating(builder);
 
-            var carrinhoItens = _carrinhoService.GetItens();
-            if (!carrinhoItens.Any()) return RedirectToAction("Index", "Carrinho");
+            // #region 1. Configuracao de Propriedades (Enums & Tipos SQL)
 
-            var model = new CheckoutViewModel
-            {
-                // Pré-preenchemos com os dados do perfil para facilitar a vida ao user
-                NomeCompleto = user.Nome, 
-                Morada = user.Morada ?? string.Empty, // Garante que não é null
-                // CodigoPostal não existe no Utilizador, user tem de preencher
+            // Conversao de Enums para String (Legibilidade na BD)
+            builder.Entity<Vendedor>().Property(v => v.Status).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Vendedor>().Property(v => v.TipoConta).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Veiculo>().Property(v => v.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Transacao>().Property(t => t.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Transacao>().Property(t => t.Metodo).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Denuncia>().Property(d => d.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Reserva>().Property(r => r.Estado).HasConversion<string>().HasMaxLength(50);
+            builder.Entity<Visita>().Property(v => v.Estado).HasConversion<string>().HasMaxLength(50);
 
-                // Se o user já tiver NIF no perfil, ativamos a opção de fatura e preenchemos
-                NifFaturacao = user.NIF,
-                QueroFaturaComNif = !string.IsNullOrEmpty(user.NIF),
-                ValorTotal = _carrinhoService.GetTotal()
-            };
+            // Tipos SQL Especificos (Money)
+            builder.Entity<Veiculo>().Property(v => v.Preco).HasColumnType("decimal(18,2)");
+            builder.Entity<Transacao>().Property(t => t.ValorPago).HasColumnType("decimal(18,2)");
 
-            return View(model);
+            // #endregion
+
+            // #region 2. Indices e Restricoes (Unicidade)
+
+            // Garante relacao 1:1 estrita (Um User so pode ter 1 perfil de cada tipo)
+            builder.Entity<Comprador>()
+                .HasIndex(c => c.UserId)
+                .IsUnique();
+
+            builder.Entity<Vendedor>()
+                .HasIndex(v => v.UserId)
+                .IsUnique();
+
+            // Indices para performance
+            builder.Entity<Veiculo>()
+                .HasIndex(v => v.VendedorId)
+                .HasDatabaseName("IX_Veiculo_VendedorId");
+
+            builder.Entity<Veiculo>()
+                .HasIndex(v => v.Estado)
+                .HasDatabaseName("IX_Veiculo_Estado");
+
+            builder.Entity<Veiculo>()
+                .HasIndex(v => v.Marca)
+                .HasDatabaseName("IX_Veiculo_Marca");
+
+            // Índices para Reservas
+            builder.Entity<Reserva>()
+                .HasIndex(r => r.VeiculoId)
+                .HasDatabaseName("IX_Reserva_VeiculoId");
+
+            builder.Entity<Reserva>()
+                .HasIndex(r => r.CompradorId)
+                .HasDatabaseName("IX_Reserva_CompradorId");
+
+            builder.Entity<Reserva>()
+                .HasIndex(r => r.DataExpiracao)
+                .HasDatabaseName("IX_Reserva_DataExpiracao");
+
+            // Índices para Visitas
+            builder.Entity<Visita>()
+                .HasIndex(v => v.VeiculoId)
+                .HasDatabaseName("IX_Visita_VeiculoId");
+
+            builder.Entity<Visita>()
+                .HasIndex(v => v.CompradorId)
+                .HasDatabaseName("IX_Visita_CompradorId");
+
+            builder.Entity<Visita>()
+                .HasIndex(v => v.VendedorId)
+                .HasDatabaseName("IX_Visita_VendedorId");
+
+            builder.Entity<Visita>()
+                .HasIndex(v => v.DataHora)
+                .HasDatabaseName("IX_Visita_DataHora");
+
+            // --- Soft Delete Configuration ---
+
+            // Base User Soft Delete
+            builder.Entity<Utilizador>().HasQueryFilter(u => !u.IsDeleted);
+
+            // Propagate Soft Delete to Profiles
+            builder.Entity<Comprador>().HasQueryFilter(c => !c.User!.IsDeleted);
+            builder.Entity<Vendedor>().HasQueryFilter(v => !v.User!.IsDeleted);
+
+            // Propagate Soft Delete to Dependent Child Entities
+            builder.Entity<Favorito>().HasQueryFilter(f => !f.Comprador.User.IsDeleted);
+            builder.Entity<Veiculo>().HasQueryFilter(v => !v.Vendedor.User.IsDeleted);
+            builder.Entity<VeiculoImagem>().HasQueryFilter(v => !v.Veiculo.Vendedor.User.IsDeleted);
+
+            // Encriptação do NIF (RGPD compliance) usando helper estático
+            var nifConverter = new ValueConverter<string?, string?>(
+                v => string.IsNullOrEmpty(v) ? v : NifEncryptionHelper.EncryptNif(v),
+                v => string.IsNullOrEmpty(v) ? v : NifEncryptionHelper.DecryptNif(v),
+                convertsNulls: true);
+
+            builder.Entity<Utilizador>()
+                .Property(u => u.NIF)
+                .HasConversion(nifConverter);
+
+            // #endregion
+
+            // #region 3. Relacoes: Delete CASCADE (Pai morre -> Filhos morrem)
+
+            // Se apagar Vendedor -> Apaga os seus Veículos
+            builder.Entity<Veiculo>()
+                .HasOne(v => v.Vendedor)
+                .WithMany(v => v.VeiculosAVenda)
+                .HasForeignKey(v => v.VendedorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Se apagar Veículo -> Apaga as suas Imagens
+            builder.Entity<VeiculoImagem>()
+                .HasOne(i => i.Veiculo)
+                .WithMany(v => v.Imagens)
+                .HasForeignKey(i => i.VeiculoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Se apagar Veículo -> Apaga as suas Reservas (NoAction para evitar ciclos)
+            builder.Entity<Reserva>()
+                .HasOne(r => r.Veiculo)
+                .WithMany()
+                .HasForeignKey(r => r.VeiculoId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Se apagar Vendedor -> Apaga as suas Visitas (NoAction para evitar ciclos)
+            builder.Entity<Visita>()
+                .HasOne(v => v.Vendedor)
+                .WithMany()
+                .HasForeignKey(v => v.VendedorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Se apagar Veículo -> Apaga as suas Visitas (NoAction para evitar ciclos)
+            builder.Entity<Visita>()
+                .HasOne(v => v.Veiculo)
+                .WithMany()
+                .HasForeignKey(v => v.VeiculoId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // #endregion
+
+            // #region 4. Relacoes: Delete RESTRICT (Seguranca & Historico)
+
+            // --- Transacoes (Financeiro) ---
+            builder.Entity<Transacao>()
+                .HasOne(t => t.Comprador)
+                .WithMany()
+                .HasForeignKey(t => t.CompradorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Transacao>()
+                .HasOne(t => t.Veiculo)
+                .WithMany()
+                .HasForeignKey(t => t.VeiculoId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Transacao>()
+                .HasOne(t => t.Vendedor)
+                .WithMany()
+                .HasForeignKey(t => t.VendedorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Reservas ---
+            builder.Entity<Reserva>()
+                .HasOne(r => r.Comprador)
+                .WithMany()
+                .HasForeignKey(r => r.CompradorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Visitas ---
+            builder.Entity<Visita>()
+                .HasOne(v => v.Comprador)
+                .WithMany()
+                .HasForeignKey(v => v.CompradorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Visita>()
+                .HasOne(v => v.Vendedor)
+                .WithMany()
+                .HasForeignKey(v => v.VendedorId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Denuncias (Auditoria) ---
+            builder.Entity<Denuncia>()
+                .HasOne(d => d.Denunciante)
+                .WithMany()
+                .HasForeignKey(d => d.DenuncianteId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Denuncia>()
+                .HasOne(d => d.AnalisadoPorAdmin)
+                .WithMany()
+                .HasForeignKey(d => d.AnalisadoPorAdminId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Vendedores (Aprovacoes) ---
+            builder.Entity<Vendedor>()
+                .HasOne(v => v.ApprovedByAdmin)
+                .WithMany()
+                .HasForeignKey(v => v.ApprovedByAdminId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Mensagens (Chat) ---
+            builder.Entity<Mensagem>()
+                .HasOne(m => m.Remetente)
+                .WithMany()
+                .HasForeignKey(m => m.RemetenteId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Mensagem>()
+                .HasOne(m => m.Destinatario)
+                .WithMany()
+                .HasForeignKey(m => m.DestinatarioId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Categoria ---
+            builder.Entity<Veiculo>()
+                .HasOne(v => v.Categoria)
+                .WithMany(c => c.Veiculos)
+                .HasForeignKey(v => v.CategoriaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- AuditoriaLog (Imutável) ---
+            builder.Entity<AuditoriaLog>()
+                .HasOne(a => a.Admin)
+                .WithMany()
+                .HasForeignKey(a => a.AdminId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // --- Favoritos (Bookmarks) ---
+            builder.Entity<Favorito>()
+                .HasOne(f => f.Comprador)
+                .WithMany()
+                .HasForeignKey(f => f.CompradorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Favorito>()
+                .HasOne(f => f.Veiculo)
+                .WithMany()
+                .HasForeignKey(f => f.VeiculoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Índice único para evitar favoritos duplicados
+            builder.Entity<Favorito>()
+                .HasIndex(f => new { f.CompradorId, f.VeiculoId })
+                .IsUnique();
+
+            // --- Notificações ---
+            builder.Entity<Notificacao>()
+                .HasOne(n => n.Destinatario)
+                .WithMany()
+                .HasForeignKey(n => n.DestinatarioId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Índice para consultas de notificações não lidas
+            builder.Entity<Notificacao>()
+                .HasIndex(n => new { n.DestinatarioId, n.Lida, n.DataCriacao });
+
+            // #endregion
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessarCompra(CheckoutViewModel model)
+        /// <summary>
+        /// Intercepta tentativas de delete físico em entidades ISoftDelete
+        /// e converte-as automaticamente em soft delete (IsDeleted = true).
+        /// </summary>
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
         {
-            var itensCarrinho = _carrinhoService.GetItens();
-            if (!itensCarrinho.Any()) return RedirectToAction("Index", "Carrinho");
+            InterceptSoftDeletes();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
 
-            if (!ModelState.IsValid)
-            {
-                model.ValorTotal = _carrinhoService.GetTotal();
-                return View("Index", model);
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Conta");
-
-            // 1. Iniciar transação de BD
-            using var dbTransaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                // 2. Obter ou criar comprador
-                var comprador = await _context.Compradores.FirstOrDefaultAsync(c => c.UserId == user.Id);
-                if (comprador == null)
-                {
-                    comprador = new Comprador { UserId = user.Id };
-                    _context.Add(comprador);
-                    await _context.SaveChangesAsync();
-                }
-
-                // 3. Atualizar NIF
-                if (model.QueroFaturaComNif && string.IsNullOrEmpty(user.NIF) && !string.IsNullOrEmpty(model.NifFaturacao))
-                {
-                    user.NIF = model.NifFaturacao;
-                    await _userManager.UpdateAsync(user);
-                }
-
-                var transacoesIds = new List<int>();
-
-                // 4. Processar cada item do carrinho
-                foreach (var item in itensCarrinho)
-                {
-                    var veiculoDb = await _context.Veiculos.FindAsync(item.VeiculoId);
-                    if (veiculoDb == null || veiculoDb.Estado != EstadoVeiculo.Ativo)
-                    {
-                        throw new InvalidOperationException($"O veículo {item.Marca} {item.Modelo} já não está disponível.");
-                    }
-
-                    var transacao = new Transacao
-                    {
-                        DataTransacao = DateTime.UtcNow,
-                        ValorPago = item.Preco,
-                        Metodo = model.MetodoPagamento,
-                        Estado = EstadoTransacao.Pendente,
-                        CompradorId = comprador.Id,
-                        VeiculoId = item.VeiculoId,
-                        VendedorId = veiculoDb.VendedorId,
-                        NifFaturacaoSnapshot = model.QueroFaturaComNif
-                                       ? model.NifFaturacao
-                                       : null,
-                        MoradaEnvioSnapshot = $"{model.Morada}, {model.CodigoPostal}"
-                    };
-                    _context.Transacoes.Add(transacao);
-                    veiculoDb.Estado = EstadoVeiculo.Reservado;
-                    await _context.SaveChangesAsync();
-                    transacoesIds.Add(transacao.Id);
-                }
-                // 5. Commit da transação de BD
-                await dbTransaction.CommitAsync();
-
-                _carrinhoService.LimparCarrinho();
-
-                return RedirectToAction("Sucesso", new { id = transacoesIds.First() }); // TODO: ALTERAR ( redirecionar para página de sucesso )
-            }
-            catch (Exception ex)
-            {
-                await dbTransaction.RollbackAsync();
-                _logger.LogError(ex, "Erro ao processar compra para o utilizador {UserId}", user.Id);
-                ModelState.AddModelError("", ex.Message);
-                model.ValorTotal = _carrinhoService.GetTotal();
-                return View("Index", model);
-            }
-        }   
-
-        [HttpGet]
-        public async Task<IActionResult> Sucesso(int id)
+        /// <summary>
+        /// Intercepta tentativas de delete físico em entidades ISoftDelete
+        /// e converte-as automaticamente em soft delete (IsDeleted = true).
+        /// </summary>
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Conta");
+            InterceptSoftDeletes();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
 
-            var transacao = await _context.Transacoes
-                .Include(t => t.Comprador)
-                .FirstOrDefaultAsync(t => t.Id == id);
+        /// <summary>
+        /// Intercepta entidades marcadas para delete físico e converte-as em soft delete.
+        /// </summary>
+        private void InterceptSoftDeletes()
+        {
+            // Intercetar entradas marcadas para Deleted que implementam ISoftDelete
+            var entries = ChangeTracker.Entries<ISoftDelete>()
+                .Where(e => e.State == EntityState.Deleted)
+                .ToList();
 
-            if (transacao == null) return NotFound();
-
-            // Verificar se a transação pertence ao user logado
-            if (transacao.Comprador.UserId != user.Id)
+            foreach (var entry in entries)
             {
-                return Forbid();
+                // Cancelar o delete físico
+                entry.State = EntityState.Modified;
+
+                // Aplicar o soft delete
+                entry.Entity.IsDeleted = true;
+
+                // Opc: Se a entidade tiver DataRemocao, pode ser adicionado aqui
+                // if (entry.Entity is Utilizador utilizador && utilizador.GetType().GetProperty("DataRemocao") != null)
+                // {
+                //     utilizador.DataRemocao = DateTime.UtcNow;
+                // }
             }
-                    
-            return View(transacao);
         }
     }
 }
@@ -17617,10 +17772,8 @@ using AutoMarket.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add localization services
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -17630,10 +17783,8 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
            .AddSupportedUICultures(supportedCultures);
 });
 
-// Adiciona o serviço de encriptação (RGPD compliance)
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-
-// Adiciona o DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -17643,7 +17794,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             errorNumbersToAdd: null
         )));
 
-// Adiciona o ASP.NET Core Identity com UserStore customizado (soft delete)
 builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false; // Simplificado para testes
@@ -17669,19 +17819,12 @@ builder.Services.AddSingleton<EmailFailureTracker>(sp =>
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<EmailTemplateService>();
 builder.Services.AddScoped<IEmailAuthService, EmailAuthService>();
-
 builder.Services.AddScoped<IFileService, FileService>();
-
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
-
 builder.Services.AddScoped<ICarrinhoService, CarrinhoService>();
-
-// Adicionar serviços de Reservas e Visitas
 builder.Services.AddScoped<IReservaService, ReservaService>();
 builder.Services.AddScoped<IVisitaService, VisitaService>();
-
-// Adicionar serviços de Denúncias, Auditoria e Notificações
 builder.Services.AddScoped<IDenunciaService, DenunciaService>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
@@ -17689,8 +17832,10 @@ builder.Services.AddScoped<IEstatisticasService, EstatisticasService>();
 builder.Services.AddScoped<IGestaoUtilizadoresService, GestaoUtilizadoresService>();
 builder.Services.AddScoped<IFavoritoService, FavoritoService>();
 builder.Services.AddScoped<IMensagensService, MensagensService>();
+builder.Services.AddScoped<IVeiculoService, VeiculoService>();
+builder.Services.AddScoped<IVendedorService, VendedorService>();
+builder.Services.AddScoped<ITransacaoService, TransacaoService>();
 
-// Adicionar Background Service para limpeza de reservas expiradas
 builder.Services.AddHostedService<LimparReservasHostedService>();
 
 builder.Services.AddSession(options => {                 
@@ -17707,7 +17852,7 @@ builder.Services.ConfigureApplicationCookie(options =>
         : CookieSecurePolicy.Always;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
     options.LoginPath = "/Public/Conta/Login";
-    options.AccessDeniedPath = "/Public/Home/Index"; // Redireciona para Home em vez de AguardandoAprovacao
+    options.AccessDeniedPath = "/Public/Home/Index";
     options.SlidingExpiration = true;
 });
 
@@ -17729,12 +17874,11 @@ app.UseSession();
 var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>().Value;
 app.UseRequestLocalization(localizationOptions);
 app.UseAuthentication();
+app.UseMiddleware<UserBlockingMiddleware>();
 app.UseAuthorization();
 
 app.UseStatusCodePages(context =>
 {
-    // Deixar o sistema padrão tratar erros 403
-    // Não fazemos redirecionamentos aqui
     return Task.CompletedTask;
 });
 app.MapControllerRoute(
@@ -17752,469 +17896,12 @@ app.MapAreaControllerRoute(
     areaName: "Vendedores",
     pattern: "Vendedores/{controller=Carros}/{action=Index}/{id?}");
 
-// Inicializar base de dados (criar roles, utilizadores de teste)
 using (var scope = app.Services.CreateScope())
 {
     await DbInitializer.InitializeAsync(scope.ServiceProvider);
 }
 
 app.Run();
-</file>
-
-<file path="Controllers/ContaController.cs">
-using AutoMarket.Models.Constants;
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.Enums;
-using AutoMarket.Models.ViewModels;
-using AutoMarket.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
-namespace AutoMarket.Controllers
-{
-    public class ContaController : Controller
-    {
-        private readonly UserManager<Utilizador> _userManager;
-        private readonly SignInManager<Utilizador> _signInManager;
-        private readonly ApplicationDbContext _context;
-        private readonly IEmailAuthService _emailAuthService;
-        private readonly ILogger<ContaController> _logger;
-
-        public ContaController(
-            UserManager<Utilizador> userManager,
-            SignInManager<Utilizador> signInManager,
-            ApplicationDbContext context,
-            IEmailAuthService emailAuthService,
-            ILogger<ContaController> logger)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _context = context;
-            _logger = logger;
-            _emailAuthService = emailAuthService;
-        }
-
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            // 1. Iniciar Transação
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                var user = new Utilizador
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    Nome = model.Nome,
-                    Morada = model.Morada,
-                    PhoneNumber = model.Contacto,
-                    NIF = model.NIF,
-                    DataRegisto = DateTime.UtcNow
-                };
-
-                // 2. Criar o User (Identity)
-                var result = await _userManager.CreateAsync(user, model.Password);
-
-                if (result.Succeeded)
-                {
-                    // 3. Criar o Perfil Específico (Vendedor ou Comprador) baseado no enum
-                    if (model.TipoConta == TipoConta.Vendedor || model.TipoConta == TipoConta.Empresa)
-                    {
-                        var vendedor = new Vendedor
-                        {
-                            UserId = user.Id,
-                            TipoConta = model.TipoConta,
-                            Status = StatusAprovacao.Pendente
-                        };
-                        _context.Vendedores.Add(vendedor);
-                        await _userManager.AddToRoleAsync(user, Roles.Vendedor);
-                    }
-                    else
-                    {
-                        var comprador = new Comprador
-                        {
-                            UserId = user.Id,
-                            ReceberNotificacoes = false
-                        };
-                        _context.Compradores.Add(comprador);
-                        await _userManager.AddToRoleAsync(user, Roles.Comprador);
-                    }
-                    // 4. Gravar Perfil na BD
-                    await _context.SaveChangesAsync();
-                    // 5. Se chegámos aqui sem erros, confirmar a transação
-                    await transaction.CommitAsync();
-
-                    // Lógica de envio de email de confirmação
-                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                    var confirmationLink = Url.Action(nameof(ConfirmarEmail), "Conta",
-                        new { userId = user.Id, token }, Request.Scheme);
-
-                    if (string.IsNullOrEmpty(confirmationLink))
-                    {
-                        _logger.LogError("Falha ao gerar link de confirmação para {Email}", user.Email);
-                        // allow registration to complete, but log the issue
-                    }
-                    else
-                    {
-                        await _emailAuthService.EnviarEmailConfirmacaoAsync(user, confirmationLink);
-                    }
-                    return RedirectToAction("Index", "Home");
-                }
-                // Se o Identity falhar (ex: password fraca), adicionar erros ao ModelState
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Se ocorrer um erro, reverter a transação
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Erro ao registar utilizador {Email}", model.Email);
-                ModelState.AddModelError(string.Empty, "Ocorreu um erro interno. Tente novamente.");
-            }
-            return View(model);
-        }
-
-        [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            // 1. Tentar Login
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-
-            if (result.Succeeded)
-            {
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null)
-                {
-                    await _signInManager.SignOutAsync();
-                    ModelState.AddModelError(string.Empty, "Erro inesperado ao obter dados do utilizador.");
-                    return View(model);
-                }
-
-                // 2. Verificar Bloqueio Global
-                if (user.IsBlocked || user.IsDeleted)
-                {
-                    await _signInManager.SignOutAsync();
-                    ModelState.AddModelError(string.Empty, "Conta bloqueada ou eliminada.");
-                    return View(model);
-                }
-
-                // 3. Verificar Vendedor
-                if (await _userManager.IsInRoleAsync(user, Roles.Vendedor))
-                {
-                    var vendedor = await _context.Vendedores
-                        .Select(v => new { v.UserId, v.Status })
-                        .FirstOrDefaultAsync(v => v.UserId == user.Id);
-
-                    if (vendedor != null && vendedor.Status != StatusAprovacao.Aprovado)
-                    {
-                        _logger.LogWarning("Vendedor {Email} tentou entrar mas está com status {Status}", user.Email, vendedor.Status);
-
-                        return RedirectToAction(nameof(AguardandoAprovacao));
-                    }
-                }
-
-                return RedirectToAction("Index", "Home");
-            }
-
-            ModelState.AddModelError(string.Empty, "Login inválido.");
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout()
-        {
-            await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Home");
-        }
-
-        // Action para confirmar email (link clicado pelo user)
-        [HttpGet]
-        public async Task<IActionResult> ConfirmarEmail(string userId, string token)
-        {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token)) return View("Error", new ErrorViewModel { Message = "Link de confirmação inválido ou incompleto." }); 
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return View("Error", new ErrorViewModel { Message = "Utilizador não encontrado no sistema." });
-
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-            if (result.Succeeded)
-                return View("EmailConfirmado");
-
-            var erros = string.Join(", ", result.Errors.Select(e => e.Description));
-
-            _logger.LogWarning("Falha na confirmação de email para {UserId}: {Errors}",userId, erros);
-            return View("Error", new ErrorViewModel
-            {
-                Message = "Não foi possível confirmar o email. O link pode ter expirado ou já foi utilizado."
-                // OPCIONAL: Request Id para debug técnico
-                // RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-            });
-        }
-
-        [HttpGet]
-        [Authorize]
-        public IActionResult PreencherDadosFiscais()
-        {
-            return View(); // Uma view simples com um input "NIF"
-        }
-
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PreencherDadosFiscais(DadosFiscaisViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) { return Unauthorized(); }
-            user.NIF = model.NIF; // Grava no perfil para sempre
-
-            var result = await _userManager.UpdateAsync(user);
-
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return View(model);
-            }
-
-            // Se tínhamos uma transação pendente, voltamos para lá
-            if (TempData["ReturnUrl"] is string returnUrl)
-            {
-                TempData.Keep("ReturnUrl");
-                return Redirect(returnUrl); // Volta para o checkout
-            }
-            // Senão, volta para a home
-            return RedirectToAction("Index", "Home");
-        }
-
-        [HttpGet]
-        [Authorize(Roles = Roles.Vendedor)]
-        public IActionResult AguardandoAprovacao()
-        {
-            // Vamos buscar o utilizador para garantir que é mesmo um Vendedor
-            // (Otimização: Injetar IAuthMessageService aqui se quiseres reenviar email, etc.)
-            return View();
-        }
-
-        // GET: Conta/AccessDenied
-        [HttpGet]
-        public IActionResult AccessDenied(string returnUrl = null)
-        {
-            ViewData["ReturnUrl"] = returnUrl;
-            _logger.LogWarning("Acesso negado para utilizador {User} ao tentar aceder {Url}", 
-                User.Identity?.Name ?? "Anónimo", returnUrl ?? "URL desconhecido");
-            return View();
-        }
-
-        // GET: Conta/Perfil
-        [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> Perfil()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound();
-
-            // Buscar estatísticas do utilizador
-            ViewBag.IsVendedor = await _userManager.IsInRoleAsync(user, Roles.Vendedor);
-            ViewBag.IsComprador = await _userManager.IsInRoleAsync(user, Roles.Comprador);
-
-            if (ViewBag.IsComprador)
-            {
-                var comprador = await _context.Compradores
-                    .FirstOrDefaultAsync(c => c.UserId == user.Id);
-
-                if (comprador != null)
-                {
-                    ViewBag.TotalCompras = await _context.Transacoes
-                        .Where(t => t.CompradorId == comprador.Id)
-                        .CountAsync();
-                }
-            }
-
-            if (ViewBag.IsVendedor)
-            {
-                var vendedor = await _context.Vendedores
-                    .FirstOrDefaultAsync(v => v.UserId == user.Id);
-
-                if (vendedor != null)
-                {
-                    ViewBag.TotalVendas = await _context.Transacoes
-                        .Where(t => t.VendedorId == vendedor.Id)
-                        .CountAsync();
-
-                    ViewBag.TotalVeiculos = await _context.Veiculos
-                        .Where(v => v.VendedorId == vendedor.Id)
-                        .CountAsync();
-
-                    ViewBag.StatusVendedor = vendedor.Status.ToString();
-                }
-            }
-
-            var model = new EditarPerfilViewModel
-            {
-                Nome = user.Nome,
-                Email = user.Email ?? string.Empty,
-                Morada = user.Morada,
-                Contacto = user.PhoneNumber ?? string.Empty,
-                NIF = user.NIF,
-                DataRegisto = user.DataRegisto
-            };
-
-            return View(model);
-        }
-
-        // POST: Conta/Perfil
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Perfil(EditarPerfilViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                // Recarregar ViewBag para estatísticas
-                var userTemp = await _userManager.GetUserAsync(User);
-                if (userTemp == null)
-                {
-                    ViewBag.IsVendedor = false;
-                    ViewBag.IsComprador = false;
-                }
-                else
-                {
-                    ViewBag.IsVendedor = await _userManager.IsInRoleAsync(userTemp, Roles.Vendedor);
-                    ViewBag.IsComprador = await _userManager.IsInRoleAsync(userTemp, Roles.Comprador);
-                }
-                return View(model);
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound();
-
-            // Atualizar dados
-            user.Nome = model.Nome;
-            user.Morada = model.Morada;
-            user.PhoneNumber = model.Contacto;
-            user.NIF = model.NIF;
-
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
-            {
-                TempData["MensagemSucesso"] = "Perfil atualizado com sucesso!";
-                _logger.LogInformation("Utilizador {UserId} atualizou o perfil.", user.Id);
-                return RedirectToAction(nameof(Perfil));
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            ViewBag.IsVendedor = await _userManager.IsInRoleAsync(user, Roles.Vendedor);
-            ViewBag.IsComprador = await _userManager.IsInRoleAsync(user, Roles.Comprador);
-            return View(model);
-        }
-
-        // GET: Conta/AlterarPassword
-        [HttpGet]
-        [Authorize]
-        public IActionResult AlterarPassword()
-        {
-            return View();
-        }
-
-        // POST: Conta/AlterarPassword
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AlterarPassword(AlterarPasswordViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound();
-
-            var result = await _userManager.ChangePasswordAsync(user, model.PasswordAtual, model.NovaPassword);
-
-            if (result.Succeeded)
-            {
-                await _signInManager.RefreshSignInAsync(user); // Mantém o user logado
-                TempData["MensagemSucesso"] = "Password alterada com sucesso!";
-                _logger.LogInformation("Utilizador {UserId} alterou a password.", user.Id);
-                return RedirectToAction(nameof(Perfil));
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ApagarConta()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound();
-
-            // LÓGICA DE SOFT DELETE
-            // 1. Ofuscar dados pessoais (Opcional, mas recomendado por RGPD)
-            // user.Email = $"deleted_{Guid.NewGuid()}@automarket.com";
-            // user.UserName = user.Email;
-            // user.Nome = "Utilizador Eliminado";
-            // user.NIF = null; 
-
-            // 2. Marcar como eliminado
-            user.IsDeleted = true;
-
-            // 3. Atualizar na BD
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
-            {
-                // 4. Fazer Logout forçado
-                await _signInManager.SignOutAsync();
-                _logger.LogInformation("Utilizador {Id} apagou a conta (Soft Delete).", user.Id);
-
-                return RedirectToAction("Index", "Home");
-            }
-
-            // Tratar erro...
-            return View("Perfil");
-        }
-    }
-}
 </file>
 
 </files>
