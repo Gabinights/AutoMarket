@@ -8,8 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace AutoMarket.Services.Implementations
 {
     /// <summary>
-    /// Implementação do serviço de notificações.
-    /// Cria notificações in-app e pode enviar emails.
+    /// ImplementaÃ§Ã£o do serviÃ§o de notificaÃ§Ãµes.
+    /// Cria notificaÃ§Ãµes in-app e pode enviar emails.
     /// </summary>
     public class NotificacaoService : INotificacaoService
     {
@@ -48,7 +48,7 @@ namespace AutoMarket.Services.Implementations
                     return;
                 }
 
-                // Criar notificação in-app
+                // Criar notificaÃ§Ã£o in-app
                 var notificacao = new Notificacao
                 {
                     DestinatarioId = utilizadorId,
@@ -65,7 +65,7 @@ namespace AutoMarket.Services.Implementations
                 _context.Notificacoes.Add(notificacao);
                 await _context.SaveChangesAsync();
 
-                // Enviar email também (opcional)
+                // Enviar email tambem (opcional)
                 if (utilizador.EmailConfirmed)
                 {
                     await _emailSender.SendEmailAsync(
@@ -75,7 +75,7 @@ namespace AutoMarket.Services.Implementations
                 }
 
                 _logger.LogInformation(
-                    "Notificação criada para {UtilizadorId}: {Tipo}",
+                    "Notificaï¿½ï¿½o criada para {UtilizadorId}: {Tipo}",
                     utilizadorId, tipo);
             }
             catch (Exception ex)
@@ -110,7 +110,7 @@ namespace AutoMarket.Services.Implementations
                 }
 
                 _logger.LogInformation(
-                    "Notificações enviadas para {AdminCount} admins: {Tipo}",
+                    "NotificaÃ§Ãµes enviadas para {AdminCount} admins: {Tipo}",
                     admins.Count, tipo);
             }
             catch (Exception ex)
@@ -145,6 +145,12 @@ namespace AutoMarket.Services.Implementations
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+        }
+
+        public async Task<int> ContarNotificacoesAsync(string utilizadorId)
+        {
+            return await _context.Notificacoes
+                .CountAsync(n => n.DestinatarioId == utilizadorId);
         }
     }
 }

@@ -3,6 +3,7 @@ using AutoMarket.Infrastructure.Data;
 using AutoMarket.Models.Constants;
 using AutoMarket.Models.ViewModels;
 using AutoMarket.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoMarket.Areas.Public.Controllers
@@ -10,21 +11,27 @@ namespace AutoMarket.Areas.Public.Controllers
     [Area("Public")]
     public class ContaController : Controller
     {
+        private readonly UserManager<Utilizador> _userManager;
         private readonly IAuthService _authService;
-        private readonly ILogger<ContaController> _logger;
-        private readonly ApplicationDbContext _context;
+        private readonly IProfileService _profileService;
         private readonly IFavoritoService _favoritoService;
+        private readonly INotificacaoService _notificacaoService;
+        private readonly ILogger<ContaController> _logger;
 
         public ContaController(
+            UserManager<Utilizador> userManager,
             IAuthService authService,
-            ILogger<ContaController> logger,
-            ApplicationDbContext context,
-            IFavoritoService favoritoService)
+            IProfileService profileService,
+            IFavoritoService favoritoService,
+            INotificacaoService notificacaoService,
+            ILogger<ContaController> logger)
         {
+            _userManager = userManager;
             _authService = authService;
-            _logger = logger;
-            _context = context;
+            _profileService = profileService;
             _favoritoService = favoritoService;
+            _notificacaoService = notificacaoService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -35,12 +42,8 @@ namespace AutoMarket.Areas.Public.Controllers
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null) return NotFound();
-
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login");
             return View(user);
         }
 
@@ -203,8 +206,7 @@ namespace AutoMarket.Areas.Public.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            var comprador = await _profileService.GetCompradorByUserIdAsync(userId);
 
             if (comprador == null)
                 return RedirectToAction("Index", "Home");
@@ -230,21 +232,42 @@ namespace AutoMarket.Areas.Public.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var notificacoes = await _context.Notificacoes
-                .Where(n => n.DestinatarioId == userId)
-                .OrderByDescending(n => n.DataCriacao)
-                .Skip((page - 1) * 20)
-                .Take(20)
-                .ToListAsync();
+            var notificacoes = await _notificacaoService.ListarNotificacoesAsync(userId, page, 20);
 
-            var total = await _context.Notificacoes
-                .CountAsync(n => n.DestinatarioId == userId);
+            var total = await _notificacaoService.ContarNotificacoesAsync(userId);
 
             ViewData["TotalNotificacoes"] = total;
             ViewData["CurrentPage"] = page;
             ViewData["TotalPages"] = (int)Math.Ceiling(total / 20.0);
 
             return View(notificacoes);
+        }
+
+
+
+
+        public async Task<IActionResult> Perfil()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            // Usar o novo ProfileService para obter stats sem context direto
+            var stats = await _profileService.GetUserStatsAsync(user.Id);
+
+            ViewBag.IsVendedor = stats.IsVendedor;
+            ViewBag.IsComprador = stats.IsComprador;
+            ViewBag.TotalCompras = stats.TotalCompras;
+            ViewBag.TotalVendas = stats.TotalVendas;
+            ViewBag.TotalVeiculos = stats.TotalVeiculos;
+            ViewBag.StatusVendedor = stats.StatusVendedor;
+
+            var model = new EditarPerfilViewModel
+            {
+                Nome = user.Nome,
+                Email = user.Email,
+                NIF = user.NIF
+            };
+            return View(model);
         }
     }
 }

@@ -7,10 +7,8 @@ using AutoMarket.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add localization services
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -20,13 +18,8 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
            .AddSupportedUICultures(supportedCultures);
 });
 
-// Adiciona o serviço de cache
 builder.Services.AddMemoryCache();
-
-// Adiciona o serviço de encriptação (RGPD compliance)
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-
-// Adiciona o DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -36,7 +29,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
             errorNumbersToAdd: null
         )));
 
-// Adiciona o ASP.NET Core Identity com UserStore customizado (soft delete)
 builder.Services.AddIdentity<Utilizador, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false; // Simplificado para testes
@@ -62,19 +54,12 @@ builder.Services.AddSingleton<EmailFailureTracker>(sp =>
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<EmailTemplateService>();
 builder.Services.AddScoped<IEmailAuthService, EmailAuthService>();
-
 builder.Services.AddScoped<IFileService, FileService>();
-
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
-
 builder.Services.AddScoped<ICarrinhoService, CarrinhoService>();
-
-// Adicionar serviços de Reservas e Visitas
 builder.Services.AddScoped<IReservaService, ReservaService>();
 builder.Services.AddScoped<IVisitaService, VisitaService>();
-
-// Adicionar serviços de Denúncias, Auditoria e Notificações
 builder.Services.AddScoped<IDenunciaService, DenunciaService>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
@@ -82,8 +67,10 @@ builder.Services.AddScoped<IEstatisticasService, EstatisticasService>();
 builder.Services.AddScoped<IGestaoUtilizadoresService, GestaoUtilizadoresService>();
 builder.Services.AddScoped<IFavoritoService, FavoritoService>();
 builder.Services.AddScoped<IMensagensService, MensagensService>();
+builder.Services.AddScoped<IVeiculoService, VeiculoService>();
+builder.Services.AddScoped<IVendedorService, VendedorService>();
+builder.Services.AddScoped<ITransacaoService, TransacaoService>();
 
-// Adicionar Background Service para limpeza de reservas expiradas
 builder.Services.AddHostedService<LimparReservasHostedService>();
 
 builder.Services.AddSession(options => {                 
@@ -100,7 +87,7 @@ builder.Services.ConfigureApplicationCookie(options =>
         : CookieSecurePolicy.Always;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
     options.LoginPath = "/Public/Conta/Login";
-    options.AccessDeniedPath = "/Public/Home/Index"; // Redireciona para Home em vez de AguardandoAprovacao
+    options.AccessDeniedPath = "/Public/Home/Index";
     options.SlidingExpiration = true;
 });
 
@@ -144,7 +131,6 @@ app.MapAreaControllerRoute(
     areaName: "Vendedores",
     pattern: "Vendedores/{controller=Carros}/{action=Index}/{id?}");
 
-// Inicializar base de dados (criar roles, utilizadores de teste)
 using (var scope = app.Services.CreateScope())
 {
     await DbInitializer.InitializeAsync(scope.ServiceProvider);

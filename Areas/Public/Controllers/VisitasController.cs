@@ -1,72 +1,52 @@
-using AutoMarket.Infrastructure.Data;
-using AutoMarket.Models.Constants;
-using AutoMarket.Models.Entities;
-using AutoMarket.Models.Enums;
 using AutoMarket.Services.Interfaces;
+using AutoMarket.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AutoMarket.Areas.Public.Controllers
 {
-    /// <summary>
-    /// Controller para gestao de visitas agendadas.
-    /// Apenas para utilizadores autenticados.
-    /// </summary>
     [Area("Public")]
     [Authorize]
     public class VisitasController : Controller
     {
         private readonly IVisitaService _visitaService;
-        private readonly ApplicationDbContext _context;
+        private readonly IVeiculoService _veiculoService;
+        private readonly IProfileService _profileService;
         private readonly UserManager<Utilizador> _userManager;
         private readonly ILogger<VisitasController> _logger;
 
         public VisitasController(
             IVisitaService visitaService,
-            ApplicationDbContext context,
+            IVeiculoService veiculoService,
+            IProfileService profileService,
             UserManager<Utilizador> userManager,
             ILogger<VisitasController> logger)
         {
             _visitaService = visitaService;
-            _context = context;
+            _veiculoService = veiculoService;
+            _profileService = profileService;
             _userManager = userManager;
             _logger = logger;
         }
 
-        /// <summary>
-        /// GET: /Visitas/Agendar/5
-        /// Mostrar formulario para agendar visita.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> Agendar(int veiculoId)
         {
-            var veiculo = await _context.Veiculos
-                .Include(v => v.Imagens)
-                .Include(v => v.Vendedor)
-                .ThenInclude(vend => vend.User)
-                .FirstOrDefaultAsync(v => v.Id == veiculoId);
+            var veiculo = await _veiculoService.GetVeiculoEntityAsync(veiculoId);
+            if (veiculo == null) return NotFound();
 
-            if (veiculo == null)
-                return NotFound();
-
-            // Verificar se veiculo foi vendido
             if (await _visitaService.ValidarVeiculoVendidoAsync(veiculoId))
             {
-                TempData["Erro"] = "Este veiculo ja foi vendido.";
+                TempData["Erro"] = "Este veículo já foi vendido.";
                 return RedirectToAction("Detalhe", "Veiculos", new { id = veiculoId });
             }
 
             ViewBag.VeiculoId = veiculoId;
-            ViewBag.DataMinima = DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm"); // ISO 8601 para input[type=datetime-local]
-
+            ViewBag.DataMinima = DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm");
             return View(veiculo);
         }
 
-        /// <summary>
-        /// POST: /Visitas/Agendar
-        /// Submeter agendamento de visita.
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Agendar(int veiculoId, DateTime dataHora, string? notas)
@@ -74,21 +54,14 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
-
+            var comprador = await _profileService.GetCompradorByUserIdAsync(user.Id);
             if (comprador == null)
             {
-                TempData["Erro"] = "Perfil de comprador nao encontrado.";
+                TempData["Erro"] = "Perfil de comprador não encontrado.";
                 return RedirectToAction("Index", "Veiculos");
             }
 
-            // Agendar visita
-            var (sucesso, visita, mensagem) = await _visitaService.AgendarVisitaAsync(
-                veiculoId,
-                comprador.Id,
-                dataHora,
-                notas);
+            var (sucesso, visita, mensagem) = await _visitaService.AgendarVisitaAsync(veiculoId, comprador.Id, dataHora, notas);
 
             if (!sucesso)
             {
@@ -100,34 +73,19 @@ namespace AutoMarket.Areas.Public.Controllers
             return RedirectToAction("MinhasVisitas");
         }
 
-        /// <summary>
-        /// GET: /Visitas/MinhasVisitas
-        /// Listar todas as visitas do comprador.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> MinhasVisitas()
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var comprador = await _context.Compradores
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
-
-            if (comprador == null)
-            {
-                TempData["Erro"] = "Perfil de comprador n�o encontrado.";
-                return RedirectToAction("Index", "Veiculos");
-            }
+            var comprador = await _profileService.GetCompradorByUserIdAsync(user.Id);
+            if (comprador == null) return RedirectToAction("Index", "Veiculos");
 
             var visitas = await _visitaService.ObterVisitasCompradorAsync(comprador.Id);
-
             return View(visitas);
         }
 
-        /// <summary>
-        /// POST: /Visitas/CancelarVisita/5
-        /// Cancelar uma visita agendada.
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelarVisita(int id)
@@ -135,36 +93,16 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Validar permiss�o
-            var visita = await _context.Visitas
-                .Include(v => v.Comprador)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            var visita = await _visitaService.ObterVisitaAsync(id);
+            if (visita == null) return RedirectToAction("MinhasVisitas");
 
-            if (visita == null)
-            {
-                TempData["Erro"] = "Visita n�o encontrada.";
-                return RedirectToAction("MinhasVisitas");
-            }
+            if (visita.Comprador.UserId != user.Id) return Forbid();
 
-            if (visita.Comprador.UserId != user.Id)
-            {
-                TempData["Erro"] = "N�o tem permiss�o para cancelar esta visita.";
-                return RedirectToAction("MinhasVisitas");
-            }
-
-            // Cancelar
-            var (sucesso, mensagem) = await _visitaService.CancelarVisitaAsync(
-                id,
-                motivo: "Cancelado pelo comprador");
-
+            var (sucesso, mensagem) = await _visitaService.CancelarVisitaAsync(id, "Cancelado pelo comprador");
             TempData[sucesso ? "Sucesso" : "Erro"] = mensagem;
             return RedirectToAction("MinhasVisitas");
         }
 
-        /// <summary>
-        /// GET: /Visitas/VendedorDashboard
-        /// Painel do vendedor com visitas agendadas.
-        /// </summary>
         [HttpGet]
         [Authorize(Roles = "Vendedor")]
         public async Task<IActionResult> VendedorDashboard()
@@ -172,24 +110,13 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var vendedor = await _context.Vendedores
-                .FirstOrDefaultAsync(v => v.UserId == user.Id);
-
-            if (vendedor == null)
-            {
-                TempData["Erro"] = "Perfil de vendedor n�o encontrado.";
-                return RedirectToAction("Index", "Home");
-            }
+            var vendedor = await _profileService.GetVendedorByUserIdAsync(user.Id);
+            if (vendedor == null) return RedirectToAction("Index", "Home");
 
             var visitas = await _visitaService.ObterVisitasVendedorAsync(vendedor.Id);
-
             return View(visitas);
         }
 
-        /// <summary>
-        /// POST: /Visitas/ConfirmarVisita/5
-        /// Confirmar uma visita agendada (a��o do vendedor).
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Vendedor")]
@@ -198,34 +125,14 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Validar permiss�o
-            var visita = await _context.Visitas
-                .Include(v => v.Vendedor)
-                .FirstOrDefaultAsync(v => v.Id == id);
+            var visita = await _visitaService.ObterVisitaAsync(id);
+            if (visita == null || visita.Vendedor.UserId != user.Id) return Forbid();
 
-            if (visita == null)
-            {
-                TempData["Erro"] = "Visita n�o encontrada.";
-                return RedirectToAction("VendedorDashboard");
-            }
-
-            if (visita.Vendedor.UserId != user.Id)
-            {
-                TempData["Erro"] = "N�o tem permiss�o.";
-                return RedirectToAction("VendedorDashboard");
-            }
-
-            // Confirmar
             var (sucesso, mensagem) = await _visitaService.ConfirmarVisitaAsync(id);
-
             TempData[sucesso ? "Sucesso" : "Erro"] = mensagem;
             return RedirectToAction("VendedorDashboard");
         }
 
-        /// <summary>
-        /// POST: /Visitas/MarcarRealizada/5
-        /// Marcar visita como realizada (a��o do vendedor).
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Vendedor")]
@@ -234,19 +141,10 @@ namespace AutoMarket.Areas.Public.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Validar permiss�o
-            var visita = await _context.Visitas
-                .Include(v => v.Vendedor)
-                .FirstOrDefaultAsync(v => v.Id == id);
-
-            if (visita == null || visita.Vendedor.UserId != user.Id)
-            {
-                TempData["Erro"] = "N�o tem permiss�o.";
-                return RedirectToAction("VendedorDashboard");
-            }
+            var visita = await _visitaService.ObterVisitaAsync(id);
+            if (visita == null || visita.Vendedor.UserId != user.Id) return Forbid();
 
             var (sucesso, mensagem) = await _visitaService.MarcarComoRealizadaAsync(id, notas);
-
             TempData[sucesso ? "Sucesso" : "Erro"] = mensagem;
             return RedirectToAction("VendedorDashboard");
         }

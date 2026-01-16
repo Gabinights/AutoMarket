@@ -38,7 +38,7 @@ namespace AutoMarket.Services.Implementations
 
         public void AdicionarItem(Veiculo veiculo)
         {
-            if (veiculo == null) { throw new ArgumentNullException(nameof(veiculo)); }
+            ArgumentNullException.ThrowIfNull(veiculo);
 
             var itens = GetItens();
 

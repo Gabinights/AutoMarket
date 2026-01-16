@@ -4,7 +4,8 @@ using AutoMarket.Models.Enums;
 namespace AutoMarket.Models.ViewModels
 {
     /// <summary>
-    /// ViewModel para exibir transações (compras ou vendas) numa lista
+    /// ViewModel para exibir transaÃ§Ãµes (compras ou vendas) numa lista
+    /// Usado pelo TransacaoService.
     /// </summary>
     public class TransacaoListViewModel
     {
@@ -21,13 +22,13 @@ namespace AutoMarket.Models.ViewModels
         [Display(Name = "Estado")]
         public EstadoTransacao Estado { get; set; }
 
-        [Display(Name = "Método de Pagamento")]
+        [Display(Name = "MÃ©todo de Pagamento")]
         public MetodoPagamento Metodo { get; set; }
 
-        // Dados do Veículo
+        // Dados do VeÃ­culo
         public int VeiculoId { get; set; }
 
-        [Display(Name = "Veículo")]
+        [Display(Name = "VeÃ­culo")]
         public string VeiculoTitulo { get; set; } = string.Empty;
 
         public string VeiculoMarca { get; set; } = string.Empty;
@@ -44,7 +45,7 @@ namespace AutoMarket.Models.ViewModels
         [Display(Name = "Comprador")]
         public string? CompradorNome { get; set; }
 
-        // Snapshots para referência
+        // Snapshots para referÃªncia
         public string? MoradaEnvioSnapshot { get; set; }
         public string? NifFaturacaoSnapshot { get; set; }
     }
